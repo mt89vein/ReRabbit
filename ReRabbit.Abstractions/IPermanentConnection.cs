@@ -20,14 +20,14 @@ namespace ReRabbit.Abstractions
         bool TryConnect();
 
         /// <summary>
-        /// Создает AMQP-модель (канал).
-        /// </summary>
-        IModel CreateModel();
-
-        /// <summary>
         /// Попытаться отключиться.
         /// </summary>
         /// <returns>True, если удалось успешно отключиться.</returns>
         bool TryDisconnect();
+
+        /// <summary>
+        /// Создает AMQP-модель (канал).
+        /// </summary>
+        IModel CreateModel();
     }
 }

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;
@@ -9,12 +8,13 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 
 namespace ReRabbit.Core
 {
-    // TODO: типизированный логгинг
+    // TODO: типизированный логгинг (как это я сделал в Notifications.Application.LoggingExtensions
     /// <summary>
     /// Реализация постоянного соединения с RabbitMq по-умолчанию.
     /// </summary>
@@ -50,7 +50,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Настройки подключения.
         /// </summary>
-        private readonly ConnectionSettings _settings;
+        private readonly MqConnectionSettings _settings;
 
         /// <summary>
         /// Политика повторного подключения к RabbitMq.
@@ -77,26 +77,32 @@ namespace ReRabbit.Core
         /// <param name="connectionFactory">Фабрика создателя подключений.</param>
         /// <param name="logger">Логгер.</param>
         public DefaultPermanentConnection(
-            IOptions<ConnectionSettings> connectionSetting,
+            MqConnectionSettings connectionSetting,
             IConnectionFactory connectionFactory,
-            ILogger logger)
+            ILogger logger
+        )
         {
-            _settings = connectionSetting.Value;
+            _settings = connectionSetting;
             _connectionFactory = connectionFactory;
             _logger = logger;
+            _logger.BeginScope(new Dictionary<string, string>
+            {
+                ["ConnectionString"] = _connectionFactory.Uri.ToString()
+            });
             _connectionRetryPolicy =
                 Policy.Handle<SocketException>()
-                .Or<BrokerUnreachableException>()
-                .WaitAndRetry(
-                    retryCount: _settings.ConnectionRetryCount,
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (ex, _, cnt, ctx) => _logger.LogWarning(
-                        ex,
-                        "Попытка установить соединение с RabbitMq {Cnt} из {ConnectionRetryCount}",
-                        cnt,
-                        _settings.ConnectionRetryCount
-                    )
-                );
+                    .Or<BrokerUnreachableException>()
+                    .WaitAndRetry(
+                        retryCount: _settings.ConnectionRetryCount,
+                        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        onRetry: (ex, _, count, ctx) => _logger.LogWarning(
+                            ex,
+                            "Попытка установить соединение с RabbitMq. Попытка подключения №{Count} из {ConnectionRetryCount}",
+                            _connectionFactory.Uri,
+                            count,
+                            _settings.ConnectionRetryCount
+                        )
+                    );
         }
 
         #endregion Конструктор
@@ -111,7 +117,7 @@ namespace ReRabbit.Core
             if (!IsConnected)
             {
                 throw new ConnectionException(
-                    "Нет активного подключения к RabbitMq для создания канала",
+                     $"Нет активного подключения к RabbitMq {_connectionFactory.Uri} для создания канала",
                     ReRabbitErrorCode.UnnableToConnect
                 );
             }
@@ -133,11 +139,14 @@ namespace ReRabbit.Core
 
             try
             {
-                _connection.Dispose();
+                _connection?.Dispose();
             }
             catch (IOException ex)
             {
-                _logger.LogCritical(ex, "Не удалось разорвать соединение с RabbitMQ");
+                _logger.LogCritical(
+                    ex,
+                    "Не удалось разорвать соединение с RabbitMQ"
+                );
             }
         }
 
@@ -151,11 +160,12 @@ namespace ReRabbit.Core
                 return true;
             }
 
-            _logger.LogInformation("Подключение к RabbitMq {RabbitMqUri}...", _connectionFactory.Uri);
+            _logger.LogInformation("Подключение к RabbitMq");
 
             lock (_syncRoot)
             {
-                _connectionRetryPolicy.Execute(() => _connection = _connectionFactory.CreateConnection(_settings.ConnectionName));
+                _connectionRetryPolicy.Execute(() =>
+                    _connection = _connectionFactory.CreateConnection(_settings.ConnectionName));
 
                 if (IsConnected)
                 {
@@ -163,7 +173,9 @@ namespace ReRabbit.Core
                     _connection.CallbackException += OnCallbackException;
                     _connection.ConnectionBlocked += OnConnectionBlocked;
 
-                    _logger.LogInformation("Подключение к RabbitMq установлено. Хост: {HostName}", _connection.Endpoint.HostName);
+                    _logger.LogInformation("Подключение к RabbitMq установлено.");
+
+                    _disposed = false;
 
                     return true;
                 }
@@ -212,7 +224,8 @@ namespace ReRabbit.Core
                 return;
             }
 
-            _logger.LogWarning(e.Exception, "Соединение с RabbitMQ разорвано в связи с необработанной ошибкой: {Details}", e.Detail);
+            _logger.LogWarning(e.Exception,
+                "Соединение с RabbitMQ разорвано в связи с необработанной ошибкой: {Details}", e.Detail);
 
             TryConnect();
         }
@@ -226,7 +239,15 @@ namespace ReRabbit.Core
 
             _logger.LogWarning("Соединение с RabbitMQ отключено. Причина: {Reason}", reason);
 
-            TryConnect();
+            if (reason.Initiator == ShutdownInitiator.Application)
+            {
+                _logger.LogInformation("Соединение было закрыто приложением.");
+                Dispose();
+            }
+            else
+            {
+                TryConnect();
+            }
         }
 
         #endregion Методы (private)

@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
-    <ProjectReference Include="..\ReRabbit.Configuration\ReRabbit.Configuration.csproj" />
   </ItemGroup>
 
 </Project>

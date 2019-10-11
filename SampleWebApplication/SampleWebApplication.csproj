@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
+    <ProjectReference Include="..\ReRabbit.Core\ReRabbit.Core.csproj" />
+    <ProjectReference Include="..\ReRabbit.Extensions\ReRabbit.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -7,6 +7,8 @@ namespace ReRabbit.Abstractions.Models
     /// </summary>
     public class MqEventData
     {
+        #region Свойства
+
         /// <summary>
         /// Принятое сообщение.
         /// </summary>
@@ -26,49 +28,34 @@ namespace ReRabbit.Abstractions.Models
         /// Глобальный идентификатор отслеживания.
         /// </summary>
         public Guid? TraceId { get; }
-    }
-
-    /// <summary>
-    /// Формат сообщения.
-    /// </summary>
-    public class MqMessage
-    {
-        /// <summary>
-        /// Тело сообщения.
-        /// </summary>
-        public string Payload { get; }
 
         /// <summary>
-        /// Версия формата сообщения.
+        /// Номер повторной обработки.
         /// </summary>
-        public string FormatVersion { get; }
+        public int RetryNumber { get; }
 
         /// <summary>
-        /// Версия.
-        /// Служебное поле для передачи версии (например клиента, формата  и т.д.).
+        /// Последняя попытка обработки?
         /// </summary>
-        public string Version { get; }
+        public bool IsLastRetry { get; }
+
+        #endregion Свойства
+
+        #region Конструктор
 
         /// <summary>
-        /// Тело сообщения.
+        /// Создает экземпляр класса <see cref="MqEventData"/>.
         /// </summary>
-        public string PayloadType { get; }
-
-        /// <summary>
-        /// Сервис отправитель.
-        /// Служебное поле для передачи информации об издателе сообщения.
-        /// </summary>
-        public string Sender { get; }
-
-        /// <summary>
-        /// Создает экземпляр класса <see cref="MqMessage"/>.
-        /// </summary>
-        public MqMessage(string payload, string version, string payloadType, string sender)
+        public MqEventData(MqMessage mqMessage, string routingKey, string exchange, Guid? traceId, int retryNumber, bool isLastRetry)
         {
-            Payload = payload;
-            Version = version;
-            PayloadType = payloadType;
-            Sender = sender;
+            MqMessage = mqMessage;
+            RoutingKey = routingKey;
+            Exchange = exchange;
+            TraceId = traceId;
+            RetryNumber = retryNumber;
+            IsLastRetry = isLastRetry;
         }
+
+        #endregion Конструктор
     }
 }

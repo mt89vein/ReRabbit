@@ -53,10 +53,8 @@ namespace ReRabbit.Core.Exceptions
 
         #region Конструкторы
 
-        public ConnectionException(
-            string message,
-            ReRabbitErrorCode errorCode
-        ) : base(message)
+        public ConnectionException(string message, ReRabbitErrorCode errorCode)
+            : base(message)
         {
             ErrorCode = errorCode;
         }
