@@ -27,8 +27,11 @@ namespace ReRabbit.Abstractions.Settings
 
         /// <summary>
         /// Название подключения.
+        /// <para>
+        /// По-умолчанию устанавливается наименование секции из конфигурации.
+        /// </para>
         /// </summary>
-        public string ConnectionName { get; set; } = "DefaultConnectionName";
+        public string ConnectionName { get; set; }
 
         /// <summary>
         /// Виртуальные хосты.

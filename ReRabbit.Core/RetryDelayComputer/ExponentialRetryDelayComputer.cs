@@ -19,6 +19,7 @@ namespace ReRabbit.Core.RetryDelayComputer
 
         #region Конструктор
 
+        // TODO: сделать компьютеры стейтлесс
         /// <summary>
         /// Конструктор по-умолчанию.
         /// </summary>

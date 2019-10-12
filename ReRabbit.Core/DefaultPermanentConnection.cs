@@ -98,7 +98,6 @@ namespace ReRabbit.Core
                         onRetry: (ex, _, count, ctx) => _logger.LogWarning(
                             ex,
                             "Попытка установить соединение с RabbitMq. Попытка подключения №{Count} из {ConnectionRetryCount}",
-                            _connectionFactory.Uri,
                             count,
                             _settings.ConnectionRetryCount
                         )
@@ -214,6 +213,7 @@ namespace ReRabbit.Core
                 return;
             }
 
+            // TODO: отловить ошибки авторизации, на случай если неправильный юзер или не существует виртуального хоста / отсутствуют права у юзера
             _logger.LogCritical("Соединение с RabbitMQ разорвано. Причина: {Reason}", e.Reason);
         }
 

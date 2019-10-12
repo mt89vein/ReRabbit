@@ -45,7 +45,7 @@ namespace SampleWebApplication
             {
                 Console.WriteLine("1" + x.Message);
                 return Task.CompletedTask;
-            }, "Q2Subscriber", virtualHost: "TESTHOST");
+            }, "Q2Subscriber", "DefaultConnection", "TESTHOST");
 
             subscriptionManager.Register<TestMessage>((x, y) =>
             {

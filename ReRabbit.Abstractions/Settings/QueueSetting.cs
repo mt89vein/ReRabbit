@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ReRabbit.Abstractions.Settings
 {
@@ -116,6 +117,11 @@ namespace ReRabbit.Abstractions.Settings
         /// TODO: сделать словарь базовых аргументов и конвертировать в тип, который требуется рэббиту по названию. Либо сделать строго типизированную настройку MessageTtl etc.
         /// </summary>
         public IDictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
+
+        /// <summary>
+        /// Подписки очереди на обменники.
+        /// </summary>
+        public IEnumerable<ExchangeBinding> Bindings { get; set; } = Enumerable.Empty<ExchangeBinding>();
 
         /// <summary>
         /// Использовать отдельную очередь для хранения сообщений при обработке которых возникла ошибка.

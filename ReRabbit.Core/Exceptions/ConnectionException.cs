@@ -42,6 +42,7 @@ namespace ReRabbit.Core.Exceptions
     {
         Unknown = 0,
         UnnableToConnect = 1,
+        InvalidConfiguration = 2
     }
 
     public class ConnectionException : ReRabbitException
@@ -66,6 +67,31 @@ namespace ReRabbit.Core.Exceptions
         ) : base(message, innerException)
         {
             ErrorCode = errorCode;
+        }
+
+        #endregion Конструкторы
+    }
+
+
+    public class InvlidConfigurationException : ReRabbitException
+    {
+        /// <summary>
+        /// Код ошибки.
+        /// </summary>
+        public override ReRabbitErrorCode ErrorCode { get; } = ReRabbitErrorCode.InvalidConfiguration;
+
+        #region Конструкторы
+
+        public InvlidConfigurationException(string message)
+            : base(message)
+        {
+        }
+
+        public InvlidConfigurationException(
+            string message,
+            Exception innerException
+        ) : base(message, innerException)
+        {
         }
 
         #endregion Конструкторы

@@ -17,7 +17,8 @@ namespace ReRabbit.Core.RetryDelayComputer
         {
             switch (retrySettings.RetryPolicy)
             {
-                // TODO: ZERO
+                case RetryPolicyType.Zero:
+                    return new ZeroRetryDelayComputer();
                 case RetryPolicyType.Exponential:
                     return new ExponentialRetryDelayComputer(retrySettings);
 
