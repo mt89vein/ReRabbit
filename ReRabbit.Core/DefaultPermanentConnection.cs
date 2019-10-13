@@ -17,6 +17,7 @@ namespace ReRabbit.Core
     // TODO: типизированный логгинг (как это я сделал в Notifications.Application.LoggingExtensions
     /// <summary>
     /// Реализация постоянного соединения с RabbitMq по-умолчанию.
+    /// Этот класс не наследуется.
     /// </summary>
     public sealed class DefaultPermanentConnection : IPermanentConnection
     {
@@ -97,7 +98,7 @@ namespace ReRabbit.Core
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         onRetry: (ex, _, count, ctx) => _logger.LogWarning(
                             ex,
-                            "Попытка установить соединение с RabbitMq. Попытка подключения №{Count} из {ConnectionRetryCount}",
+                            "Попытка установить соединение с RabbitMq. Попытка подключения {Count} из {ConnectionRetryCount}",
                             count,
                             _settings.ConnectionRetryCount
                         )

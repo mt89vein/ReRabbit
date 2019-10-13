@@ -15,19 +15,14 @@ namespace ReRabbit.Subscribers
         #region Поля
 
         /// <summary>
-        /// Менеджер постоянных соединений.
-        /// </summary>
-        private readonly IPermanentConnectionManager _connectionManager;
-
-        /// <summary>
         /// Список канал для подписок.
         /// </summary>
         private readonly List<IModel> _channels;
 
         /// <summary>
-        /// Менеджер конфигураций.
+        /// Фабрика подписчиков.
         /// </summary>
-        private readonly IConfigurationManager _configurationManager;
+        private readonly ISubscriberFactory _subscriberFactory;
 
         #endregion Поля
 
@@ -36,133 +31,110 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultPermanentConnection"/>.
         /// </summary>
-        /// <param name="connectionManager">Менеджер постоянных соединений.</param>
-        /// <param name="configurationManager">Менеджер конфигураций.</param>
-        public DefaultSubscriptionManager(
-            IPermanentConnectionManager connectionManager,
-            IConfigurationManager configurationManager
-        )
+        /// <param name="subscriberFactory">Фабрика подписчиков.</param>
+        public DefaultSubscriptionManager(ISubscriberFactory subscriberFactory)
         {
-            _connectionManager = connectionManager;
             _channels = new List<IModel>();
-            _configurationManager = configurationManager;
+            _subscriberFactory = subscriberFactory;
         }
 
         #endregion Конструктор
 
         #region Методы (public)
 
-        public bool Bind(QueueSetting queueSetting)
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <returns>True, если удалось выполнить привязку.</returns>
+        public bool Bind<TMessageType>(QueueSetting queueSetting)
         {
-            var connection = _connectionManager.GetConnection(queueSetting.ConnectionSettings);
-
-            using (SubscriberFactory.CreateSubscriber(connection, queueSetting).Bind())
-            { }
+            using (_subscriberFactory.CreateSubscriber<TMessageType>(queueSetting).Bind()) { }
 
             return true;
         }
 
-        public bool Bind(string configurationSectionName)
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <returns>True, если удалось выполнить привязку.</returns>
+        public bool Bind<TMessageType>(string configurationSectionName)
         {
-            var queueSettings = _configurationManager.GetQueueSettings(
-                configurationSectionName
-            );
-            var connection = _connectionManager.GetConnection(queueSettings.ConnectionSettings);
-
-            using (SubscriberFactory.CreateSubscriber(connection, queueSettings).Bind())
-            { }
+            using (_subscriberFactory.CreateSubscriber<TMessageType>(configurationSectionName).Bind()) { }
 
             return true;
         }
 
-        public bool Bind(
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <returns>True, если удалось выполнить привязку.</returns>
+        public bool Bind<TMessageType>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
         {
-            var queueSettings = _configurationManager.GetQueueSettings(
-                configurationSectionName,
-                connectionName,
-                virtualHost
-            );
-            var connection = _connectionManager.GetConnection(queueSettings.ConnectionSettings);
-
-            using (SubscriberFactory.CreateSubscriber(connection, queueSettings).Bind())
+            using (_subscriberFactory.CreateSubscriber<TMessageType>(
+                    configurationSectionName,
+                    connectionName,
+                    virtualHost
+                ).Bind()
+            )
             { }
 
             return true;
         }
 
-        public bool Register<THandler>(
-            Func<THandler, MqEventData, Task> eventHandler,
+        /// <summary>
+        /// Выполнить регистрацию подписчика на сообщения.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
+        public bool Register<TMessageType>(
+            Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
         {
-            var queueSettings = _configurationManager.GetQueueSettings(
-                configurationSectionName,
-                connectionName,
-                virtualHost
-            );
-
-            var connection = _connectionManager.GetConnection(queueSettings.ConnectionSettings);
-
-            var channel = SubscriberFactory
-                .CreateSubscriber(connection, queueSettings)
-                .Subscribe(eventHandler);
+            var channel = _subscriberFactory
+                .CreateSubscriber<TMessageType>(
+                    configurationSectionName,
+                    connectionName,
+                    virtualHost
+                ).Subscribe(eventHandler);
 
             _channels.Add(channel);
 
             return true;
         }
 
-        public bool Register<THandler>(Func<THandler, MqEventData, Task> eventHandler, string configurationSectionName)
-        {
-            var queueSettings = _configurationManager.GetQueueSettings(configurationSectionName);
-
-            var connection = _connectionManager.GetConnection(queueSettings.ConnectionSettings);
-
-            var channel = SubscriberFactory
-                .CreateSubscriber(connection, queueSettings)
-                .Subscribe(eventHandler);
-
-            _channels.Add(channel);
-
-            return true;
-        }
-
-        public bool Register<THandler>(Func<THandler, MqEventData, Task> eventHandler, QueueSetting queueSetting)
-        {
-            var connection = _connectionManager.GetConnection(queueSetting.ConnectionSettings);
-
-            var channel = SubscriberFactory
-                .CreateSubscriber(connection, queueSetting)
-                .Subscribe(eventHandler);
-
-            _channels.Add(channel);
-
-            return true;
-        }
-
-        public bool Register<THandler>(
-            Func<THandler, MqEventData, Task<Acknowledgement>> eventHandler,
-            string configurationSectionName,
-            string connectionName,
-            string virtualHost
+        /// <summary>
+        /// Выполнить регистрацию подписчика на сообщения.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
+        public bool Register<TMessageType>(
+            Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler,
+            string configurationSectionName
         )
         {
-            var queueSettings = _configurationManager.GetQueueSettings(
-                configurationSectionName,
-                connectionName,
-                virtualHost
-            );
-
-            var connection = _connectionManager.GetConnection(queueSettings.ConnectionSettings);
-
-            var channel = SubscriberFactory
-                .CreateSubscriber(connection, queueSettings)
+            var channel = _subscriberFactory
+                .CreateSubscriber<TMessageType>(configurationSectionName)
                 .Subscribe(eventHandler);
 
             _channels.Add(channel);
@@ -170,30 +142,26 @@ namespace ReRabbit.Subscribers
             return true;
         }
 
-        public bool Register<THandler>(Func<THandler, MqEventData, Task<Acknowledgement>> eventHandler, string configurationSectionName)
+        /// <summary>
+        /// Выполнить регистрацию подписчика на сообщения.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
+        public bool Register<TMessageType>(
+            Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler,
+            QueueSetting queueSetting
+        )
         {
-            var queueSettings = _configurationManager.GetQueueSettings(configurationSectionName);
+            for (var i = 0; i < queueSetting.ConsumersCount; i++)
+            {
+                var channel = _subscriberFactory
+                    .CreateSubscriber<TMessageType>(queueSetting)
+                    .Subscribe(eventHandler);
 
-            var connection = _connectionManager.GetConnection(queueSettings.ConnectionSettings);
-
-            var channel = SubscriberFactory
-                .CreateSubscriber(connection, queueSettings)
-                .Subscribe(eventHandler);
-
-            _channels.Add(channel);
-
-            return true;
-        }
-
-        public bool Register<THandler>(Func<THandler, MqEventData, Task<Acknowledgement>> eventHandler, QueueSetting queueSetting)
-        {
-            var connection = _connectionManager.GetConnection(queueSetting.ConnectionSettings);
-
-            var channel = SubscriberFactory
-                .CreateSubscriber(connection, queueSetting)
-                .Subscribe(eventHandler);
-
-            _channels.Add(channel);
+                _channels.Add(channel);
+            }
 
             return true;
         }

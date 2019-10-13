@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ReRabbit.Abstractions.Settings
 {
@@ -27,6 +26,11 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Ключи роутинга для привязки.
         /// </summary>
-        public IEnumerable<string> RoutingKeys { get; set; } = Enumerable.Empty<string>();            
+        public List<string> RoutingKeys { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Дополнительные аргументы привязки.
+        /// </summary>
+        public IDictionary<string, object> Arguments { get; set; } = new Dictionary<string, object>();
     }
 }

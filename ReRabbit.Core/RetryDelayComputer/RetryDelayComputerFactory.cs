@@ -1,5 +1,6 @@
 using ReRabbit.Abstractions.Settings;
 using System;
+using ReRabbit.Abstractions.Enums;
 
 namespace ReRabbit.Core.RetryDelayComputer
 {
@@ -19,6 +20,7 @@ namespace ReRabbit.Core.RetryDelayComputer
             {
                 case RetryPolicyType.Zero:
                     return new ZeroRetryDelayComputer();
+
                 case RetryPolicyType.Exponential:
                     return new ExponentialRetryDelayComputer(retrySettings);
 

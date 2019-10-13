@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ReRabbit.Abstractions.Settings
 {
@@ -121,7 +120,7 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Подписки очереди на обменники.
         /// </summary>
-        public IEnumerable<ExchangeBinding> Bindings { get; set; } = Enumerable.Empty<ExchangeBinding>();
+        public List<ExchangeBinding> Bindings { get; set; } = new List<ExchangeBinding>();
 
         /// <summary>
         /// Использовать отдельную очередь для хранения сообщений при обработке которых возникла ошибка.
@@ -156,7 +155,6 @@ namespace ReRabbit.Abstractions.Settings
         /// Настройки повторной обработки сообщений.
         /// </summary>
         public RetrySettings RetrySettings { get; set; } = new RetrySettings();
-
 
         public MqConnectionSettings ConnectionSettings { get; }
 

@@ -9,8 +9,9 @@ namespace ReRabbit.Core
 {
     /// <summary>
     /// Предоставляет свойства клиента, используемые при подключении к брокеру.
+    /// Этот класс не наследуется.
     /// </summary>
-    public class DefaultClientPropertyProvider : IClientPropertyProvider
+    public sealed class DefaultClientPropertyProvider : IClientPropertyProvider
     {
         #region Поля
 

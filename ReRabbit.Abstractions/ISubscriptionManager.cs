@@ -11,33 +11,68 @@ namespace ReRabbit.Abstractions
     /// </summary>
     public interface ISubscriptionManager : IDisposable
     {
-        bool Bind(QueueSetting queueSetting);
-        bool Bind(string configurationSectionName);
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <returns>True, если удалось выполнить привязку.</returns>
+        bool Bind<TMessageType>(QueueSetting queueSetting);
 
-        bool Bind(
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <returns>True, если удалось выполнить привязку.</returns>
+        bool Bind<TMessageType>(string configurationSectionName);
+
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <returns>True, если удалось выполнить привязку.</returns>
+        bool Bind<TMessageType>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
         );
 
-        bool Register<THandler>(
-            Func<THandler, MqEventData, Task> eventHandler,
+        /// <summary>
+        /// Выполнить регистрацию подписчика на сообщения.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
+        bool Register<TMessageType>(
+            Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
         );
 
-        bool Register<THandler>(Func<THandler, MqEventData, Task> eventHandler, string configurationSectionName);
-        bool Register<THandler>(Func<THandler, MqEventData, Task> eventHandler, QueueSetting queueSetting);
+        /// <summary>
+        /// Выполнить регистрацию подписчика на сообщения.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
+        bool Register<TMessageType>(Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler, string configurationSectionName);
 
-        bool Register<THandler>(
-            Func<THandler, MqEventData, Task<Acknowledgement>> eventHandler,
-            string configurationSectionName,
-            string connectionName,
-            string virtualHost
-        );
-
-        bool Register<THandler>(Func<THandler, MqEventData, Task<Acknowledgement>> eventHandler, string configurationSectionName);
-        bool Register<THandler>(Func<THandler, MqEventData, Task<Acknowledgement>> eventHandler, QueueSetting queueSetting);
+        /// <summary>
+        /// Выполнить регистрацию подписчика на сообщения.
+        /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
+        bool Register<TMessageType>(Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler, QueueSetting queueSetting);
     }
 }

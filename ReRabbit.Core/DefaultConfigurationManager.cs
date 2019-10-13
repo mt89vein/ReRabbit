@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Configuration;
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -11,41 +13,46 @@ namespace ReRabbit.Core
     /// <summary>
     /// Менеджер конфигураций.
     /// </summary>
-    public interface IConfigurationManager
-    {
-        /// <summary>
-        /// Получить конфигурацию подписчика по названию секции, подключения и виртуального хоста.
-        /// </summary>
-        /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
-        /// <param name="connectionName">Наименование подключения.</param>
-        /// <param name="virtualHost">Наименование вирутального хоста.</param>
-        /// <returns>Настройки подписчика.</returns>
-        QueueSetting GetQueueSettings(
-            string configurationSectionName,
-            string connectionName,
-            string virtualHost
-        );
-
-        /// <summary>
-        /// Получить конфигурацию среди всех подключений и виртуальных хостов.
-        /// </summary>
-        /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
-        /// <returns>Настройки подписчика.</returns>
-        QueueSetting GetQueueSettings(string configurationSectionName);
-    }
-
     public class DefaultConfigurationManager : IConfigurationManager
     {
+        #region Поля
+
+        /// <summary>
+        /// Конфигурация приложения.
+        /// </summary>
         private readonly IConfiguration _configuration;
+
+        /// <summary>
+        /// Ленивая инициализация. Для исключения проблемы с virtual member call in constructor.
+        /// </summary>
         private readonly Lazy<RabbitMqSettings> _lazyInitialization;
 
+        #endregion Поля
+
+        #region Свойства
+
+        /// <summary>
+        /// Настройки RabbitMq.
+        /// </summary>
         protected RabbitMqSettings Settings => _lazyInitialization.Value;
 
+        #endregion Свойства
+
+        #region Конструктор
+
+        /// <summary>
+        /// Создает экземпляр класса <see cref="DefaultConfigurationManager"/>.
+        /// </summary>
+        /// <param name="configuration">Конфигурация приложения.</param>
         public DefaultConfigurationManager(IConfiguration configuration)
         {
             _configuration = configuration;
             _lazyInitialization = new Lazy<RabbitMqSettings>(ConfigureRabbitMqSettings);
         }
+
+        #endregion Конструктор
+
+        #region Методы (public)
 
         /// <summary>
         /// Получить конфигурацию подписчика по названию секции, подключения и виртуального хоста.
@@ -95,7 +102,7 @@ namespace ReRabbit.Core
                 {
                     foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
                     {
-                        var queueSettingSectionPath = 
+                        var queueSettingSectionPath =
                             ConfigurationSectionConstants.GetQueueSectionPath(
                                 connectionSettings.ConnectionName,
                                 virtualHostSettings.Name,
@@ -115,6 +122,10 @@ namespace ReRabbit.Core
                 }
             }
         }
+
+        #endregion Методы (public)
+
+        #region Методы (protected)
 
         protected virtual RabbitMqSettings ConfigureRabbitMqSettings()
         {
@@ -143,7 +154,6 @@ namespace ReRabbit.Core
                         ? connectionConfSection.Key
                         : connectionSettings.ConnectionName;
 
-
                     var virtualHostsSection =
                         connectionConfSection.GetSection(virtualHostsConfigurationSectionPath);
 
@@ -161,8 +171,11 @@ namespace ReRabbit.Core
                             virtualHostConfSection.Bind(virtualHost);
 
                             virtualHost.Name = virtualHostConfSection.Key;
-                            return new KeyValuePair<string, VirtualHostSetting>(virtualHostConfSection.Key,
-                                virtualHost);
+
+                            return new KeyValuePair<string, VirtualHostSetting>(
+                                virtualHostConfSection.Key,
+                                virtualHost
+                            );
                         }).ToDictionary(y => y.Key, y => y.Value);
 
                     return new KeyValuePair<string, ConnectionSettings>(connectionConfSection.Key, connectionSettings);
@@ -171,6 +184,10 @@ namespace ReRabbit.Core
 
             return rabbitMqSettings;
         }
+
+        #endregion Методы (protected)
+
+        #region Методы (private)
 
         /// <summary>
         /// Сформировать настройки подписчика.
@@ -200,7 +217,22 @@ namespace ReRabbit.Core
 
             subscriberConfigurationSection.Bind(queueSettings);
 
+            var bindings = Enumerable.Empty<ExchangeBinding>();
+            var arrayBindings = Array.Empty<ExchangeBinding>();
+            var listBindings = new List<ExchangeBinding>();
+
+            subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
+            subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
+            subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
+
+            // судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
+            Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
+
+            // TODO: нормализация аргуметов 
+
             return queueSettings;
         }
+
+        #endregion Методы (private)
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Extensions;
 using System;
 using System.Threading.Tasks;
@@ -32,31 +33,31 @@ namespace SampleWebApplication
             subscriptionManager.Register<TestMessage>((x, y) =>
             {
                 Console.WriteLine("1" + x.Message);
-                return Task.CompletedTask;
+                return Task.FromResult<Acknowledgement>(new Ack());
             }, "Q1Subscriber");
 
             subscriptionManager.Register<TestMessage>((x, y) =>
             {
                 Console.WriteLine("1" + x.Message);
-                return Task.CompletedTask;
+                return Task.FromResult<Acknowledgement>(new Ack());
             }, "Q1Subscriber");
 
             subscriptionManager.Register<TestMessage>((x, y) =>
             {
                 Console.WriteLine("1" + x.Message);
-                return Task.CompletedTask;
+                return Task.FromResult<Acknowledgement>(new Ack());
             }, "Q2Subscriber", "DefaultConnection", "TESTHOST");
 
             subscriptionManager.Register<TestMessage>((x, y) =>
             {
                 Console.WriteLine("1" + x.Message);
-                return Task.CompletedTask;
+                return Task.FromResult<Acknowledgement>(new Ack());
             }, "Q3Subscriber", "SecondConnection", "ThirdVirtualHost");
 
             subscriptionManager.Register<TestMessage>((x, y) =>
             {
                 Console.WriteLine("1" + x.Message);
-                return Task.CompletedTask;
+                return Task.FromResult<Acknowledgement>(new Ack());
             }, "Q3Subscriber", "SecondConnection", "ThirdVirtualHost");
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using ReRabbit.Abstractions.Enums;
 
 namespace ReRabbit.Abstractions.Settings
 {
