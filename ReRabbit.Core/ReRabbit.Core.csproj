@@ -20,4 +20,10 @@
     <ProjectReference Include="..\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Microsoft.Extensions.Hosting.Abstractions">
+      <HintPath>C:\Users\Admin\.nuget\packages\microsoft.extensions.hosting.abstractions\3.0.0\lib\netstandard2.0\Microsoft.Extensions.Hosting.Abstractions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

@@ -1,9 +1,8 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
-using ReRabbit.Subscribers.AcknowledgementBehaviours;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 {
     /// <summary>
     /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки

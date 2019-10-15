@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Core;
 using ReRabbit.Subscribers;
+using ReRabbit.Subscribers.AcknowledgementBehaviours;
 using System;
 
 namespace ReRabbit.Extensions
@@ -73,6 +74,16 @@ namespace ReRabbit.Extensions
                 options.ConfigurationManagerFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultConfigurationManager>()
             );
 
+            services.AddSingleton<DefaultNamingConvention>();
+            services.AddSingleton(sp =>
+                options.NamingConventionFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultNamingConvention>()
+            );
+
+            services.AddSingleton<DefaultTopologyProvider>();
+            services.AddSingleton(sp =>
+                options.TopologyProviderFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultTopologyProvider>()
+            );
+
             return services;
         }
 
@@ -90,6 +101,10 @@ namespace ReRabbit.Extensions
 
             public AcknowledgementBehaviourFactory AcknowledgementBehaviourFactory { get; set; }
 
+            public NamingConventionFactory NamingConventionFactory { get; set; }
+
+            public TopologyProviderFactory TopologyProviderFactory { get; set; }
+
         }
 
         public delegate IPermanentConnectionManager PermanentConnectionManager(IServiceProvider serviceProvider);
@@ -103,7 +118,9 @@ namespace ReRabbit.Extensions
         public delegate IConfigurationManager ConfigurationManagerFactory(IServiceProvider serviceProvider);
 
         public delegate IAcknowledgementBehaviourFactory AcknowledgementBehaviourFactory(IServiceProvider serviceProvider);
+
+        public delegate INamingConvention NamingConventionFactory(IServiceProvider serviceProvider);
+
+        public delegate ITopologyProvider TopologyProviderFactory(IServiceProvider serviceProvider);
     }
-
-
 }

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions;
@@ -6,118 +8,45 @@ using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers
 {
     public class RoutedSubscriber<TMessageType> : SubscriberBase<TMessageType>
     {
-        #region Поля
-
-        /// <summary>
-        /// Наименование приложения.
-        /// </summary>
-        private readonly string _applicationName;
-
-        /// <summary>
-        /// Окружение.
-        /// </summary>
-        private readonly string _environmentName;
-
-        /// <summary>
-        /// Наименование машины.
-        /// </summary>
-        private readonly string _hostName;
-
-        #endregion Поля
-
         #region Конструктор
 
         /// <summary>
         /// Создает экземпляр класса <see cref="RoutedSubscriber{TMessageType}"/>.
         /// </summary>
-        /// <param name="applicationName">Наименование приложения.</param>
-        /// <param name="environmentName">Окружение.</param>
-        /// <param name="hostName">Наименование машины.</param>
+        /// <param name="logger">Логгер.</param>
+        /// <param name="topologyProvider">Провайдер топологий.</param>
+        /// <param name="namingConvention">Конвенции именования.</param>
         /// <param name="acknowledgementBehaviour">Поведение для оповещения брокера о результате обработки сообщения из шины.</param>
         /// <param name="permanentConnection">Постоянное подключение к RabbitMq.</param>
         /// <param name="settings">Настройки подписчика.</param>
         public RoutedSubscriber(
-            string applicationName,
-            string environmentName,
-            string hostName,
+            ILogger logger,
+            ITopologyProvider topologyProvider,
+            INamingConvention namingConvention,
             IAcknowledgementBehaviour acknowledgementBehaviour,
             IPermanentConnection permanentConnection,
             QueueSetting settings
         ) : base(
+            logger,
+            topologyProvider,
+            namingConvention,
             acknowledgementBehaviour,
             permanentConnection,
             settings
         )
         {
-            _applicationName = applicationName;
-            _environmentName = environmentName;
-            _hostName = hostName;
         }
 
         #endregion Конструктор
 
         #region Методы (protected)
-
-        /// <summary>
-        /// Использовать специальную очередь, куда будут перекидываться сообщения с ошибками при обработке.
-        /// </summary>
-        protected override void UseDeadLetteredQueue()
-        {
-            //throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Использовать специальную очередь, в которую будут попадать сообщения, не попавшие ни в одну из очередей.
-        /// TODO: так же если метод IsMessageForThisConsumer вернет false, сообщение тоже будет перемещено в эту очередь.
-        /// </summary>
-        protected override void UseCommonUnroutedMessagesQueue()
-        {
-            //throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Использовать специальную очередь, в которую будут попадать сообщения с ошибками при обработке, у которых нет своего DeadLetter очереди.
-        /// </summary>
-        protected override void UseCommonErrorMessagesQueue()
-        {
-           // throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Определить название очереди.
-        /// </summary>
-        /// <returns>Название очереди.</returns>
-        protected override string DefineQueueName()
-        {
-            if (Settings.QueueName == null)
-            {
-                throw new ArgumentException("Название очереди не может быть пустым.", nameof(Settings.QueueName));
-            }
-
-            return Settings.UseModelTypeAsSuffix
-                ? $"{Settings.QueueName}-{typeof(TMessageType).Name}"
-                : Settings.QueueName;
-        }
-
-        /// <summary>
-        /// Сформировать тэг подписчика.
-        /// </summary>
-        /// <returns>Тэг подписчика.</returns>
-        protected override string GetConsumerTag()
-        {
-            return string.Join("-",
-                _hostName,
-                _applicationName,
-                _environmentName,
-                Settings.ConsumerName
-            );
-        }
 
         /// <summary>
         /// Проверяет, является ли текущий подписчик адресатом сообщения.
@@ -127,7 +56,7 @@ namespace ReRabbit.Subscribers
         {
             // если используется delayed-queue, то сообщения возвращаются в очередь через
             // стандартный обменник, где RoutingKey - название очереди.
-            if (Settings.RetrySettings.IsEnabled && ea.RoutingKey == QueueName)
+            if (Settings.RetrySettings.IsEnabled && ea.RoutingKey == NamingConvention.QueueNamingConvention(typeof(TMessageType), Settings))
             {
                 return true;
             }
@@ -139,15 +68,19 @@ namespace ReRabbit.Subscribers
         #endregion Методы (protected)
     }
 
+    /// <summary>
+    /// Базовый подписчик на сообщения.
+    /// </summary>
+    /// <typeparam name="TMessageType"></typeparam>
     public abstract class SubscriberBase<TMessageType> : ISubscriber<TMessageType>
     {
+        private readonly ILogger _logger;
+
         #region Поля
 
         /// <summary>
-        /// Ленивая инициализация названия очереди.
+        /// Обработчик сообщения.
         /// </summary>
-        private readonly Lazy<string> _lazyQueueNameGetter;
-
         private Func<TMessageType, MqEventData, Task<Acknowledgement>> _eventHandler;
 
         /// <summary>
@@ -159,52 +92,90 @@ namespace ReRabbit.Subscribers
 
         #region Свойства
 
+        /// <summary>
+        /// Провайдер топологий.
+        /// </summary>
+        protected ITopologyProvider TopologyProvider { get; set; }
+
+        /// <summary>
+        /// Конвенция именования.
+        /// </summary>
+        protected INamingConvention NamingConvention { get; }
+
+        /// <summary>
+        /// Настройки очереди.
+        /// </summary>
         protected QueueSetting Settings { get; }
 
+        /// <summary>
+        /// Постоянное подключение.
+        /// </summary>
         protected IPermanentConnection PermanentConnection { get; }
 
+        /// <summary>
+        /// Поведение для оповещения брокера о результате обработки сообщения из шины.
+        /// </summary>
         protected IAcknowledgementBehaviour AcknowledgementBehaviour { get; }
-
-        protected string QueueName => _lazyQueueNameGetter.Value;
 
         #endregion Свойства
 
         #region Конструктор
 
+        /// <summary>
+        /// Создает экземпляр класса <see cref="SubscriberBase{TMessageType}"/>.
+        /// </summary>
+        /// <param name="logger">Логгер.</param>
+        /// <param name="topologyProvider">Провайдер топологий.</param>
+        /// <param name="namingConvention">Конвенция именования.</param>
+        /// <param name="acknowledgementBehaviour">Поведение для оповещения брокера о результате обработки сообщения из шины.</param>
+        /// <param name="permanentConnection">Постоянное подключение.</param>
+        /// <param name="settings">Настройки очереди.</param>
         protected SubscriberBase(
+            ILogger logger,
+            ITopologyProvider topologyProvider,
+            INamingConvention namingConvention,
             IAcknowledgementBehaviour acknowledgementBehaviour,
             IPermanentConnection permanentConnection,
             QueueSetting settings
         )
         {
+            _logger = logger;
+            TopologyProvider = topologyProvider;
+            NamingConvention = namingConvention;
             Settings = settings;
             PermanentConnection = permanentConnection;
             AcknowledgementBehaviour = acknowledgementBehaviour;
-            _lazyQueueNameGetter = new Lazy<string>(DefineQueueName);
         }
 
         #endregion Конструктор
 
+        #region Методы (public)
+
+        /// <summary>
+        /// Подписаться на сообщения.
+        /// </summary>
+        /// <param name="eventHandler">Обработчик сообщений.</param>
+        /// <returns>Канал, на котором работает подписчик.</returns>
         public IModel Subscribe(Func<TMessageType, MqEventData, Task<Acknowledgement>> eventHandler)
         {
             _eventHandler = eventHandler;
             _channel = Bind();
 
-            // TODO: тут дальше логика подписчика.
-
-
-            //_channel.BasicConsume(
-            //    queue: QueueName,
-            //    autoAck: Settings.AutoAck,
-            //    exclusive: Settings.Exclusive,
-            //    consumer: consumer,
-            //    consumerTag: GetConsumerTag()
-            //);
-
+            _channel.BasicConsume(
+                queue: NamingConvention.QueueNamingConvention(typeof(TMessageType), Settings),
+                autoAck: Settings.AutoAck,
+                exclusive: Settings.Exclusive,
+                consumer: GetBasicConsumer(_channel),
+                consumerTag: NamingConvention.ConsumerTagNamingConvention(Settings)
+            );
 
             return _channel;
         }
 
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <returns>Канал, на котором была выполнена привязка.</returns>
         public IModel Bind()
         {
             if (!PermanentConnection.IsConnected)
@@ -219,92 +190,127 @@ namespace ReRabbit.Subscribers
             return _channel;
         }
 
+        #endregion Методы (public)
+
         #region Методы (protected)
 
-        protected virtual void SetTopology(IModel channel)
+#pragma warning disable IDE1006 // Naming Styles
+        protected virtual async Task HandleMessageReceiveAsync(IModel channel, BasicDeliverEventArgs ea, string queueName, string eventName)
+#pragma warning restore IDE1006 // Naming Styles
         {
-            channel.QueueDeclare(
-                QueueName,
-                Settings.Durable,
-                Settings.Exclusive,
-                Settings.AutoDelete,
-                Settings.Arguments
-            );
+            var message = Encoding.UTF8.GetString(ea.Body);
+            var messageInfo = new { ea.Exchange, ea.RoutingKey, queueName, eventName };
 
-            foreach (var binding in Settings.Bindings)
+            try
             {
-                // Пустая строка - обменник по-умолчанию. Его менять нельзя.
-                if (!string.IsNullOrWhiteSpace(binding.FromExchange))
-                {
-                    channel.ExchangeDeclare(
-                        binding.FromExchange,
-                        durable: Settings.Durable,
-                        autoDelete: Settings.AutoDelete,
-                        type: binding.ExchangeType
-                    );
+                // TODO: ISerializer.
+                var mqMessage = JsonConvert.DeserializeObject<MqMessage>(message);
 
-                    foreach (var routingKey in binding.RoutingKeys)
+                // TODO: traceId взять тут.
+
+                //using (_logger.UseTracingScope(Settings.TracingSettings.IsEnabled))
+
+                var payload = mqMessage?.Payload;
+
+                if (string.IsNullOrEmpty(payload))
+                {
+                    _logger.LogWarning("Принято сообщение без тела: @{MessageInfo}", messageInfo);
+                }
+                else if (IsMessageForThisConsumer(ea))
+                {
+                    // TODO: ISerializer
+                    var eventMessage = JsonConvert.DeserializeObject<TMessageType>(payload);
+                    // TODO: tracing, retries
+                    var eventData = new MqEventData(mqMessage, ea.RoutingKey, ea.Exchange, Guid.Empty, 0, false);
+
+                    Acknowledgement acknowledgement = default;
+                    try
                     {
-                        channel.QueueBind(
-                            QueueName,
-                            binding.FromExchange,
-                            routingKey,
-                            binding.Arguments
-                        );
+                        acknowledgement = await _eventHandler(eventMessage, eventData);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "Ошибка обработки сообщения из очереди. {EventName}.", eventName);
+
+                        acknowledgement = new Nack(); // TODO: ??
+                    }
+
+                    switch (acknowledgement)
+                    {
+                        case Ack ack:
+                            AcknowledgementBehaviour.HandleAck(ack, channel, ea);
+                            break;
+                        case Nack nack:
+                            AcknowledgementBehaviour.HandleNack(nack, channel, ea);
+                            break;
+                        case Reject reject:
+                            AcknowledgementBehaviour.HandleReject(reject, channel, ea);
+                            break;
                     }
                 }
             }
-
-            if (Settings.UseDeadLetter)
+            catch (Exception e)
             {
-                UseDeadLetteredQueue();
+                // TODO:
+                throw;
             }
+        }
 
-            if (Settings.UseCommonUnroutedMessagesQueue)
+        protected virtual IBasicConsumer GetBasicConsumer(IModel channel)
+        {
+            var eventName = typeof(TMessageType).Name;
+            var queueName = NamingConvention.QueueNamingConvention(typeof(TMessageType), Settings);
+
+            if (Settings.ConnectionSettings.UseAsyncConsumer)
             {
-                UseCommonUnroutedMessagesQueue();
+                var consumer = new AsyncEventingBasicConsumer(channel);
+                consumer.Received += async (sender, ea) => await HandleMessageReceiveAsync((IModel)sender, ea, queueName, eventName);
+
+                return consumer;
             }
-
-            if (Settings.UseCommonErrorMessagesQueue)
+            else
             {
-                UseCommonErrorMessagesQueue();
+                var consumer = new EventingBasicConsumer(channel);
+                consumer.Received += async (sender, ea) => await HandleMessageReceiveAsync((IModel)sender, ea, queueName, eventName);
+
+                return consumer;
             }
         }
 
         /// <summary>
-        /// Использовать специальную очередь, куда будут перекидываться сообщения с ошибками при обработке.
+        /// Установить топологию.
         /// </summary>
-        protected abstract void UseDeadLetteredQueue();
+        /// <param name="channel">Канал.</param>
+        protected virtual void SetTopology(IModel channel)
+        {
+            TopologyProvider.SetQueue(channel, Settings, typeof(TMessageType));
 
-        /// <summary>
-        /// Использовать специальную очередь, в которую будут попадать сообщения, не попавшие ни в одну из очередей.
-        /// TODO: так же если метод IsMessageForThisConsumer вернет false, сообщение тоже будет перемещено в эту очередь.
-        /// </summary>
-        protected abstract void UseCommonUnroutedMessagesQueue();
+            if (Settings.UseDeadLetter)
+            {
+                TopologyProvider.UseDeadLetteredQueue(channel, Settings, typeof(TMessageType));
+            }
 
-        /// <summary>
-        /// Использовать специальную очередь, в которую будут попадать сообщения с ошибками при обработке, у которых нет своего DeadLetter очереди.
-        /// </summary>
-        protected abstract void UseCommonErrorMessagesQueue();
+            if (Settings.ConnectionSettings.UseCommonUnroutedMessagesQueue)
+            {
+                TopologyProvider.UseCommonUnroutedMessagesQueue(channel, Settings);
+            }
 
-        /// <summary>
-        /// Определить название очереди.
-        /// </summary>
-        /// <returns>Название очереди.</returns>
-        protected abstract string DefineQueueName();
-
-        /// <summary>
-        /// Сформировать тэг подписчика.
-        /// </summary>
-        /// <returns>Тэг подписчика.</returns>
-        protected abstract string GetConsumerTag();
+            if (Settings.ConnectionSettings.UseCommonErrorMessagesQueue)
+            {
+                TopologyProvider.UseCommonErrorMessagesQueue(channel, Settings);
+            }
+        }
 
         /// <summary>
         /// Проверяет, является ли текущий подписчик адресатом сообщения.
         /// </summary>
         /// <param name="ea">Параметры сообщения, пришедший из брокера сообщения.</param>
         /// <returns>True, если </returns>
-        protected abstract bool IsMessageForThisConsumer(BasicDeliverEventArgs ea);
+        // TODO: так же если метод IsMessageForThisConsumer вернет false, сообщение тоже будет перемещено в эту очередь (unrouted).
+        protected virtual bool IsMessageForThisConsumer(BasicDeliverEventArgs ea)
+        {
+            return true;
+        }
 
         protected virtual void OnException(object sender, BasicDeliverEventArgs ea)
         {
@@ -317,6 +323,4 @@ namespace ReRabbit.Subscribers
 
         #endregion Методы (protected)
     }
-
-    // TODO: INamingConvention
 }

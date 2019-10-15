@@ -34,6 +34,30 @@ namespace ReRabbit.Abstractions.Settings
         public string ConnectionName { get; set; }
 
         /// <summary>
+        /// Использовать общую очередь с ошибочными сообщениями.
+        /// <para>
+        /// По-умолчанию: true.
+        /// </para>
+        /// </summary>
+        public bool UseCommonErrorMessagesQueue { get; set; } = true;
+
+        /// <summary>
+        /// Использовать общую очередь с ошибочным роутингом (те что не ушли ни в одну из других очередей из-за отсутствия биндинга).
+        /// <para>
+        /// По-умолчанию: true.
+        /// </para>
+        /// </summary>
+        public bool UseCommonUnroutedMessagesQueue { get; set; } = true;
+
+        /// <summary>
+        /// Использовать асинхронного подписчика (и подключение).
+        /// <para>
+        /// По-умолчанию: false.
+        /// </para>
+        /// </summary>
+        public bool UseAsyncConsumer { get; set; }
+
+        /// <summary>
         /// Виртуальные хосты.
         /// </summary>
         public Dictionary<string, VirtualHostSetting> VirtualHosts { get; set; } = new Dictionary<string, VirtualHostSetting>();
@@ -109,6 +133,30 @@ namespace ReRabbit.Abstractions.Settings
         /// </summary>
         public string ConnectionName { get; set; } = "DefaultConnectionName";
 
+        /// <summary>
+        /// Использовать общую очередь с ошибочными сообщениями.
+        /// <para>
+        /// По-умолчанию: true.
+        /// </para>
+        /// </summary>
+        public bool UseCommonErrorMessagesQueue { get; set; } = true;
+
+        /// <summary>
+        /// Использовать общую очередь с ошибочным роутингом (те что не ушли ни в одну из других очередей из-за отсутствия биндинга).
+        /// <para>
+        /// По-умолчанию: true.
+        /// </para>
+        /// </summary>
+        public bool UseCommonUnroutedMessagesQueue { get; set; } = true;
+
+        /// <summary>
+        /// Использовать асинхронного подписчика (и подключение).
+        /// <para>
+        /// По-умолчанию: false.
+        /// </para>
+        /// </summary>
+        public bool UseAsyncConsumer { get; set; }
+
         #endregion Свойства
 
         #region IEquatable
@@ -128,9 +176,13 @@ namespace ReRabbit.Abstractions.Settings
                 return true;
             }
 
-            return string.Equals(HostName, other.HostName) && Port == other.Port &&
-                   string.Equals(UserName, other.UserName) && string.Equals(Password, other.Password) &&
-                   string.Equals(VirtualHost, other.VirtualHost);
+            return string.Equals(HostName, other.HostName) &&
+                   Port == other.Port &&
+                   string.Equals(UserName, other.UserName) &&
+                   string.Equals(Password, other.Password) &&
+                   string.Equals(VirtualHost, other.VirtualHost) &&
+                   string.Equals(ConnectionName, other.ConnectionName) &&
+                   UseAsyncConsumer == other.UseAsyncConsumer;
         }
 
         /// <summary>Determines whether the specified object is equal to the current object.</summary>
@@ -166,15 +218,18 @@ namespace ReRabbit.Abstractions.Settings
             {
                 var hashCode = offset;
                 hashCode = (hashCode * primeMultiplier) ^ Port;
+                hashCode = (hashCode * primeMultiplier) ^ UseAsyncConsumer.GetHashCode();
                 hashCode = (hashCode * primeMultiplier) ^ (HostName != null ? HostName.GetHashCode() : 0);
                 hashCode = (hashCode * primeMultiplier) ^ (UserName != null ? UserName.GetHashCode() : 0);
                 hashCode = (hashCode * primeMultiplier) ^ (Password != null ? Password.GetHashCode() : 0);
                 hashCode = (hashCode * primeMultiplier) ^ (VirtualHost != null ? VirtualHost.GetHashCode() : 0);
+                hashCode = (hashCode * primeMultiplier) ^ (ConnectionName != null ? ConnectionName.GetHashCode() : 0);
+
                 return hashCode;
             }
         }
 
-        /// <summary>Returns a value that indicates whether the values of two <see cref="T:ReRabbit.Core.MqConnectionSettings" /> objects are equal.</summary>
+        /// <summary>Returns a value that indicates whether the values of two <see cref="T:ReRabbit.Abstractions.Settings.MqConnectionSettings" /> objects are equal.</summary>
         /// <param name="left">The first value to compare.</param>
         /// <param name="right">The second value to compare.</param>
         /// <returns>true if the <paramref name="left" /> and <paramref name="right" /> parameters have the same value; otherwise, false.</returns>
@@ -183,7 +238,7 @@ namespace ReRabbit.Abstractions.Settings
             return Equals(left, right);
         }
 
-        /// <summary>Returns a value that indicates whether two <see cref="T:ReRabbit.Core.MqConnectionSettings" /> objects have different values.</summary>
+        /// <summary>Returns a value that indicates whether two <see cref="T:ReRabbit.Abstractions.Settings.MqConnectionSettings" /> objects have different values.</summary>
         /// <param name="left">The first value to compare.</param>
         /// <param name="right">The second value to compare.</param>
         /// <returns>true if <paramref name="left" /> and <paramref name="right" /> are not equal; otherwise, false.</returns>

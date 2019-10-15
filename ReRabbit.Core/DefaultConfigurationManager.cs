@@ -210,7 +210,10 @@ namespace ReRabbit.Core
                 Port = connectionSettings.Port,
                 VirtualHost = virtualHostSettings.Name,
                 UserName = virtualHostSettings.UserName,
-                Password = virtualHostSettings.Password
+                Password = virtualHostSettings.Password,
+                UseCommonUnroutedMessagesQueue = connectionSettings.UseCommonUnroutedMessagesQueue,
+                UseCommonErrorMessagesQueue = connectionSettings.UseCommonErrorMessagesQueue,
+                UseAsyncConsumer = connectionSettings.UseAsyncConsumer
             };
 
             var queueSettings = new QueueSetting(mqConnectionSettings);

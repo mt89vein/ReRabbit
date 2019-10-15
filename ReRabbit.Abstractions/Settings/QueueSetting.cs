@@ -131,22 +131,6 @@ namespace ReRabbit.Abstractions.Settings
         public bool UseDeadLetter { get; set; }
 
         /// <summary>
-        /// Использовать общую очередь с ошибочными сообщениями.
-        /// <para>
-        /// По-умолчанию: true.
-        /// </para>
-        /// </summary>
-        public bool UseCommonErrorMessagesQueue { get; set; } = true;
-
-        /// <summary>
-        /// Использовать общую очередь с ошибочным роутингом (те что не ушли ни в одну из других очередей из-за отсутствия биндинга).
-        /// <para>
-        /// По-умолчанию: true.
-        /// </para>
-        /// </summary>
-        public bool UseCommonUnroutedMessagesQueue { get; set; } = true;
-
-        /// <summary>
         /// Настройки отслеживания сообщений.
         /// </summary>
         public TracingSettings TracingSettings { get; set; } = new TracingSettings();

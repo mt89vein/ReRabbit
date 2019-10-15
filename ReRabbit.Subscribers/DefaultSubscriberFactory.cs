@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 
@@ -13,14 +12,19 @@ namespace ReRabbit.Subscribers
         #region Поля
 
         /// <summary>
-        /// Переменные окружения.
+        /// Фабрика логгеров.
         /// </summary>
-        private readonly IHostEnvironment _env;
+        private readonly ILoggerFactory _loggerFactory;
 
         /// <summary>
-        /// Конфигурация приложения.
+        /// Провайдер топологий.
         /// </summary>
-        private readonly IConfiguration _configuration;
+        private readonly ITopologyProvider _topologyProvider;
+
+        /// <summary>
+        /// Конвенции именования.
+        /// </summary>
+        private readonly INamingConvention _namingConvention;
 
         /// <summary>
         /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки
@@ -44,23 +48,26 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultSubscriberFactory"/>.
         /// </summary>
-        /// <param name="env">Переменные окружения.</param>
-        /// <param name="configuration">Конфигурация приложения.</param>
+        /// <param name="loggerFactory">Фабрика логгеров.</param>
+        /// <param name="topologyProvider">Провайдер топологий.</param>
+        /// <param name="namingConvention">Конвенция именования.</param>
         /// <param name="acknowledgementBehaviourFactory">
         /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки.
         /// </param>
         /// <param name="permanentConnectionManager">Менеджер постоянных соединений.</param>
         /// <param name="configurationManager">Менеджер конфигураций.</param>
         public DefaultSubscriberFactory(
-            IHostEnvironment env,
-            IConfiguration configuration,
+            ILoggerFactory loggerFactory,
+            ITopologyProvider topologyProvider,
+            INamingConvention namingConvention,
             IAcknowledgementBehaviourFactory acknowledgementBehaviourFactory,
             IPermanentConnectionManager permanentConnectionManager,
             IConfigurationManager configurationManager
         )
         {
-            _env = env;
-            _configuration = configuration;
+            _loggerFactory = loggerFactory;
+            _topologyProvider = topologyProvider;
+            _namingConvention = namingConvention;
             _acknowledgementBehaviourFactory = acknowledgementBehaviourFactory;
             _permanentConnectionManager = permanentConnectionManager;
             _configurationManager = configurationManager;
@@ -82,9 +89,9 @@ namespace ReRabbit.Subscribers
 
             // TODO: логика опр. типа подписчика для создания.
             var subscriber = new RoutedSubscriber<TMessageType>(
-                _env.ApplicationName,
-                _env.EnvironmentName,
-                _configuration.GetValue<string>("HOSTNAME"),
+                _loggerFactory.CreateLogger<RoutedSubscriber<TMessageType>>(),
+                _topologyProvider,
+                _namingConvention,
                 _acknowledgementBehaviourFactory.GetBehaviour(queueSettings),
                 connection,
                 queueSettings
