@@ -268,7 +268,7 @@ dotnet_naming_rule.async_methods_require_async_suffix_rule.style    = async_suff
 dotnet_naming_rule.async_methods_require_async_suffix_rule.severity = error
 dotnet_naming_symbols.async_methods.applicable_kinds           = method, local_function, delegate
 dotnet_naming_symbols.async_methods.required_modifiers = async
-dotnet_naming_style.async_suffix.capitalization = camel_case
+dotnet_naming_style.async_suffix.capitalization = pascal_case
 dotnet_naming_style.async_suffix.required_suffix = Async
 
 # Local functions are PascalCase

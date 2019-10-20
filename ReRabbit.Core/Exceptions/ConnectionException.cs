@@ -45,7 +45,7 @@ namespace ReRabbit.Core.Exceptions
         InvalidConfiguration = 2
     }
 
-    public class ConnectionException : ReRabbitException
+    public sealed class ConnectionException : ReRabbitException
     {
         /// <summary>
         /// Код ошибки.
@@ -73,7 +73,7 @@ namespace ReRabbit.Core.Exceptions
     }
 
 
-    public class InvlidConfigurationException : ReRabbitException
+    public sealed class InvlidConfigurationException : ReRabbitException
     {
         /// <summary>
         /// Код ошибки.

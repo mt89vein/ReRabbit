@@ -1,4 +1,4 @@
-﻿namespace ReRabbit.Abstractions.Models
+namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Формат сообщения.
@@ -10,7 +10,7 @@
         /// <summary>
         /// Тело сообщения.
         /// </summary>
-        public string Payload { get; }
+        public object Payload { get; }
 
         /// <summary>
         /// Версия формата сообщения.
@@ -41,7 +41,7 @@
         /// <summary>
         /// Создает экземпляр класса <see cref="MqMessage"/>.
         /// </summary>
-        public MqMessage(string payload, string version, string payloadType, string sender)
+        public MqMessage(object payload, string version, string payloadType, string sender)
         {
             Payload = payload;
             Version = version;

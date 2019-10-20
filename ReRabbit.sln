@@ -15,7 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReRabbit.Core", "ReRabbit.C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{25DFCEB3-CEEE-42FC-93FA-2D3C1FF6EEB8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleWebApplication", "SampleWebApplication\SampleWebApplication.csproj", "{6A43DE05-9E95-419E-9215-9B99A4686301}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebApplication", "SampleWebApplication\SampleWebApplication.csproj", "{6A43DE05-9E95-419E-9215-9B99A4686301}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReRabbit.UnitTests", "Tests\UnitTests\ReRabbit.UnitTests.csproj", "{E3EE1E29-CCAB-473D-A5B9-9D0A42F6EA85}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0EDB0394-9B54-4EC6-A6BF-64F2956E7115}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,12 +51,17 @@ Global
 		{6A43DE05-9E95-419E-9215-9B99A4686301}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A43DE05-9E95-419E-9215-9B99A4686301}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A43DE05-9E95-419E-9215-9B99A4686301}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3EE1E29-CCAB-473D-A5B9-9D0A42F6EA85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3EE1E29-CCAB-473D-A5B9-9D0A42F6EA85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3EE1E29-CCAB-473D-A5B9-9D0A42F6EA85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3EE1E29-CCAB-473D-A5B9-9D0A42F6EA85}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6A43DE05-9E95-419E-9215-9B99A4686301} = {25DFCEB3-CEEE-42FC-93FA-2D3C1FF6EEB8}
+		{E3EE1E29-CCAB-473D-A5B9-9D0A42F6EA85} = {0EDB0394-9B54-4EC6-A6BF-64F2956E7115}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {99735E91-DE38-461E-B4DE-666123FAE751}

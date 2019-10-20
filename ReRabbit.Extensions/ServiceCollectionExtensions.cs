@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using ReRabbit.Abstractions;
 using ReRabbit.Core;
 using ReRabbit.Subscribers;
 using ReRabbit.Subscribers.AcknowledgementBehaviours;
+using ReRabbit.Subscribers.RetryDelayComputer;
 using System;
 
 namespace ReRabbit.Extensions
@@ -14,6 +16,8 @@ namespace ReRabbit.Extensions
             Action<RabbitMqRegistrationOptions> options = null
         )
         {
+            // TODO: applicationServiceCollections + InternalServiceCollections
+
             var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions();
             options?.Invoke(rabbitMqRegistrationOptions);
 
@@ -30,12 +34,14 @@ namespace ReRabbit.Extensions
         {
             services.AddSingleton<DefaultPermanentConnectionManager>();
             services.AddSingleton(sp =>
-                options.PermanentConnectionManagerFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultPermanentConnectionManager>()
+                options.PermanentConnectionManagerFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultPermanentConnectionManager>()
             );
 
             services.AddSingleton<DefaultClientPropertyProvider>();
             services.AddSingleton(sp =>
-                options.ClientPropertyProviderFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultClientPropertyProvider>()
+                options.ClientPropertyProviderFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultClientPropertyProvider>()
             );
 
             return services;
@@ -48,18 +54,35 @@ namespace ReRabbit.Extensions
         {
             services.AddSingleton<DefaultSubscriberFactory>();
             services.AddSingleton(sp =>
-                options.SubscriberFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultSubscriberFactory>()
+                options.SubscriberFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultSubscriberFactory>()
             );
 
             services.AddSingleton<DefaultSubscriptionManager>();
             services.AddSingleton(sp =>
-                options.SubscriptionManagerFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultSubscriptionManager>()
+                options.SubscriptionManagerFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultSubscriptionManager>()
             );
 
             services.AddSingleton<DefaultAcknowledgementBehaviourFactory>();
             services.AddSingleton(sp =>
                 options.AcknowledgementBehaviourFactory?.Invoke(sp) ??
-                sp.GetRequiredService<DefaultAcknowledgementBehaviourFactory>());
+                sp.GetRequiredService<DefaultAcknowledgementBehaviourFactory>()
+            );
+
+
+            services.AddSingleton<DefaultRetryDelayComputer>();
+            services.AddSingleton(
+                sp => options.RetryDelayComputerFactory?.Invoke(sp) ??
+                      sp.GetRequiredService<DefaultRetryDelayComputer>()
+            );
+
+            services.AddSingleton<JsonSerializer>();
+            services.AddSingleton<DefaultJsonSerializer>();
+            services.AddSingleton(
+                sp => options.SerializerFactory?.Invoke(sp) ??
+                      sp.GetRequiredService<DefaultJsonSerializer>()
+            );
 
             return services;
         }
@@ -71,17 +94,20 @@ namespace ReRabbit.Extensions
         {
             services.AddSingleton<DefaultConfigurationManager>();
             services.AddSingleton(sp =>
-                options.ConfigurationManagerFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultConfigurationManager>()
+                options.ConfigurationManagerFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultConfigurationManager>()
             );
 
             services.AddSingleton<DefaultNamingConvention>();
             services.AddSingleton(sp =>
-                options.NamingConventionFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultNamingConvention>()
+                options.NamingConventionFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultNamingConvention>()
             );
 
             services.AddSingleton<DefaultTopologyProvider>();
             services.AddSingleton(sp =>
-                options.TopologyProviderFactory?.Invoke(sp) ?? sp.GetRequiredService<DefaultTopologyProvider>()
+                options.TopologyProviderFactory?.Invoke(sp) ??
+                sp.GetRequiredService<DefaultTopologyProvider>()
             );
 
             return services;
@@ -105,6 +131,9 @@ namespace ReRabbit.Extensions
 
             public TopologyProviderFactory TopologyProviderFactory { get; set; }
 
+            public RetryDelayComputerFactory RetryDelayComputerFactory { get; set; }
+
+            public SerializerFactory SerializerFactory { get; set; }
         }
 
         public delegate IPermanentConnectionManager PermanentConnectionManager(IServiceProvider serviceProvider);
@@ -117,10 +146,15 @@ namespace ReRabbit.Extensions
 
         public delegate IConfigurationManager ConfigurationManagerFactory(IServiceProvider serviceProvider);
 
-        public delegate IAcknowledgementBehaviourFactory AcknowledgementBehaviourFactory(IServiceProvider serviceProvider);
+        public delegate IAcknowledgementBehaviourFactory AcknowledgementBehaviourFactory(
+            IServiceProvider serviceProvider);
 
         public delegate INamingConvention NamingConventionFactory(IServiceProvider serviceProvider);
 
         public delegate ITopologyProvider TopologyProviderFactory(IServiceProvider serviceProvider);
+
+        public delegate IRetryDelayComputer RetryDelayComputerFactory(IServiceProvider serviceProvider);
+
+        public delegate ISerializer SerializerFactory(IServiceProvider serviceProvider);
     }
 }

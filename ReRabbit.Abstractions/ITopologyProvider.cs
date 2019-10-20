@@ -37,6 +37,15 @@ namespace ReRabbit.Abstractions
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        void SetQueue(IModel channel, QueueSetting settings, Type messageType);
+        void DeclareQueue(IModel channel, QueueSetting settings, Type messageType);
+
+        /// <summary>
+        /// Объявить очередь с отложенной обработкой.
+        /// </summary>
+        /// <param name="channel">Канал.</param>
+        /// <param name="settings">Настройки подписчика.</param>
+        /// <param name="messageType">Тип сообщения.</param>
+        /// <param name="retryDelay">Период на которую откладывается обработка.</param>
+        string DeclareDelayedQueue(IModel channel, QueueSetting settings, Type messageType, TimeSpan retryDelay);
     }
 }

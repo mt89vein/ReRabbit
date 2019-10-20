@@ -73,5 +73,10 @@ namespace ReRabbit.Core.Configuration
         /// Время жизни сообщения в очереди.
         /// </summary>
         public const string MESSAGE_TTL = "x-message-ttl";
+
+        /// <summary>
+        /// Мод очереди. 
+        /// </summary>
+        public const string QUEUE_MODE = "x-queue-mode";
     }
 }

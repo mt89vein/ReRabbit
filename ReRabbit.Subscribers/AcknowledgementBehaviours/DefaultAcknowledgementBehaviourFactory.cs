@@ -1,5 +1,4 @@
 using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
 
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
@@ -9,29 +8,65 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
     /// </summary>
     public class DefaultAcknowledgementBehaviourFactory : IAcknowledgementBehaviourFactory
     {
+        #region Поля
+
+        /// <summary>
+        /// Конвенции именования.
+        /// </summary>
+        private readonly INamingConvention _namingConvention;
+
+        /// <summary>
+        /// Провайдер топологий.
+        /// </summary>
+        private readonly ITopologyProvider _topologyProvider;
+
+        /// <summary>
+        /// Вычислитель задержек между повторными обработками.
+        /// </summary>
+        private readonly IRetryDelayComputer _retryDelayComputer;
+
+        #endregion Поля
+
+        #region Конструктор
+
+        /// <summary>
+        /// Создает экземпляр класса <see cref="DefaultAcknowledgementBehaviourFactory"/>.
+        /// </summary>
+        /// <param name="namingConvention">Конвенции именования.</param>
+        /// <param name="topologyProvider">Провайдер топологий.</param>
+        /// <param name="retryDelayComputer">Вычислитель задержек между повторными обработками.</param>
+        public DefaultAcknowledgementBehaviourFactory(
+            INamingConvention namingConvention,
+            ITopologyProvider topologyProvider,
+            IRetryDelayComputer retryDelayComputer
+        )
+        {
+            _namingConvention = namingConvention;
+            _topologyProvider = topologyProvider;
+            _retryDelayComputer = retryDelayComputer;
+        }
+
+        #endregion Конструктор
+
+        #region Методы (public)
+
         /// <summary>
         /// Получить поведение.
         /// </summary>
+        /// <typeparam name="TMessageType">Тип сообщения.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
         /// <returns>Поведение оповещения брокера сообщений.</returns>
-        public IAcknowledgementBehaviour GetBehaviour(QueueSetting queueSetting)
+        public IAcknowledgementBehaviour GetBehaviour<TMessageType>(QueueSetting queueSetting)
         {
-            if (queueSetting.RetrySettings.IsEnabled)
-            {
-                if (queueSetting.RetrySettings.RetryPolicy != RetryPolicyType.Zero)
-                {
-                    return new RetryWithDelayAcknowledgementBehaviour(queueSetting);
-                }
-
-                return new RetryAcknowledgementBehaviour(queueSetting);
-            }
-
-            if (queueSetting.AutoAck)
-            {
-                return new AutoAcknowledgementBehaviour();
-            }
-
-            return new DefaultAcknowledgementBehaviour();
+            return new DefaultAcknowledgementBehaviour(
+                queueSetting,
+                _retryDelayComputer,
+                _namingConvention,
+                _topologyProvider,
+                typeof(TMessageType)
+            );
         }
+
+        #endregion Методы (public)
     }
 }

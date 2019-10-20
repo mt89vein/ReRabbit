@@ -1,8 +1,10 @@
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using System;
+using System.Collections.Generic;
 
 namespace ReRabbit.Core
 {
@@ -27,6 +29,8 @@ namespace ReRabbit.Core
 
         #region Поля
 
+        private readonly ILogger<DefaultTopologyProvider> _logger;
+
         /// <summary>
         /// Конвенции именования.
         /// </summary>
@@ -39,9 +43,14 @@ namespace ReRabbit.Core
         /// <summary>
         /// Создает экземпляр класса <see cref="INamingConvention"/>.
         /// </summary>
+        /// <param name="logger">Логгер.</param>
         /// <param name="namingConvention">Конвенции именования.</param>
-        public DefaultTopologyProvider(INamingConvention namingConvention)
+        public DefaultTopologyProvider(
+            ILogger<DefaultTopologyProvider> logger,
+            INamingConvention namingConvention
+        )
         {
+            _logger = logger;
             _namingConvention = namingConvention;
         }
 
@@ -55,9 +64,15 @@ namespace ReRabbit.Core
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        public void SetQueue(IModel channel, QueueSetting settings, Type messageType)
+        public void DeclareQueue(IModel channel, QueueSetting settings, Type messageType)
         {
             var queueName = _namingConvention.QueueNamingConvention(messageType, settings);
+
+            if (settings.UseDeadLetter)
+            {
+                settings.Arguments[QueueArgument.DEAD_LETTER_EXCHANGE] =  _namingConvention.DeadLetterExchangeNamingConvention(messageType, settings);
+                settings.Arguments[QueueArgument.DEAD_LETTER_ROUTING_KEY] = queueName;
+            }
 
             channel.QueueDeclare(
                 queueName,
@@ -93,6 +108,39 @@ namespace ReRabbit.Core
         }
 
         /// <summary>
+        /// Объявить очередь с отложенной обработкой.
+        /// </summary>
+        /// <param name="channel">Канал.</param>
+        /// <param name="settings">Настройки подписчика.</param>
+        /// <param name="messageType">Тип сообщения.</param>
+        /// <param name="retryDelay">Период на которую откладывается обработка.</param>
+        /// <returns>Название очереди с отложенной обработкой.</returns>
+        public string DeclareDelayedQueue(IModel channel, QueueSetting settings, Type messageType, TimeSpan retryDelay)
+        {
+            var queueName = _namingConvention.QueueNamingConvention(messageType, settings);
+            var delayedQueueName = _namingConvention.DelayedQueueNamingConvention(messageType, settings, retryDelay);
+
+            channel.QueueDeclare(
+                queue: delayedQueueName,
+                // персистентность сообщений должна быть как у основной очереди.
+                durable: settings.Durable,
+                exclusive: false,
+                autoDelete: false,
+                arguments: new Dictionary<string, object>
+                {
+                    // для отправки в основную очередь используется обменник по-умолчанию.
+                    [QueueArgument.DEAD_LETTER_EXCHANGE] = string.Empty,
+                    // сообщения будут возвращаться обратно в основную очередь по названию.
+                    [QueueArgument.DEAD_LETTER_ROUTING_KEY] = queueName,
+                    [QueueArgument.EXPIRES] = Convert.ToInt32(retryDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds),
+                    [QueueArgument.MESSAGE_TTL] = Convert.ToInt32(retryDelay.TotalMilliseconds)
+                }
+            );
+
+            return delayedQueueName;
+        }
+
+        /// <summary>
         /// Использовать очередь с ошибочными сообщениями.
         /// </summary>
         /// <param name="channel">Канал.</param>
@@ -104,8 +152,11 @@ namespace ReRabbit.Core
             var deadLetterQueueName = _namingConvention.DeadLetterQueueNamingConvention(messageType, settings);
             var deadLetterExchangeName = _namingConvention.DeadLetterExchangeNamingConvention(messageType, settings);
 
-            settings.Arguments[QueueArgument.DEAD_LETTER_EXCHANGE] = deadLetterExchangeName;
-            settings.Arguments[QueueArgument.DEAD_LETTER_ROUTING_KEY] = deadLetterQueueName;
+            // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди, чтобы делать очереди ленивыми
+
+            //settings.ConnectionSettings.VirtualHost
+            //settings.ConnectionSettings.HostName ->
+            //settings.ConnectionSettings.Port  -> ManagementPort default 15672
 
             channel.ExchangeDeclare(
                 exchange: deadLetterExchangeName,
@@ -118,7 +169,11 @@ namespace ReRabbit.Core
                 queue: deadLetterQueueName,
                 durable: settings.Durable,
                 exclusive: settings.Exclusive,
-                autoDelete: settings.AutoDelete
+                autoDelete: settings.AutoDelete,
+                arguments: new Dictionary<string, object>
+                {
+                    [QueueArgument.QUEUE_MODE] = "lazy"
+                }
             );
 
             channel.QueueBind(

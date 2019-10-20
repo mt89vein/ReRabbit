@@ -4,6 +4,7 @@ using ReRabbit.Abstractions.Settings;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace ReRabbit.Core
 {
@@ -16,9 +17,19 @@ namespace ReRabbit.Core
         #region Поля
 
         /// <summary>
-        /// Конфигурация микросервиса.
+        /// Текущая версия клиента.
         /// </summary>
-        private readonly IConfiguration _configuration;
+        private readonly string _currentVersion;
+
+        /// <summary>
+        /// Наименование сервиса.
+        /// </summary>
+        private readonly string _serviceName;
+
+        /// <summary>
+        /// Наименование машины (или идентификатор докер-контейнера)
+        /// </summary>
+        private readonly string _hostName;
 
         #endregion Поля
 
@@ -30,7 +41,9 @@ namespace ReRabbit.Core
         /// <param name="configuration">Конфигурация микросервиса.</param>
         public DefaultClientPropertyProvider(IConfiguration configuration)
         {
-            _configuration = configuration;
+            _currentVersion = typeof(IEventHandler<>).GetTypeInfo().Assembly.GetName().Version.ToString();
+            _serviceName = configuration.GetValue("ServiceName", "undefined-service-name");
+            _hostName = configuration.GetValue("HOSTNAME", Environment.MachineName);
         }
 
         #endregion Конструктор
@@ -46,10 +59,10 @@ namespace ReRabbit.Core
         {
             return new Dictionary<string, object>
             {
-                ["product"] = _configuration["ServiceName"],
-                ["version"] = typeof(IEventHandler<>).GetTypeInfo().Assembly.GetName().Version.ToString(),
-                ["platform"] = ".NET",
-                ["client_server"] = Environment.MachineName, // _configuration["HOSTNAME"]
+                ["product"] = _serviceName,
+                ["version"] = _currentVersion,
+                ["platform"] = RuntimeInformation.FrameworkDescription,
+                ["client_server"] = _hostName,
                 ["broker_username"] = connectionSettings.UserName
             };
         }

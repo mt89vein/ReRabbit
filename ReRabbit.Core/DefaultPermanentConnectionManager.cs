@@ -104,7 +104,6 @@ namespace ReRabbit.Core
         {
             if (disposing)
             {
-                _loggerFactory?.Dispose(); // TODO: фабрика диспозится?)
                 foreach (var connection in _permanentConnections.Values)
                 {
                     connection?.Dispose();

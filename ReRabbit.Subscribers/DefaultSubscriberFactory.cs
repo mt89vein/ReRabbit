@@ -16,6 +16,8 @@ namespace ReRabbit.Subscribers
         /// </summary>
         private readonly ILoggerFactory _loggerFactory;
 
+        private readonly ISerializer _serializer;
+
         /// <summary>
         /// Провайдер топологий.
         /// </summary>
@@ -36,11 +38,6 @@ namespace ReRabbit.Subscribers
         /// </summary>
         private readonly IPermanentConnectionManager _permanentConnectionManager;
 
-        /// <summary>
-        /// Менеджер конфигураций.
-        /// </summary>
-        private readonly IConfigurationManager _configurationManager;
-
         #endregion Поля
 
         #region Конструктор
@@ -49,28 +46,28 @@ namespace ReRabbit.Subscribers
         /// Создает экземпляр класса <see cref="DefaultSubscriberFactory"/>.
         /// </summary>
         /// <param name="loggerFactory">Фабрика логгеров.</param>
+        /// <param name="serializer"></param>
         /// <param name="topologyProvider">Провайдер топологий.</param>
         /// <param name="namingConvention">Конвенция именования.</param>
         /// <param name="acknowledgementBehaviourFactory">
         /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки.
         /// </param>
         /// <param name="permanentConnectionManager">Менеджер постоянных соединений.</param>
-        /// <param name="configurationManager">Менеджер конфигураций.</param>
         public DefaultSubscriberFactory(
             ILoggerFactory loggerFactory,
+            ISerializer serializer,
             ITopologyProvider topologyProvider,
             INamingConvention namingConvention,
             IAcknowledgementBehaviourFactory acknowledgementBehaviourFactory,
-            IPermanentConnectionManager permanentConnectionManager,
-            IConfigurationManager configurationManager
+            IPermanentConnectionManager permanentConnectionManager
         )
         {
             _loggerFactory = loggerFactory;
+            _serializer = serializer;
             _topologyProvider = topologyProvider;
             _namingConvention = namingConvention;
             _acknowledgementBehaviourFactory = acknowledgementBehaviourFactory;
             _permanentConnectionManager = permanentConnectionManager;
-            _configurationManager = configurationManager;
         }
 
         #endregion Конструктор
@@ -90,46 +87,15 @@ namespace ReRabbit.Subscribers
             // TODO: логика опр. типа подписчика для создания.
             var subscriber = new RoutedSubscriber<TMessageType>(
                 _loggerFactory.CreateLogger<RoutedSubscriber<TMessageType>>(),
+                _serializer,
                 _topologyProvider,
                 _namingConvention,
-                _acknowledgementBehaviourFactory.GetBehaviour(queueSettings),
+                _acknowledgementBehaviourFactory.GetBehaviour<TMessageType>(queueSettings),
                 connection,
                 queueSettings
             );
 
             return subscriber;
-        }
-
-        /// <summary>
-        /// Создать подписчика.
-        /// </summary>
-        /// <typeparam name="TMessageType">Тип сообщения.</typeparam>
-        /// <param name="configurationSectionName">Секция с настройками подписчика.</param>
-        /// <returns>Подписчик.</returns>
-        public ISubscriber<TMessageType> CreateSubscriber<TMessageType>(string configurationSectionName)
-        {
-            var queueSettings = _configurationManager.GetQueueSettings(configurationSectionName);
-
-            return CreateSubscriber<TMessageType>(queueSettings);
-        }
-
-        /// <summary>
-        /// Создать подписчика.
-        /// </summary>
-        /// <typeparam name="TMessageType">Тип сообщения.</typeparam>
-        /// <param name="configurationSectionName">Секция с настройками подписчика.</param>
-        /// <param name="connectionName">Наименование подключения.</param>
-        /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>Подписчик.</returns>
-        public ISubscriber<TMessageType> CreateSubscriber<TMessageType>(string configurationSectionName, string connectionName, string virtualHost)
-        {
-            var queueSettings = _configurationManager.GetQueueSettings(
-                configurationSectionName,
-                connectionName,
-                virtualHost
-            );
-
-            return CreateSubscriber<TMessageType>(queueSettings);
         }
 
         #endregion Методы (public)

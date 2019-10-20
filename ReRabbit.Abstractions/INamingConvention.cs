@@ -16,6 +16,6 @@ namespace ReRabbit.Abstractions
 
         Func<Type, QueueSetting, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
 
-        Func<QueueSetting, string> ConsumerTagNamingConvention { get; set; }
+        Func<QueueSetting, int, int, string> ConsumerTagNamingConvention { get; set; }
     }
 }

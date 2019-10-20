@@ -219,6 +219,10 @@ namespace ReRabbit.Core
             var queueSettings = new QueueSetting(mqConnectionSettings);
 
             subscriberConfigurationSection.Bind(queueSettings);
+            if (string.IsNullOrWhiteSpace(queueSettings.ConsumerName))
+            {
+                queueSettings.ConsumerName = subscriberConfigurationSection.Key;
+            }
 
             var bindings = Enumerable.Empty<ExchangeBinding>();
             var arrayBindings = Array.Empty<ExchangeBinding>();
@@ -231,7 +235,7 @@ namespace ReRabbit.Core
             // судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
             Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
 
-            // TODO: нормализация аргуметов 
+            // TODO: нормализация аргументов 
 
             return queueSettings;
         }

@@ -72,14 +72,6 @@ namespace ReRabbit.Abstractions.Settings
         public string ConsumerName { get; set; }
 
         /// <summary>
-        /// Количество подписчиков.
-        /// <para>
-        /// По-умолчанию: 1.
-        /// </para>
-        /// </summary>
-        public int ConsumersCount { get; set; } = 1;
-
-        /// <summary>
         /// Очередь автоматически восстанавливается при перезапуске брокера сообщений.
         /// <para>
         /// По-умолчанию: true.
@@ -140,6 +132,11 @@ namespace ReRabbit.Abstractions.Settings
         /// </summary>
         public RetrySettings RetrySettings { get; set; } = new RetrySettings();
 
+        /// <summary>
+        /// Настройки масштабирования подписчика.
+        /// </summary>
+        public ScalingSettings ScalingSettings { get; set; } = new ScalingSettings();
+
         public MqConnectionSettings ConnectionSettings { get; }
 
         public QueueSetting(MqConnectionSettings connectionSettings)
@@ -148,5 +145,5 @@ namespace ReRabbit.Abstractions.Settings
         }
     }
 
-    // TODO: подписчик с header exchange
+    // TODO: проверить работу подписчика с header exchange
 }

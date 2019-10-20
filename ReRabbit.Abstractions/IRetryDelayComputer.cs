@@ -1,17 +1,19 @@
-﻿using System;
+using ReRabbit.Abstractions.Settings;
+using System;
 
-namespace ReRabbit.Core.RetryDelayComputer
+namespace ReRabbit.Abstractions
 {
     /// <summary>
     /// Вычислитель задержек между повторными обработками.
     /// </summary>
-    internal interface IRetryDelayComputer
+    public interface IRetryDelayComputer
     {
         /// <summary>
         /// Вычислить задержку для указанного номера повторения.
         /// </summary>
+        /// <param name="retrySettings">Настройки повторной обработки сообщений.</param>
         /// <param name="retryNumber">Номер повторной обработки.</param>
         /// <returns>Временной интервал.</returns>
-        TimeSpan Compute(int retryNumber);
+        TimeSpan Compute(RetrySettings retrySettings, int retryNumber);
     }
 }
