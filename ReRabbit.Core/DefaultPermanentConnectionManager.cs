@@ -4,13 +4,14 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace ReRabbit.Core
 {
     /// <summary>
     /// Менеджер постоянных соединений.
     /// </summary>
-    public class DefaultPermanentConnectionManager : IPermanentConnectionManager
+    public sealed class DefaultPermanentConnectionManager : IPermanentConnectionManager
     {
         #region Поля
 
@@ -67,29 +68,51 @@ namespace ReRabbit.Core
         /// </summary>
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            foreach (var connection in _permanentConnections.Values)
+            {
+                connection?.Dispose();
+            }
         }
 
         #endregion Методы (public)
 
-        #region Методы (protected)
+        #region Методы (private)
 
         /// <summary>
         /// Фабричный метод создания постоянного подключения к RabbitMq.
         /// </summary>
         /// <param name="settings">Настройки подключения.</param>
         /// <returns>Постоянное подключение к RabbitMq.</returns>
-        protected virtual IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings)
+        private IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings)
         {
             var connectionFactory = new ConnectionFactory
             {
                 VirtualHost = settings.VirtualHost,
                 UserName = settings.UserName,
                 Password = settings.Password,
-                HostName = settings.HostName,
+                HostName = settings.HostNames.FirstOrDefault(),
                 Port = settings.Port,
-                ClientProperties = _clientPropertyProvider.GetClientProperties(settings)
+                ClientProperties = _clientPropertyProvider.GetClientProperties(settings),
+                RequestedConnectionTimeout = settings.RequestedConnectionTimeout,
+                SocketReadTimeout = settings.SocketReadTimeout,
+                SocketWriteTimeout = settings.SocketWriteTimeout,
+                RequestedChannelMax = settings.RequestedChannelMax,
+                RequestedFrameMax = settings.RequestedFrameMax,
+                RequestedHeartbeat = settings.RequestedHeartbeat,
+                UseBackgroundThreadsForIO = settings.UseBackgroundThreadsForIO,
+                DispatchConsumersAsync = settings.UseAsyncConsumer,
+                NetworkRecoveryInterval = settings.NetworkRecoveryInterval,
+                AutomaticRecoveryEnabled = settings.AuthomaticRecoveryEnabled,
+                TopologyRecoveryEnabled = settings.TopologyRecoveryEnabled,
+                HandshakeContinuationTimeout = settings.HandshakeContinuationTimeout,
+                ContinuationTimeout = settings.ContinuationTimeout,
+                Ssl = settings.Ssl == null
+                    ? new SslOption()
+                    : new SslOption(
+                        settings.Ssl.ServerName,
+                        settings.Ssl.CertificatePath,
+                        settings.Ssl.IsEnabled
+                    ) 
             };
             connectionFactory.Uri = new Uri(connectionFactory.Endpoint.ToString());
 
@@ -100,17 +123,6 @@ namespace ReRabbit.Core
             );
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                foreach (var connection in _permanentConnections.Values)
-                {
-                    connection?.Dispose();
-                }
-            }
-        }
-
-        #endregion Методы (protected)
+        #endregion Методы (private)
     }
 }

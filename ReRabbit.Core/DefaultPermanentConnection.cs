@@ -10,11 +10,14 @@ using ReRabbit.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 
 namespace ReRabbit.Core
 {
     // TODO: типизированный логгинг (как это я сделал в Notifications.Application.LoggingExtensions
+    // TODO: таймер на проверку факта подключения, на случай блока или падения подключения - чтобы переподключался.
+
     /// <summary>
     /// Реализация постоянного соединения с RabbitMq по-умолчанию.
     /// Этот класс не наследуется.
@@ -114,10 +117,10 @@ namespace ReRabbit.Core
         /// </summary>
         public IModel CreateModel()
         {
-            if (!IsConnected)
+            if (!TryConnect())
             {
                 throw new ConnectionException(
-                     $"Нет активного подключения к RabbitMq {_connectionFactory.Uri} для создания канала",
+                    $"Нет активного подключения к RabbitMq {_connectionFactory.Uri} для создания канала",
                     ReRabbitErrorCode.UnnableToConnect
                 );
             }
@@ -151,7 +154,7 @@ namespace ReRabbit.Core
         }
 
         /// <summary>
-        /// Устанавливает соединение
+        /// Попытаться установить соединение.
         /// </summary>
         public bool TryConnect()
         {
@@ -165,7 +168,11 @@ namespace ReRabbit.Core
             lock (_syncRoot)
             {
                 _connectionRetryPolicy.Execute(() =>
-                    _connection = _connectionFactory.CreateConnection(_settings.ConnectionName));
+                    _connection = _connectionFactory.CreateConnection(
+                        _settings.HostNames.ToList(),
+                        _settings.ConnectionName
+                    )
+                );
 
                 if (IsConnected)
                 {
@@ -192,6 +199,11 @@ namespace ReRabbit.Core
         /// <returns>True, если удалось успешно отключиться.</returns>
         public bool TryDisconnect()
         {
+            if (_disposed)
+            {
+                return true;
+            }
+
             _connection.ConnectionShutdown -= OnConnectionShutdown;
             _connection.CallbackException -= OnCallbackException;
             _connection.ConnectionBlocked -= OnConnectionBlocked;
@@ -214,8 +226,10 @@ namespace ReRabbit.Core
                 return;
             }
 
-            // TODO: отловить ошибки авторизации, на случай если неправильный юзер или не существует виртуального хоста / отсутствуют права у юзера
+            _connection.Dispose();
+
             _logger.LogCritical("Соединение с RabbitMQ разорвано. Причина: {Reason}", e.Reason);
+            // TODO: отловить ошибки авторизации, на случай если неправильный юзер или не существует виртуального хоста / отсутствуют права у юзера
         }
 
         private void OnCallbackException(object sender, CallbackExceptionEventArgs e)

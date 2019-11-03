@@ -13,7 +13,7 @@ namespace ReRabbit.Core
     /// <summary>
     /// Менеджер конфигураций.
     /// </summary>
-    public class DefaultConfigurationManager : IConfigurationManager
+    public sealed class DefaultConfigurationManager : IConfigurationManager
     {
         #region Поля
 
@@ -23,9 +23,9 @@ namespace ReRabbit.Core
         private readonly IConfiguration _configuration;
 
         /// <summary>
-        /// Ленивая инициализация. Для исключения проблемы с virtual member call in constructor.
+        /// Настройки RabbitMq.
         /// </summary>
-        private readonly Lazy<RabbitMqSettings> _lazyInitialization;
+        private RabbitMqSettings _settings;
 
         #endregion Поля
 
@@ -34,7 +34,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Настройки RabbitMq.
         /// </summary>
-        protected RabbitMqSettings Settings => _lazyInitialization.Value;
+        public RabbitMqSettings Settings => _settings ?? (_settings = ConfigureRabbitMqSettings());
 
         #endregion Свойства
 
@@ -47,7 +47,6 @@ namespace ReRabbit.Core
         public DefaultConfigurationManager(IConfiguration configuration)
         {
             _configuration = configuration;
-            _lazyInitialization = new Lazy<RabbitMqSettings>(ConfigureRabbitMqSettings);
         }
 
         #endregion Конструктор
@@ -67,15 +66,13 @@ namespace ReRabbit.Core
             string virtualHost
         )
         {
-            var sectionPath = ConfigurationHelper.GetQueueSectionPath(
+            if (!_configuration.TryGetQueueSection(
                 connectionName,
                 virtualHost,
-                configurationSectionName
-            );
-
-            var subscriberConfigurationSection = _configuration.GetSection(sectionPath);
-
-            if (!subscriberConfigurationSection.Exists())
+                configurationSectionName,
+                out var subscriberConfigurationSection,
+                out var sectionPath)
+            )
             {
                 throw new InvlidConfigurationException($"Конфигурация подписчика по пути {sectionPath} не найдена");
             }
@@ -83,7 +80,11 @@ namespace ReRabbit.Core
             var connectionSettings = Settings.Connections[connectionName];
             var virtualHostSettings = connectionSettings.VirtualHosts[virtualHost];
 
-            return BuildQueueSettings(connectionSettings, virtualHostSettings, subscriberConfigurationSection);
+            return BuildQueueSettings(
+                connectionSettings,
+                virtualHostSettings,
+                subscriberConfigurationSection
+            );
         }
 
         /// <summary>
@@ -102,15 +103,13 @@ namespace ReRabbit.Core
                 {
                     foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
                     {
-                        var queueSettingSectionPath =
-                            ConfigurationHelper.GetQueueSectionPath(
-                                connectionSettings.ConnectionName,
-                                virtualHostSettings.Name,
-                                configurationSectionName
-                            );
-
-                        var subscriberConfigurationSection = _configuration.GetSection(queueSettingSectionPath);
-                        if (subscriberConfigurationSection.Exists())
+                        if (_configuration.TryGetQueueSection(
+                            connectionSettings.ConnectionName,
+                            virtualHostSettings.Name,
+                            configurationSectionName,
+                            out var subscriberConfigurationSection,
+                            out _)
+                        )
                         {
                             yield return BuildQueueSettings(
                                 connectionSettings,
@@ -125,9 +124,13 @@ namespace ReRabbit.Core
 
         #endregion Методы (public)
 
-        #region Методы (protected)
+        #region Методы (private)
 
-        protected virtual RabbitMqSettings ConfigureRabbitMqSettings()
+        /// <summary>
+        /// Сформировать настройки RabbitMq.
+        /// </summary>
+        /// <returns>Настройки RabbitMq.</returns>
+        private RabbitMqSettings ConfigureRabbitMqSettings()
         {
             var rabbitMqSettings = new RabbitMqSettings();
             const string rabbitMqConfigurationPath = ConfigurationSectionConstants.ROOT;
@@ -142,52 +145,58 @@ namespace ReRabbit.Core
 
             mqConfigurationSection.Bind(rabbitMqSettings);
 
-            rabbitMqSettings.Connections = mqConfigurationSection
-                .GetSection(ConfigurationSectionConstants.CONNECTIONS)
-                .GetChildren()
-                .Select(connectionConfSection =>
-                {
-                    var connectionSettings = new ConnectionSettings();
-                    connectionConfSection.Bind(connectionSettings);
-
-                    connectionSettings.ConnectionName = string.IsNullOrWhiteSpace(connectionSettings.ConnectionName)
-                        ? connectionConfSection.Key
-                        : connectionSettings.ConnectionName;
-
-                    var virtualHostsSection =
-                        connectionConfSection.GetSection(virtualHostsConfigurationSectionPath);
-
-                    if (!virtualHostsSection.Exists())
-                    {
-                        throw new InvlidConfigurationException(
-                            $"Конфгируация {connectionConfSection.Path}:{virtualHostsConfigurationSectionPath} не задана.");
-                    }
-
-                    connectionSettings.VirtualHosts = virtualHostsSection
-                        .GetChildren()
-                        .Select(virtualHostConfSection =>
-                        {
-                            var virtualHost = new VirtualHostSetting();
-                            virtualHostConfSection.Bind(virtualHost);
-
-                            virtualHost.Name = virtualHostConfSection.Key;
-
-                            return new KeyValuePair<string, VirtualHostSetting>(
-                                virtualHostConfSection.Key,
-                                virtualHost
-                            );
-                        }).ToDictionary(y => y.Key, y => y.Value);
-
-                    return new KeyValuePair<string, ConnectionSettings>(connectionConfSection.Key, connectionSettings);
-                })
-                .ToDictionary(x => x.Key, x => x.Value);
+            rabbitMqSettings.Connections =
+                mqConfigurationSection
+                    .GetSection(ConfigurationSectionConstants.CONNECTIONS)
+                    .GetChildren()
+                    .Select(BuildConnectionSettings)
+                    .ToDictionary(x => x.Key, x => x.Value);
 
             return rabbitMqSettings;
+
+            KeyValuePair<string, VirtualHostSetting> BuildConnectionVirtualHosts(
+                IConfigurationSection virtualHostConfSection
+            )
+            {
+                var virtualHost = new VirtualHostSetting();
+                virtualHostConfSection.Bind(virtualHost);
+
+                virtualHost.Name = virtualHostConfSection.Key;
+
+                return new KeyValuePair<string, VirtualHostSetting>(
+                    virtualHostConfSection.Key,
+                    virtualHost
+                );
+            }
+
+            KeyValuePair<string, ConnectionSettings> BuildConnectionSettings(
+                IConfigurationSection connectionConfSection
+            )
+            {
+                var connectionSettings = new ConnectionSettings();
+                connectionConfSection.Bind(connectionSettings);
+
+                connectionSettings.ConnectionName = string.IsNullOrWhiteSpace(connectionSettings.ConnectionName)
+                    ? connectionConfSection.Key
+                    : connectionSettings.ConnectionName;
+
+                var virtualHostsSection =
+                    connectionConfSection.GetSection(virtualHostsConfigurationSectionPath);
+
+                if (!virtualHostsSection.Exists())
+                {
+                    throw new InvlidConfigurationException(
+                        $"Конфигируация виртуального хоста {connectionConfSection.Path}:{virtualHostsConfigurationSectionPath} не задана.");
+                }
+
+                connectionSettings.VirtualHosts = virtualHostsSection
+                    .GetChildren()
+                    .Select(BuildConnectionVirtualHosts)
+                    .ToDictionary(y => y.Key, y => y.Value);
+
+                return new KeyValuePair<string, ConnectionSettings>(connectionConfSection.Key, connectionSettings);
+            }
         }
-
-        #endregion Методы (protected)
-
-        #region Методы (private)
 
         /// <summary>
         /// Сформировать настройки подписчика.
@@ -202,19 +211,31 @@ namespace ReRabbit.Core
             IConfigurationSection subscriberConfigurationSection
         )
         {
-            var mqConnectionSettings = new MqConnectionSettings
-            {
-                ConnectionRetryCount = connectionSettings.ConnectionRetryCount,
-                ConnectionName = connectionSettings.ConnectionName,
-                HostName = connectionSettings.HostName,
-                Port = connectionSettings.Port,
-                VirtualHost = virtualHostSettings.Name,
-                UserName = virtualHostSettings.UserName,
-                Password = virtualHostSettings.Password,
-                UseCommonUnroutedMessagesQueue = connectionSettings.UseCommonUnroutedMessagesQueue,
-                UseCommonErrorMessagesQueue = connectionSettings.UseCommonErrorMessagesQueue,
-                UseAsyncConsumer = connectionSettings.UseAsyncConsumer
-            };
+            var mqConnectionSettings = new MqConnectionSettings(
+                connectionSettings.HostNames,
+                connectionSettings.Port,
+                virtualHostSettings.UserName,
+                virtualHostSettings.Password,
+                virtualHostSettings.Name,
+                connectionSettings.ConnectionRetryCount,
+                connectionSettings.ConnectionName,
+                connectionSettings.UseCommonErrorMessagesQueue,
+                connectionSettings.UseCommonUnroutedMessagesQueue,
+                connectionSettings.UseAsyncConsumer,
+                connectionSettings.UseBackgroundThreadsForIO,
+                connectionSettings.RequestedConnectionTimeoutInMs,
+                connectionSettings.SocketReadTimeoutInMs,
+                connectionSettings.SocketWriteTimeoutInMs,
+                connectionSettings.RequestedChannelMaxCount,
+                connectionSettings.RequestedFrameMaxBytes,
+                connectionSettings.RequestedHeartbeatInSeconds,
+                TimeSpan.FromSeconds(connectionSettings.HandshakeContinuationTimeoutInSeconds),
+                TimeSpan.FromSeconds(connectionSettings.ContinuationTimeoutInSeconds),
+                connectionSettings.AuthomaticRecoveryEnabled,
+                TimeSpan.FromSeconds(connectionSettings.NetworkRecoveryIntervalInSeconds),
+                connectionSettings.TopologyRecoveryEnabled,
+                connectionSettings.SslOptions
+            );
 
             var queueSettings = new QueueSetting(mqConnectionSettings);
 

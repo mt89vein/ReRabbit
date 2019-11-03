@@ -3,7 +3,7 @@ namespace ReRabbit.Core.Configuration
     /// <summary>
     /// Аргументы очереди.
     /// </summary>
-    internal static class QueueArgument
+    public static class QueueArgument
     {
         /// <summary>
         /// Обменник, в которую будет переслано сообщение, если сделать basicReject или basicNack с параметром reEnqueue: false
@@ -31,5 +31,21 @@ namespace ReRabbit.Core.Configuration
         /// Мод очереди. 
         /// </summary>
         public const string QUEUE_MODE = "x-queue-mode";
+    }
+
+    /// <summary>
+    /// Константы общих очередей.
+    /// </summary>
+    public static class CommonQueuesConstants
+    {
+        /// <summary>
+        /// Наименование очереди, в которую будут пересылаться сообщения с ошибками, у которых не настроен dead-lettered.
+        /// </summary>
+        public const string ERROR_MESSAGES = "#common-error-messages";
+
+        /// <summary>
+        /// Наименование очереди, в которую будут пересылаться сообщения, на которые не было биндинга.
+        /// </summary>
+        public const string UNROUTED_MESSAGES = "#common-unrouted-messages";
     }
 }

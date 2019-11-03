@@ -19,10 +19,10 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Логировать факт отправки на повторную обработку.
         /// <para>
-        /// По-умолчанию: true.
+        /// По-умолчанию: false.
         /// </para>
         /// </summary>
-        public bool LogOnRetry { get; set; } = true;
+        public bool LogOnRetry { get; set; }
 
         /// <summary>
         /// Логировать факт ошибки обработки с уровнем <see cref="Microsoft.Extensions.Logging.LogLevel.Critical"/>, если не удалось обработать событие за N попыток.
@@ -40,10 +40,10 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Закон по которому вычисляется интервал (задержка) между повторениями.
         /// <para>
-        /// По-умолчанию: <see cref="RetryPolicyType.Zero"/>.
+        /// По-умолчанию: <see cref="RetryPolicyType.Constant"/>.
         /// </para>
         /// </summary>
-        public RetryPolicyType RetryPolicy { get; set; } = RetryPolicyType.Zero;
+        public RetryPolicyType RetryPolicy { get; set; } = RetryPolicyType.Constant;
 
         /// <summary>
         /// Повторять до победного.
@@ -56,13 +56,10 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Задержка между повторениями в секундах. Для разных законов, свойство имеет различную семантику.
         /// <para>
-        /// По-умолчанию: 20 секунд.
+        /// По-умолчанию: без задержки - 0 секунд.
         /// </para>
         /// <para>
         /// <list type="bullet">
-        /// <item>
-        /// Для <see cref="RetryPolicyType.Zero"/> игнорируется.
-        /// </item>
         /// <item>
         /// Для <see cref="RetryPolicyType.Constant"/> используется это значение.
         /// </item>
@@ -72,7 +69,7 @@ namespace ReRabbit.Abstractions.Settings
         /// </list>
         /// </para>
         /// </summary>
-        public int RetryDelayInSeconds { get; set; } = 20;
+        public int RetryDelayInSeconds { get; set; } = 0;
 
         /// <summary>
         /// Максимальная задержка между повторениями обработки сообщений в секундах.
@@ -80,9 +77,6 @@ namespace ReRabbit.Abstractions.Settings
         /// По-умолчанию: 1 час.
         /// </para>
         /// <list type="bullet">
-        /// <item>
-        /// Для <see cref="RetryPolicyType.Zero"/> игнорируется.
-        /// </item>
         /// <item>
         /// Для <see cref="RetryPolicyType.Exponential"/> используется это значение в качестве максимального.
         /// </item>

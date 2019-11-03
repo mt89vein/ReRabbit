@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "Virtual hosts",
+    "default": {
+        "/": {
+            "Queues": {
+                "DefaultSubscriber": {
+                    "QueueName": "example-queue",
+                    "Bindings": [
+                        {
+                            "FromExchange": "example-exchange",
+                            "RoutingKeys": [
+                                "example-routing-key"
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "additionalProperties": {
+        "type": "object",
+        "title": "Virtual host name",
+        "required": [
+            "Queues"
+        ],
+        "properties": {
+            "UserName": {
+                "$id": "#/properties/RabbitMq/properties/Connections/properties/DefaultConnection/properties/VirtualHosts/properties///properties/UserName",
+                "type": "string",
+                "title": "Username for auth in RabbitMq",
+                "default": "guest",
+                "examples": [
+                    "guest"
+                ],
+                "pattern": "^(.*)$"
+            },
+            "Password": {
+                "$id": "#/properties/RabbitMq/properties/Connections/properties/DefaultConnection/properties/VirtualHosts/properties///properties/Password",
+                "type": "string",
+                "title": "Password for auth in RabbitMq",
+                "default": "guest",
+                "examples": [
+                    "guest"
+                ],
+                "pattern": "^(.*)$"
+            },
+            "Queues": {
+                "$ref": "./subscriber.schema.json"
+            }
+        }
+    }
+}

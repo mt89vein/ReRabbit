@@ -9,6 +9,7 @@ namespace ReRabbit.Abstractions
     /// </summary>
     /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
     public interface IEventHandler<in TEvent>
+        where TEvent : IEvent
     {
         /// <summary>
         /// Обработать сообщение.

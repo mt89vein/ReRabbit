@@ -6,6 +6,7 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Extensions;
+using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,7 +17,8 @@ namespace ReRabbit.Subscribers
     /// Базовый подписчик на сообщения.
     /// </summary>
     /// <typeparam name="TMessage">Тип сообщения.</typeparam>
-    public abstract class SubscriberBase<TMessage> : ISubscriber<TMessage>
+    public class SubscriberBase<TMessage> : ISubscriber<TMessage>
+        where TMessage : IEvent
     {
         #region Поля
 
@@ -98,7 +100,7 @@ namespace ReRabbit.Subscribers
         /// <param name="acknowledgementBehaviour">Поведение для оповещения брокера о результате обработки сообщения из шины.</param>
         /// <param name="permanentConnection">Постоянное подключение.</param>
         /// <param name="settings">Настройки очереди.</param>
-        protected SubscriberBase(
+        public SubscriberBase(
             ILogger logger,
             ISerializer serializer,
             ITopologyProvider topologyProvider,
@@ -162,11 +164,6 @@ namespace ReRabbit.Subscribers
         /// <returns>Канал, на котором была выполнена привязка.</returns>
         public IModel Bind()
         {
-            if (!PermanentConnection.IsConnected)
-            {
-                PermanentConnection.TryConnect();
-            }
-
             _channel = PermanentConnection.CreateModel();
 
             SetTopology(_channel);
@@ -186,8 +183,6 @@ namespace ReRabbit.Subscribers
         protected virtual async Task<Acknowledgement> HandleMessageAsync(BasicDeliverEventArgs ea)
         {
             var traceId = default(Guid);
-            var retryNumber = default(int);
-            var isLastRetry = true;
 
             var loggingScope = new Dictionary<string, object>
             {
@@ -202,57 +197,46 @@ namespace ReRabbit.Subscribers
                 traceId = ea.BasicProperties.EnsureTraceId(Settings.TracingSettings, _logger, loggingScope);
             }
 
-            if (Settings.RetrySettings.IsEnabled)
-            {
-                (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(Settings.RetrySettings, loggingScope);
-            }
+            var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(Settings.RetrySettings, loggingScope);
 
             using (_logger.BeginScope(loggingScope))
             {
-                if (!IsMessageForThisConsumer(ea))
-                {
-                    // TODO: так же если метод IsMessageForThisConsumer вернет false, сообщение тоже будет перемещено в эту очередь (unrouted).
-                    return Reject.Unrouted;
-                }
-
                 try
                 {
-                    try
+                    var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
+                    var payload = mqMessage?.Payload?.ToString();
+
+                    if (string.IsNullOrEmpty(payload))
                     {
-                        var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
-                        var payload = mqMessage?.Payload?.ToString();
-
-                        if (string.IsNullOrEmpty(payload))
-                        {
-                            return Reject.EmptyBody;
-                        }
-
-                        var eventMessage = _serializer.Deserialize<TMessage>(payload);
-
-                        var eventData = new MqEventData(
-                            mqMessage,
-                            ea.RoutingKey,
-                            ea.Exchange,
-                            traceId,
-                            retryNumber,
-                            isLastRetry
-                        );
-
-                        return await _eventHandler(eventMessage, eventData);
+                        return Reject.EmptyBody;
                     }
-                    catch (Exception e)
-                    {
-                        return new Reject(e, "Ошибка обработки сообщения из очереди.", !isLastRetry);
-                    }
+
+                    var eventMessage = _serializer.Deserialize<TMessage>(payload);
+
+                    var eventData = new MqEventData(
+                        mqMessage,
+                        ea.RoutingKey,
+                        ea.Exchange,
+                        ea.Redelivered || retryNumber != 0,
+                        traceId,
+                        retryNumber,
+                        isLastRetry
+                    );
+
+                    return await _eventHandler(eventMessage, eventData);
                 }
                 catch (Exception e)
                 {
-                    // TODO: recover ? halt ?
-                    throw;
+                    return new Reject(e, "Ошибка обработки сообщения из очереди.", Settings.RetrySettings.IsEnabled && !isLastRetry);
                 }
             }
         }
 
+        /// <summary>
+        /// Получить <see cref="IBasicConsumer"/> (синхронный или асинхронный).
+        /// </summary>
+        /// <param name="channel">Канал.</param>
+        /// <returns>Потребитель.</returns>
         protected virtual IBasicConsumer GetBasicConsumer(IModel channel)
         {
             if (Settings.ConnectionSettings.UseAsyncConsumer)
@@ -265,7 +249,9 @@ namespace ReRabbit.Subscribers
             else
             {
                 var consumer = new EventingBasicConsumer(channel);
-                consumer.Received += async (sender, ea) => await HandleMessageReceivedAsync(ea);
+
+                // HACK: async void unhandled exceptions.
+                consumer.Received += (sender, ea) => AsyncHelper.RunSync(() => HandleMessageReceivedAsync(ea));
 
                 return consumer;
             }
@@ -295,16 +281,6 @@ namespace ReRabbit.Subscribers
             }
         }
 
-        /// <summary>
-        /// Проверяет, является ли текущий подписчик адресатом сообщения.
-        /// </summary>
-        /// <param name="ea">Параметры сообщения, пришедший из брокера сообщения.</param>
-        /// <returns>True, если </returns>
-        protected virtual bool IsMessageForThisConsumer(BasicDeliverEventArgs ea)
-        {
-            return true;
-        }
-
         protected virtual void OnException(object sender, CallbackExceptionEventArgs ea)
         {
             _channel.Dispose();
@@ -318,31 +294,15 @@ namespace ReRabbit.Subscribers
 
         #region Методы (private)
 
+        /// <summary>
+        /// Обработать сообщение.
+        /// </summary>
+        /// <param name="ea">Данные события.</param>
         private async Task HandleMessageReceivedAsync(BasicDeliverEventArgs ea)
         {
             var acknowledgement = await HandleMessageAsync(ea);
 
-            switch (acknowledgement)
-            {
-                case Ack ack:
-                    AcknowledgementBehaviour.HandleAck(ack, _channel, ea);
-                    break;
-
-                case Nack nack:
-                    AcknowledgementBehaviour.HandleNack(nack, _channel, ea);
-                    break;
-
-                case Reject reject:
-                    AcknowledgementBehaviour.HandleReject(reject, _channel, ea);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(acknowledgement),
-                        typeof(Acknowledgement),
-                        "Передан неизвестный подтип Acknowledgement."
-                    );
-            }
+            AcknowledgementBehaviour.Handle(acknowledgement, _channel, ea);
         }
 
         #endregion Методы (private)

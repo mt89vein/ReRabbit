@@ -10,6 +10,7 @@ namespace ReRabbit.Abstractions
     /// </summary>
     /// <typeparam name="TMessage">Тип сообщения.</typeparam>
     public interface ISubscriber<out TMessage>
+        where TMessage : IEvent
     {
         /// <summary>
         /// Подписаться на сообщения.
@@ -25,6 +26,26 @@ namespace ReRabbit.Abstractions
         IModel Bind();
     }
 
-    public delegate Task<Acknowledgement> AcknowledgableMessageHandler<in TMessage>(TMessage message, MqEventData eventData);
-    public delegate Task MessageHandler<in TMessage>(TMessage message, MqEventData eventData);
+    /// <summary>
+    /// Обработчик сообщений с возвратом результата выполнения.
+    /// </summary>
+    /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+    /// <param name="message">Сообщение.</param>
+    /// <param name="eventData">Данные события.</param>
+    /// <returns>Результат выполнения.</returns>
+    public delegate Task<Acknowledgement> AcknowledgableMessageHandler<in TMessage>(
+        TMessage message,
+        MqEventData eventData
+    ) where TMessage : IEvent;
+
+    /// <summary>
+    /// Обработчк сообщений с неявным (успешным) результатом выполнения.
+    /// </summary>
+    /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+    /// <param name="message">Сообщение.</param>
+    /// <param name="eventData">Данные события.</param>
+    public delegate Task MessageHandler<in TMessage>(
+        TMessage message,
+        MqEventData eventData
+    ) where TMessage : IEvent;
 }

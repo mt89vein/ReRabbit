@@ -1,4 +1,4 @@
-﻿namespace ReRabbit.Abstractions.Enums
+namespace ReRabbit.Abstractions.Enums
 {
     /// <summary>
     /// Закон по которому высчитывается интервал (задержка) между повторениями.
@@ -6,23 +6,18 @@
     public enum RetryPolicyType
     {
         /// <summary>
-        /// Без задержек.
-        /// </summary>
-        Zero = 0,
-
-        /// <summary>
         /// Константный закон.
         /// </summary>
-        Constant = 1,
+        Constant = 0,
 
         /// <summary>
         /// Линейный закон.
         /// </summary>
-        Linear = 2,
+        Linear = 1,
 
         /// <summary>
         /// Экспоненциальный закон.
         /// </summary>
-        Exponential = 3
+        Exponential = 2
     }
 }

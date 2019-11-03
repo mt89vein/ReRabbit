@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 
@@ -25,6 +26,11 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// </summary>
         private readonly IRetryDelayComputer _retryDelayComputer;
 
+        /// <summary>
+        /// Фабрика логгеров.
+        /// </summary>
+        private readonly ILoggerFactory _loggerFactory;
+
         #endregion Поля
 
         #region Конструктор
@@ -35,15 +41,18 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="namingConvention">Конвенции именования.</param>
         /// <param name="topologyProvider">Провайдер топологий.</param>
         /// <param name="retryDelayComputer">Вычислитель задержек между повторными обработками.</param>
+        /// <param name="loggerFactory">Фабрика логгеров.</param>
         public DefaultAcknowledgementBehaviourFactory(
             INamingConvention namingConvention,
             ITopologyProvider topologyProvider,
-            IRetryDelayComputer retryDelayComputer
+            IRetryDelayComputer retryDelayComputer,
+            ILoggerFactory loggerFactory
         )
         {
             _namingConvention = namingConvention;
             _topologyProvider = topologyProvider;
             _retryDelayComputer = retryDelayComputer;
+            _loggerFactory = loggerFactory;
         }
 
         #endregion Конструктор
@@ -63,6 +72,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 _retryDelayComputer,
                 _namingConvention,
                 _topologyProvider,
+                _loggerFactory.CreateLogger<TMessageType>(),
                 typeof(TMessageType)
             );
         }

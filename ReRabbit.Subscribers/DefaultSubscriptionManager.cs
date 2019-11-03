@@ -59,6 +59,7 @@ namespace ReRabbit.Subscribers
         /// <param name="queueSetting">Настройки подписчика.</param>
         /// <returns>True, если удалось выполнить привязку.</returns>
         public bool Bind<TMessage>(QueueSetting queueSetting)
+            where TMessage : IEvent
         {
             using (_subscriberFactory
                 .CreateSubscriber<TMessage>(queueSetting)
@@ -76,6 +77,7 @@ namespace ReRabbit.Subscribers
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <returns>True, если удалось выполнить привязку.</returns>
         public bool Bind<TMessage>(string configurationSectionName)
+            where TMessage : IEvent
         {
             return Bind<TMessage>(_configurationManager.GetQueueSettings(configurationSectionName));
         }
@@ -93,6 +95,7 @@ namespace ReRabbit.Subscribers
             string connectionName,
             string virtualHost
         )
+            where TMessage : IEvent
         {
             return Bind<TMessage>(_configurationManager.GetQueueSettings(
                     configurationSectionName,
@@ -117,6 +120,7 @@ namespace ReRabbit.Subscribers
             string connectionName,
             string virtualHost
         )
+            where TMessage : IEvent
         {
             return Register(eventHandler, _configurationManager.GetQueueSettings(
                     configurationSectionName,
@@ -137,8 +141,12 @@ namespace ReRabbit.Subscribers
             AcknowledgableMessageHandler<TMessage> eventHandler,
             string configurationSectionName
         )
+            where TMessage : IEvent
         {
-            return Register(eventHandler, _configurationManager.GetQueueSettings(configurationSectionName));
+            return Register(
+                eventHandler,
+                _configurationManager.GetQueueSettings(configurationSectionName)
+            );
         }
 
         /// <summary>
@@ -152,6 +160,7 @@ namespace ReRabbit.Subscribers
             AcknowledgableMessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
         )
+            where TMessage : IEvent
         {
             for (var i = 0; i < queueSetting.ScalingSettings.ChannelsCount; i++)
             {
@@ -172,15 +181,16 @@ namespace ReRabbit.Subscribers
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
         /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(MessageHandler<TMessage> eventHandler,
+        public bool Register<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
         )
+            where TMessage : IEvent
         {
             return Register<TMessage>(async (message, eventData) =>
             {
                 return await eventHandler(message, eventData)
-                    // TODO: обёртка подойдет ли?
-                    .ContinueWith(x => new Ack());
+                    .ContinueWith(x => Ack.Ok);
             }, queueSetting);
         }
 
@@ -195,8 +205,12 @@ namespace ReRabbit.Subscribers
             MessageHandler<TMessage> eventHandler,
             string configurationSectionName
         )
+            where TMessage : IEvent
         {
-            return Register(eventHandler, _configurationManager.GetQueueSettings(configurationSectionName));
+            return Register(
+                eventHandler,
+                _configurationManager.GetQueueSettings(configurationSectionName)
+            );
         }
 
         /// <summary>
@@ -214,8 +228,11 @@ namespace ReRabbit.Subscribers
             string connectionName,
             string virtualHost
         )
+            where TMessage : IEvent
         {
-            return Register(eventHandler, _configurationManager.GetQueueSettings(
+            return Register(
+                eventHandler,
+                _configurationManager.GetQueueSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost

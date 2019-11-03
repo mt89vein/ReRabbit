@@ -12,15 +12,14 @@ namespace ReRabbit.Subscribers.RetryDelayComputer
     public class DefaultRetryDelayComputer : IRetryDelayComputer
     {
         /// <summary>
-        /// Словарь с инстансами вычислетелей задержек.
+        /// Словарь с инстансами вычислителей задержек.
         /// </summary>
         private static readonly Dictionary<RetryPolicyType, IRetryDelayComputer> RetryDelayComputers =
             new Dictionary<RetryPolicyType, IRetryDelayComputer>
             {
                 {RetryPolicyType.Constant, new ConstantRetryDelayComputer()},
                 {RetryPolicyType.Exponential, new ExponentialRetryDelayComputer()},
-                {RetryPolicyType.Linear, new LinearRetryDelayComputer()},
-                {RetryPolicyType.Zero, new ZeroRetryDelayComputer()}
+                {RetryPolicyType.Linear, new LinearRetryDelayComputer()}
             };
 
         /// <summary>

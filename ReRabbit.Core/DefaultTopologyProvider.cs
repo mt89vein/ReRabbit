@@ -5,6 +5,7 @@ using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ReRabbit.Core
 {
@@ -13,20 +14,6 @@ namespace ReRabbit.Core
     /// </summary>
     public class DefaultTopologyProvider : ITopologyProvider
     {
-        #region Константы
-
-        /// <summary>
-        /// Наименование очереди, в которую будут пересылаться сообщения с ошибками, у которых не настроен dead-lettered.
-        /// </summary>
-        private const string ERROR_MESSAGES = "#common-error-messages";
-
-        /// <summary>
-        /// Наименование очереди, в которую будут пересылаться сообщения, на которые не было биндинга.
-        /// </summary>
-        private const string UNROUTED_MESSAGES = "#common-unrouted-messages";
-
-        #endregion Константы
-
         #region Поля
 
         private readonly ILogger<DefaultTopologyProvider> _logger;
@@ -103,6 +90,16 @@ namespace ReRabbit.Core
                             binding.Arguments
                         );
                     }
+
+                    if (binding.ExchangeType.Equals("headers", StringComparison.OrdinalIgnoreCase) && binding.Arguments.Keys.Any())
+                    {
+                        channel.QueueBind(
+                            queueName,
+                            binding.FromExchange,
+                            string.Empty,
+                            binding.Arguments
+                        );
+                    }
                 }
             }
         }
@@ -152,10 +149,10 @@ namespace ReRabbit.Core
             var deadLetterQueueName = _namingConvention.DeadLetterQueueNamingConvention(messageType, settings);
             var deadLetterExchangeName = _namingConvention.DeadLetterExchangeNamingConvention(messageType, settings);
 
-            // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди, чтобы делать очереди ленивыми
+            // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди
 
             //settings.ConnectionSettings.VirtualHost
-            //settings.ConnectionSettings.HostName ->
+            //settings.ConnectionSettings.HostNames ->
             //settings.ConnectionSettings.Port  -> ManagementPort default 15672
 
             channel.ExchangeDeclare(
@@ -193,25 +190,29 @@ namespace ReRabbit.Core
             // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди.
 
             //settings.ConnectionSettings.VirtualHost
-            //settings.ConnectionSettings.HostName ->
+            //settings.ConnectionSettings.HostNames ->
             //settings.ConnectionSettings.Port  -> ManagementPort default 15672
 
             channel.QueueDeclare(
-                UNROUTED_MESSAGES,
+                CommonQueuesConstants.UNROUTED_MESSAGES,
                 durable: true,
                 exclusive: false,
-                autoDelete: false
+                autoDelete: false,
+                arguments: new Dictionary<string, object>
+                {
+                    [QueueArgument.QUEUE_MODE] = "lazy"
+                }
             );
 
             channel.ExchangeDeclare(
-                exchange: UNROUTED_MESSAGES,
+                exchange: CommonQueuesConstants.UNROUTED_MESSAGES,
                 type: ExchangeType.Fanout,
                 durable: true
             );
 
             channel.QueueBind(
-                UNROUTED_MESSAGES,
-                exchange: UNROUTED_MESSAGES,
+                CommonQueuesConstants.UNROUTED_MESSAGES,
+                exchange: CommonQueuesConstants.UNROUTED_MESSAGES,
                 routingKey: string.Empty
             );
         }
@@ -226,25 +227,29 @@ namespace ReRabbit.Core
             // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди.
 
             //settings.ConnectionSettings.VirtualHost
-            //settings.ConnectionSettings.HostName ->
+            //settings.ConnectionSettings.HostNames ->
             //settings.ConnectionSettings.Port  -> ManagementPort default 15672
 
             channel.QueueDeclare(
-                ERROR_MESSAGES,
+                CommonQueuesConstants.ERROR_MESSAGES,
                 durable: true,
                 exclusive: false,
-                autoDelete: false
+                autoDelete: false,
+                arguments: new Dictionary<string, object>
+                {
+                    [QueueArgument.QUEUE_MODE] = "lazy"
+                }
             );
 
             channel.ExchangeDeclare(
-                exchange: ERROR_MESSAGES,
+                exchange: CommonQueuesConstants.ERROR_MESSAGES,
                 type: ExchangeType.Fanout,
                 durable: true
             );
 
             channel.QueueBind(
-                ERROR_MESSAGES,
-                exchange: ERROR_MESSAGES,
+                CommonQueuesConstants.ERROR_MESSAGES,
+                exchange: CommonQueuesConstants.ERROR_MESSAGES,
                 routingKey: string.Empty
             );
         }

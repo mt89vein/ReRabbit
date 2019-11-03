@@ -13,6 +13,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessageType">Тип сообщения.</typeparam>
         /// <param name="queueSettings">Настройки подписчика.</param>
         /// <returns>Подписчик.</returns>
-        ISubscriber<TMessageType> CreateSubscriber<TMessageType>(QueueSetting queueSettings);
+        ISubscriber<TMessageType> CreateSubscriber<TMessageType>(QueueSetting queueSettings)
+            where TMessageType : IEvent;
     }
 }

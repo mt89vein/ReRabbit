@@ -14,7 +14,8 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
         /// <returns>True, если удалось выполнить привязку.</returns>
-        bool Bind<TMessage>(QueueSetting queueSetting);
+        bool Bind<TMessage>(QueueSetting queueSetting)
+            where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить привязку.
@@ -22,7 +23,8 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <returns>True, если удалось выполнить привязку.</returns>
-        bool Bind<TMessage>(string configurationSectionName);
+        bool Bind<TMessage>(string configurationSectionName)
+            where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить привязку.
@@ -36,7 +38,7 @@ namespace ReRabbit.Abstractions
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        );
+        ) where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -52,7 +54,7 @@ namespace ReRabbit.Abstractions
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        );
+        ) where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -64,7 +66,7 @@ namespace ReRabbit.Abstractions
         bool Register<TMessage>(
             AcknowledgableMessageHandler<TMessage> eventHandler,
             string configurationSectionName
-        );
+        ) where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -76,7 +78,7 @@ namespace ReRabbit.Abstractions
         bool Register<TMessage>(
             AcknowledgableMessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
-        );
+        ) where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -88,7 +90,7 @@ namespace ReRabbit.Abstractions
         bool Register<TMessage>(
             MessageHandler<TMessage> eventHandler,
             string configurationSectionName
-        );
+        ) where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -104,7 +106,7 @@ namespace ReRabbit.Abstractions
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        );
+        ) where TMessage : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -116,6 +118,6 @@ namespace ReRabbit.Abstractions
         bool Register<TMessage>(
             MessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
-        );
+        ) where TMessage : IEvent;
     }
 }

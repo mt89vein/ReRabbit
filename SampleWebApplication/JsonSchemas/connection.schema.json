@@ -1,0 +1,210 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "#RabbitMq/Connections",
+    "type": "object",
+    "title": "Connections to RabbitMq",
+    "default": {
+        "DefaultConnection": {
+            "VirtualHosts": {
+                "/": {
+                    "Queues": {
+                        "DefaultSubscriber": {
+                            "QueueName": "example-queue",
+                            "Bindings": [
+                                {
+                                    "FromExchange": "example-exchange",
+                                    "RoutingKeys": ["example-routing-key"]
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "additionalProperties": {
+        "type": "object",
+        "title": "Connection name",
+        "required": [
+            "VirtualHosts"
+        ],
+        "properties": {
+            "ConnectionName": {
+                "$id": "#RabbitMq/Connections/properties/ConnectionName",
+                "type": "string",
+                "title": "ConnectionName. Uses section name by default."
+            },
+            "HostNames": {
+                "$id": "#/properties/Connections/properties/HostNames",
+                "type": "array",
+                "title": "RabbitMq hostnames to connect as round robin.",
+                "default": [
+                    "localhost"
+                ],
+                "items": {
+                    "$id": "#/properties/Connections/properties/HostNames/items",
+                    "type": "string",
+                    "title": "Hostname.",
+                    "default": "localhost",
+                    "examples": [
+                        "localhost"
+                    ],
+                    "pattern": "^(.*)$"
+                }
+            },
+            "Port": {
+                "$id": "#RabbitMq/Connections/properties/Port",
+                "type": "integer",
+                "title": "Port",
+                "default": 5672,
+                "examples": [
+                    5672,
+                    5671
+                ]
+            },
+            "UseAsyncConsumer": {
+                "$id": "#RabbitMq/Connections/properties/UseAsyncConsumer",
+                "type": "boolean",
+                "title": "UseAsyncConsumer for async connection and AsyncEventingConsumer.",
+                "default": true,
+                "examples": [
+                    false
+                ]
+            },
+            "UseCommonErrorMessagesQueue": {
+                "$id": "#RabbitMq/Connections/properties/UseCommonErrorMessagesQueue",
+                "type": "boolean",
+                "title": "UseCommonErrorMessagesQueue for creating queue as global store of unprocessed messages.",
+                "default": true,
+                "examples": [
+                    false
+                ]
+            },
+            "UseCommonUnroutedMessagesQueue": {
+                "$id": "#RabbitMq/Connections/properties/UseCommonUnroutedMessagesQueue",
+                "type": "boolean",
+                "title": "UseCommonUnroutedMessagesQueue for creating queue as global store of unrouted messages.",
+                "default": true,
+                "examples": [
+                    false
+                ]
+            },
+            "UseBackgroundThreadsForIO": {
+                "$id": "#RabbitMq/Connections/properties/UseBackgroundThreadsForIO",
+                "type": "boolean",
+                "title": "If set to true, uses IO and heartbeats on the background thread.",
+                "default": true
+            },
+            "SslOptions": {
+                "$id": "#RabbitMq/Connections/properties/SslOptions",
+                "type": "object",
+                "title": "SSl settings.",
+                "default": {
+                    "IsEnabled": true,
+                    "ServerName": "MY_SERVER_NAME",
+                    "CertificatePath": "PATH_TO_CERTIFICATE"
+                },
+                "properties": {
+                    "IsEnabled": {
+                        "$id": "#RabbitMq/Connections/properties/SslOptions/IsEnabled",
+                        "type": "boolean",
+                        "title": "Is need to use SSL.",
+                        "default": true,
+                        "examples": [
+                            false,
+                            true
+                        ]
+                    },
+                    "ServerName": {
+                        "$id": "#RabbitMq/Connections/properties/SslOptions/ServerName",
+                        "type": "string",
+                        "title": "Server name."
+                    },
+                    "CertificatePath": {
+                        "$id": "#RabbitMq/Connections/properties/SslOptions/CertificatePath",
+                        "type": "string",
+                        "title": "Path to certificate."
+                    }
+                }
+            },
+            "ConnectionRetryCount": {
+                "$id": "#RabbitMq/Connections/properties/ConnectionRetryCount",
+                "type": "integer",
+                "title": "Number of retries to connect.",
+                "default": 5
+            },
+            "RequestedConnectionTimeoutInMs": {
+                "$id": "#RabbitMq/Connections/properties/RequestedConnectionTimeoutInMs",
+                "type": "integer",
+                "title": "Connection timeout in miliseconds.",
+                "default": 30000
+            },
+            "SocketReadTimeoutInMs": {
+                "$id": "#RabbitMq/Connections/properties/SocketReadTimeoutInMs",
+                "type": "integer",
+                "title": "Read from socket timeout in miliseconds.",
+                "default": 30000
+            },
+            "SocketWriteTimeoutInMs": {
+                "$id": "#RabbitMq/Connections/properties/SocketWriteTimeoutInMs",
+                "type": "integer",
+                "title": "Write to socket timeout in miliseconds.",
+                "default": 30000
+            },
+            "RequestedChannelMaxCount": {
+                "$id": "#RabbitMq/Connections/properties/RequestedChannelMaxCount",
+                "type": "integer",
+                "title": "Open channel limit to connection.",
+                "default": 100
+            },
+            "RequestedFrameMaxBytes": {
+                "$id": "#RabbitMq/Connections/properties/RequestedFrameMaxBytes",
+                "type": "integer",
+                "title": "Frame max size in bytes.",
+                "default": 0
+            },
+            "RequestedHeartbeatInSeconds": {
+                "$id": "#RabbitMq/Connections/properties/RequestedHeartbeatInSeconds",
+                "type": "integer",
+                "title": "Heartbeat period.",
+                "default": 60
+            },
+            "HandshakeContinuationTimeoutInSeconds": {
+                "$id": "#RabbitMq/Connections/properties/HandshakeContinuationTimeoutInSeconds",
+                "type": "integer",
+                "title": "Handshake timeout.",
+                "default": 10
+            },
+            "ContinuationTimeoutInSeconds": {
+                "$id": "#RabbitMq/Connections/properties/ContinuationTimeoutInSeconds",
+                "type": "integer",
+                "title": "Timeout for declaring queue etc.",
+                "default": 10
+            },
+            "NetworkRecoveryIntervalInSeconds": {
+                "$id": "#RabbitMq/Connections/properties/NetworkRecoveryIntervalInSeconds",
+                "type": "integer",
+                "title": "Time between retries to recover.",
+                "default": 10
+            },
+            "AuthomaticRecoveryEnabled": {
+                "$id": "#RabbitMq/Connections/properties/AuthomaticRecoveryEnabled",
+                "type": "boolean",
+                "title": "If set to true, recovers connection automatically.",
+                "default": true
+            },
+            "TopologyRecoveryEnabled": {
+                "$id": "#RabbitMq/Connections/properties/TopologyRecoveryEnabled",
+                "type": "boolean",
+                "title": "If set to true, recovers topology.",
+                "default": true
+            },
+            "VirtualHosts": {
+                "$id": "#RabbitMq/Connections/properties/VirtualHosts",
+                "type": "object",
+                "title": "Virtual hosts",
+                "$ref": "./virtualhosts.schema.json"
+            }
+        }
+    }
+}

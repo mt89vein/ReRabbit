@@ -16,6 +16,9 @@ namespace ReRabbit.Subscribers
         /// </summary>
         private readonly ILoggerFactory _loggerFactory;
 
+        /// <summary>
+        /// Сервис сериализации/десериализации.
+        /// </summary>
         private readonly ISerializer _serializer;
 
         /// <summary>
@@ -81,12 +84,12 @@ namespace ReRabbit.Subscribers
         /// <param name="queueSettings">Настройки подписчика.</param>
         /// <returns>Подписчик.</returns>
         public ISubscriber<TMessageType> CreateSubscriber<TMessageType>(QueueSetting queueSettings)
+            where TMessageType : IEvent
         {
             var connection = _permanentConnectionManager.GetConnection(queueSettings.ConnectionSettings);
 
-            // TODO: логика опр. типа подписчика для создания.
-            var subscriber = new RoutedSubscriber<TMessageType>(
-                _loggerFactory.CreateLogger<RoutedSubscriber<TMessageType>>(),
+            var subscriber = new SubscriberBase<TMessageType>(
+                _loggerFactory.CreateLogger<SubscriberBase<TMessageType>>(),
                 _serializer,
                 _topologyProvider,
                 _namingConvention,

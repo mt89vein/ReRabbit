@@ -25,6 +25,11 @@ namespace ReRabbit.Abstractions.Models
         public string Exchange { get; }
 
         /// <summary>
+        /// Сообщение было отправлено повторно.
+        /// </summary>
+        public bool IsRedelivered { get; }
+
+        /// <summary>
         /// Глобальный идентификатор отслеживания.
         /// </summary>
         public Guid? TraceId { get; }
@@ -46,11 +51,20 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает экземпляр класса <see cref="MqEventData"/>.
         /// </summary>
-        public MqEventData(MqMessage mqMessage, string routingKey, string exchange, Guid? traceId, int retryNumber, bool isLastRetry)
+        public MqEventData(
+            MqMessage mqMessage,
+            string routingKey,
+            string exchange,
+            bool isRedelivered,
+            Guid? traceId,
+            int retryNumber,
+            bool isLastRetry
+        )
         {
             MqMessage = mqMessage;
             RoutingKey = routingKey;
             Exchange = exchange;
+            IsRedelivered = isRedelivered;
             TraceId = traceId;
             RetryNumber = retryNumber;
             IsLastRetry = isLastRetry;

@@ -25,7 +25,12 @@ namespace ReRabbit.Abstractions.Attributes
         /// <param name="configurationSectionName">Наименование секции, в котором находится конфигурация.</param>
         public SubscriberConfigurationAttribute(string configurationSectionName)
         {
-            ConfigurationSectionName = configurationSectionName;
+            ConfigurationSectionName = !string.IsNullOrWhiteSpace(configurationSectionName)
+                ? configurationSectionName
+                : throw new ArgumentNullException(
+                    nameof(configurationSectionName),
+                    "Наименование секции не может быть пустым"
+                );
         }
 
         #endregion Конструктор
