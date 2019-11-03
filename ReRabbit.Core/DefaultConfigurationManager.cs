@@ -67,7 +67,7 @@ namespace ReRabbit.Core
             string virtualHost
         )
         {
-            var sectionPath = ConfigurationSectionConstants.GetQueueSectionPath(
+            var sectionPath = ConfigurationHelper.GetQueueSectionPath(
                 connectionName,
                 virtualHost,
                 configurationSectionName
@@ -103,7 +103,7 @@ namespace ReRabbit.Core
                     foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
                     {
                         var queueSettingSectionPath =
-                            ConfigurationSectionConstants.GetQueueSectionPath(
+                            ConfigurationHelper.GetQueueSectionPath(
                                 connectionSettings.ConnectionName,
                                 virtualHostSettings.Name,
                                 configurationSectionName

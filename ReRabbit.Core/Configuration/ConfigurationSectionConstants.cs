@@ -1,5 +1,8 @@
 namespace ReRabbit.Core.Configuration
 {
+    /// <summary>
+    /// Константы с наименованиями секций конфигурации.
+    /// </summary>
     public static class ConfigurationSectionConstants
     {
         /// <summary>
@@ -21,17 +24,30 @@ namespace ReRabbit.Core.Configuration
         /// Наименование секции с настройками очередей.
         /// </summary>
         public const string QUEUES = "Queues";
+    }
 
+    /// <summary>
+    /// Вспомогательный класс для получения пути.
+    /// </summary>
+    public static class ConfigurationHelper
+    {
+        /// <summary>
+        /// Получить путь к конфигурации с подключением.
+        /// </summary>
+        /// <param name="connectionName"></param>
+        /// <returns></returns>
         public static string GetConnectionSectionPath(string connectionName)
         {
-            return string.Join(":", ROOT, CONNECTIONS, connectionName);
+            return string.Join(":",
+                ConfigurationSectionConstants.ROOT,
+                ConfigurationSectionConstants.CONNECTIONS,
+                connectionName);
         }
 
         public static string GetVirtualHostsSectionPath(string connectionName, string virtualHostName)
         {
-            return string.Join(":",
-                GetConnectionSectionPath(connectionName),
-                VIRTUAL_HOSTS,
+            return string.Join(":", GetConnectionSectionPath(connectionName),
+                ConfigurationSectionConstants.VIRTUAL_HOSTS,
                 virtualHostName
             );
         }
@@ -39,44 +55,10 @@ namespace ReRabbit.Core.Configuration
         public static string GetQueueSectionPath(string connectionName, string virtualHostName,
             string queueConfigurationSectionName)
         {
-            return string.Join(":",
-                GetVirtualHostsSectionPath(connectionName, virtualHostName),
-                QUEUES,
+            return string.Join(":", GetVirtualHostsSectionPath(connectionName, virtualHostName),
+                ConfigurationSectionConstants.QUEUES,
                 queueConfigurationSectionName
             );
         }
-    }
-
-    /// <summary>
-    /// Аргументы очереди.
-    /// </summary>
-    internal static class QueueArgument
-    {
-        /// <summary>
-        /// Обменник, в которую будет переслано сообщение, если сделать basicReject или basicNack с параметром reEnqueue: false
-        /// </summary>
-        public const string DEAD_LETTER_EXCHANGE = "x-dead-letter-exchange";
-
-        /// <summary>
-        /// Опциональный маркер. Используется совместно с обменником <see cref="DEAD_LETTER_EXCHANGE"/>.
-        /// </summary>
-        public const string DEAD_LETTER_ROUTING_KEY = "x-dead-letter-routing-key";
-
-        /// <summary>
-        /// Время жизни очереди.
-        /// Очередь удалится, если в течении указанного времени не было активных потребителей или не был выполнен basic.Get.
-        /// При повторных объявлениях очереди или рестарте брокера отсчёт времени жизни начинается заново.
-        /// </summary>
-        public const string EXPIRES = "x-expires";
-
-        /// <summary>
-        /// Время жизни сообщения в очереди.
-        /// </summary>
-        public const string MESSAGE_TTL = "x-message-ttl";
-
-        /// <summary>
-        /// Мод очереди. 
-        /// </summary>
-        public const string QUEUE_MODE = "x-queue-mode";
     }
 }

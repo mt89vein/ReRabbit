@@ -29,9 +29,7 @@ namespace ReRabbit.Subscribers
         /// </summary>
         private readonly ISubscriberFactory _subscriberFactory;
 
-        #endregion
-
-        #region Конструкторы
+        #endregion Поля
 
         #region Конструктор
 
@@ -51,8 +49,6 @@ namespace ReRabbit.Subscribers
         }
 
         #endregion Конструктор
-
-        #endregion
 
         #region Методы (public)
 

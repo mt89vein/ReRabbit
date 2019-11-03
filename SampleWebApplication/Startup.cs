@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Extensions;
-using System;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication
