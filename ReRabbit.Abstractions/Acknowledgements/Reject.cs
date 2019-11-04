@@ -42,14 +42,5 @@ namespace ReRabbit.Abstractions.Acknowledgements
         }
 
         #endregion Конструктор
-
-        #region Закэшированные инстансы
-
-        /// <summary>
-        /// Сообщение без тела. Обработке не подлежит.
-        /// </summary>
-        public static EmptyBodyReject EmptyBody { get; } = new EmptyBodyReject();
-
-        #endregion Закэшированные инстансы
     }
 }

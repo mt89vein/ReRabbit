@@ -3,19 +3,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using ReRabbit.Abstractions;
 using ReRabbit.Core;
+using ReRabbit.Core.Serializations;
 using ReRabbit.Subscribers;
 using ReRabbit.Subscribers.AcknowledgementBehaviours;
 using ReRabbit.Subscribers.Extensions;
+using ReRabbit.Subscribers.Plugins;
 using ReRabbit.Subscribers.RetryDelayComputer;
 using System;
 
 namespace ReRabbit.Extensions
 {
-    // TODO: билдер?
-    public interface IReRabbitBuilder
-    {
-    }
-
     /// <summary>
     /// Методы расширения для конфигурирования служб приложения.
     /// </summary>
@@ -37,7 +34,10 @@ namespace ReRabbit.Extensions
             Action<RabbitMqRegistrationOptions> options = null
         )
         {
-            var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions();
+            var pluginsRegistry = new SubscriberPluginsRegistry();
+            services.AddSingleton<ISubscriberPluginsRegistryAccessor>(pluginsRegistry);
+
+            var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions(pluginsRegistry);
             options?.Invoke(rabbitMqRegistrationOptions);
 
             return services
@@ -97,6 +97,8 @@ namespace ReRabbit.Extensions
                       sp.GetRequiredService<DefaultRetryDelayComputer>()
             );
 
+            services.AddScoped<ISubscriberPluginsExecutor, SubscriberPluginsExecutor>();
+
             return services;
         }
 
@@ -131,6 +133,7 @@ namespace ReRabbit.Extensions
             RabbitMqRegistrationOptions options
         )
         {
+            // TODO: is Newtonsoft.json thread safe ?
             services.AddSingleton<JsonSerializer>();
             services.AddSingleton<DefaultJsonSerializer>();
             services.AddSingleton(
@@ -140,39 +143,5 @@ namespace ReRabbit.Extensions
 
             return services;
         }
-    }
-
-    public class RabbitMqRegistrationOptions
-    {
-        public RabbitMqFactories Factories { get; set; }
-    }
-
-    public class RabbitMqPlugins
-    {
-        // TODO: outbox pattern
-        // TODO: deduplication
-    }
-
-    public class RabbitMqFactories
-    {
-        public Func<IServiceProvider, IPermanentConnectionManager> PermanentConnectionManager { get; set; }
-
-        public Func<IServiceProvider, IClientPropertyProvider> ClientPropertyProvider { get; set; }
-
-        public Func<IServiceProvider, ISubscriberFactory> SubscriberFactory { get; set; }
-
-        public Func<IServiceProvider, ISubscriptionManager> SubscriptionManager { get; set; }
-
-        public Func<IServiceProvider, IConfigurationManager> ConfigurationManager { get; set; }
-
-        public Func<IServiceProvider, IAcknowledgementBehaviourFactory> AcknowledgementBehaviourFactory { get; set; }
-
-        public Func<IServiceProvider, INamingConvention> NamingConvention { get; set; }
-
-        public Func<IServiceProvider, ITopologyProvider> TopologyProvider { get; set; }
-
-        public Func<IServiceProvider, IRetryDelayComputer> RetryDelayComputer { get; set; }
-
-        public Func<IServiceProvider, ISerializer> Serializer { get; set; }
     }
 }

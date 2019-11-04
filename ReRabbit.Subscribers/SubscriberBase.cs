@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -6,7 +7,9 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Extensions;
+using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
+using ReRabbit.Subscribers.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -31,6 +34,11 @@ namespace ReRabbit.Subscribers
         /// Канал.
         /// </summary>
         private IModel _channel;
+
+        /// <summary>
+        /// Фабрика скоупов.
+        /// </summary>
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         /// <summary>
         /// Логгер.
@@ -91,8 +99,9 @@ namespace ReRabbit.Subscribers
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр класса <see cref="SubscriberBase{TMessageType}"/>.
+        /// Создает экземпляр класса <see cref="SubscriberBase{TMessage}"/>.
         /// </summary>
+        /// <param name="serviceScopeFactory">Фабрика скоупов.</param>
         /// <param name="logger">Логгер.</param>
         /// <param name="serializer">Сервис сериализации/десериализации.</param>
         /// <param name="topologyProvider">Провайдер топологий.</param>
@@ -101,6 +110,7 @@ namespace ReRabbit.Subscribers
         /// <param name="permanentConnection">Постоянное подключение.</param>
         /// <param name="settings">Настройки очереди.</param>
         public SubscriberBase(
+            IServiceScopeFactory serviceScopeFactory,
             ILogger logger,
             ISerializer serializer,
             ITopologyProvider topologyProvider,
@@ -110,6 +120,7 @@ namespace ReRabbit.Subscribers
             QueueSetting settings
         )
         {
+            _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
             _serializer = serializer;
             TopologyProvider = topologyProvider;
@@ -117,7 +128,9 @@ namespace ReRabbit.Subscribers
             Settings = settings;
             PermanentConnection = permanentConnection;
             AcknowledgementBehaviour = acknowledgementBehaviour;
-            _lazyQueueNameInitializer = new Lazy<string>(() => NamingConvention.QueueNamingConvention(typeof(TMessage), Settings));
+            _lazyQueueNameInitializer = new Lazy<string>(
+                () => NamingConvention.QueueNamingConvention(typeof(TMessage), Settings)
+            );
         }
 
         #endregion Конструктор
@@ -201,33 +214,48 @@ namespace ReRabbit.Subscribers
 
             using (_logger.BeginScope(loggingScope))
             {
-                try
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
-                    var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
-                    var payload = mqMessage?.Payload?.ToString();
-
-                    if (string.IsNullOrEmpty(payload))
+                    try
                     {
-                        return Reject.EmptyBody;
+                        var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
+                        var payload = mqMessage?.Payload?.ToString();
+
+                        if (string.IsNullOrEmpty(payload))
+                        {
+                            return EmptyBodyReject.EmptyBody;
+                        }
+
+                        var messageContext = new MessageContext(
+                            _serializer.Deserialize<TMessage>(payload),
+                            new MqEventData(
+                                mqMessage,
+                                ea.RoutingKey,
+                                ea.Exchange,
+                                ea.Redelivered || retryNumber != 0,
+                                traceId,
+                                retryNumber,
+                                isLastRetry
+                            ),
+                            ea
+                        );
+                        var eventHandler = _eventHandler;
+                        var executor = scope.ServiceProvider.GetRequiredService<ISubscriberPluginsExecutor>();
+
+                        return await executor.ExecuteAsync(ctx =>
+                                eventHandler((TMessage)ctx.Message, ctx.EventData),
+                            messageContext,
+                            Settings.Plugins
+                        );
                     }
-
-                    var eventMessage = _serializer.Deserialize<TMessage>(payload);
-
-                    var eventData = new MqEventData(
-                        mqMessage,
-                        ea.RoutingKey,
-                        ea.Exchange,
-                        ea.Redelivered || retryNumber != 0,
-                        traceId,
-                        retryNumber,
-                        isLastRetry
-                    );
-
-                    return await _eventHandler(eventMessage, eventData);
-                }
-                catch (Exception e)
-                {
-                    return new Reject(e, "Ошибка обработки сообщения из очереди.", Settings.RetrySettings.IsEnabled && !isLastRetry);
+                    catch (Exception e)
+                    {
+                        return new Reject(
+                            e,
+                            "Ошибка обработки сообщения из очереди.",
+                            Settings.RetrySettings.IsEnabled && !isLastRetry
+                        );
+                    }
                 }
             }
         }
@@ -250,7 +278,7 @@ namespace ReRabbit.Subscribers
             {
                 var consumer = new EventingBasicConsumer(channel);
 
-                // HACK: async void unhandled exceptions.
+                // FIX: async void unhandled exceptions.
                 consumer.Received += (sender, ea) => AsyncHelper.RunSync(() => HandleMessageReceivedAsync(ea));
 
                 return consumer;
@@ -301,8 +329,11 @@ namespace ReRabbit.Subscribers
         private async Task HandleMessageReceivedAsync(BasicDeliverEventArgs ea)
         {
             var acknowledgement = await HandleMessageAsync(ea);
-
-            AcknowledgementBehaviour.Handle(acknowledgement, _channel, ea);
+            AcknowledgementBehaviour.Handle(
+                acknowledgement,
+                _channel,
+                ea
+            );
         }
 
         #endregion Методы (private)

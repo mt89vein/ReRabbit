@@ -6,6 +6,7 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Extensions;
+using ReRabbit.Subscribers.Acknowledgments;
 using System;
 using System.Globalization;
 
@@ -192,16 +193,20 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                if (reject is EmptyBodyReject)
+                if (reject is EmptyBodyReject || reject is FormatReject)
                 {
                     _logger.LogWarning( "Сообщение перемещено в общую unrouted очередь. {Reason}", reject.Reason);
 
-                    channel.BasicPublish(
-                        CommonQueuesConstants.UNROUTED_MESSAGES,
-                        string.Empty,
-                        deliveryArgs.BasicProperties,
-                        deliveryArgs.Body
-                    );
+                    if (_queueSettings.ConnectionSettings.UseCommonUnroutedMessagesQueue)
+                    {
+                        channel.BasicPublish(
+                            CommonQueuesConstants.UNROUTED_MESSAGES,
+                            string.Empty,
+                            deliveryArgs.BasicProperties,
+                            deliveryArgs.Body
+                        );
+                    }
+
                     channel.BasicAck(deliveryArgs.DeliveryTag, false);
                 }
                 else if (TryRetry(channel, deliveryArgs))

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
@@ -10,6 +11,11 @@ namespace ReRabbit.Subscribers
     public class DefaultSubscriberFactory : ISubscriberFactory
     {
         #region Поля
+
+        /// <summary>
+        /// Фабрика скоупов.
+        /// </summary>
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         /// <summary>
         /// Фабрика логгеров.
@@ -48,6 +54,7 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultSubscriberFactory"/>.
         /// </summary>
+        /// <param name="serviceScopeFactory">Фабрика скоупов.</param>
         /// <param name="loggerFactory">Фабрика логгеров.</param>
         /// <param name="serializer"></param>
         /// <param name="topologyProvider">Провайдер топологий.</param>
@@ -57,6 +64,7 @@ namespace ReRabbit.Subscribers
         /// </param>
         /// <param name="permanentConnectionManager">Менеджер постоянных соединений.</param>
         public DefaultSubscriberFactory(
+            IServiceScopeFactory serviceScopeFactory,
             ILoggerFactory loggerFactory,
             ISerializer serializer,
             ITopologyProvider topologyProvider,
@@ -65,6 +73,7 @@ namespace ReRabbit.Subscribers
             IPermanentConnectionManager permanentConnectionManager
         )
         {
+            _serviceScopeFactory = serviceScopeFactory;
             _loggerFactory = loggerFactory;
             _serializer = serializer;
             _topologyProvider = topologyProvider;
@@ -89,6 +98,7 @@ namespace ReRabbit.Subscribers
             var connection = _permanentConnectionManager.GetConnection(queueSettings.ConnectionSettings);
 
             var subscriber = new SubscriberBase<TMessageType>(
+                _serviceScopeFactory,
                 _loggerFactory.CreateLogger<SubscriberBase<TMessageType>>(),
                 _serializer,
                 _topologyProvider,

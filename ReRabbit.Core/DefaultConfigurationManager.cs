@@ -256,8 +256,6 @@ namespace ReRabbit.Core
             // судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
             Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
 
-            // TODO: нормализация аргументов 
-
             return queueSettings;
         }
 

@@ -97,6 +97,11 @@ namespace ReRabbit.Abstractions.Settings
         public ScalingSettings ScalingSettings { get; set; } = new ScalingSettings();
 
         /// <summary>
+        /// Плагины.
+        /// </summary>
+        public List<string> Plugins { get; set; } = new List<string>();
+
+        /// <summary>
         /// Настройки подключения, используемые данной очередью.
         /// </summary>
         public MqConnectionSettings ConnectionSettings { get; }
@@ -116,6 +121,4 @@ namespace ReRabbit.Abstractions.Settings
 
         #endregion Конструктор
     }
-
-    // TODO: проверить работу подписчика с header exchange
 }
