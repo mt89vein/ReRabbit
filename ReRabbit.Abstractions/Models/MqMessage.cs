@@ -41,11 +41,12 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает экземпляр класса <see cref="MqMessage"/>.
         /// </summary>
-        public MqMessage(object payload, string version, string payloadType, string sender)
+        public MqMessage(object payload, string payloadType, string formatVersion, string version, string sender)
         {
             Payload = payload;
-            Version = version;
             PayloadType = payloadType;
+            FormatVersion = formatVersion;
+            Version = version;
             Sender = sender;
         }
 

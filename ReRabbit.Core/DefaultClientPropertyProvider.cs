@@ -1,9 +1,6 @@
-using Microsoft.Extensions.Configuration;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace ReRabbit.Core
@@ -17,19 +14,9 @@ namespace ReRabbit.Core
         #region Поля
 
         /// <summary>
-        /// Текущая версия клиента.
+        /// Предоставляет информацию о сервисе.
         /// </summary>
-        private readonly string _currentVersion;
-
-        /// <summary>
-        /// Наименование сервиса.
-        /// </summary>
-        private readonly string _serviceName;
-
-        /// <summary>
-        /// Наименование машины (или идентификатор докер-контейнера)
-        /// </summary>
-        private readonly string _hostName;
+        private readonly IServiceInfoAccessor _serviceInfoAccessor;
 
         #endregion Поля
 
@@ -38,12 +25,10 @@ namespace ReRabbit.Core
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultClientPropertyProvider"/>.
         /// </summary>
-        /// <param name="configuration">Конфигурация микросервиса.</param>
-        public DefaultClientPropertyProvider(IConfiguration configuration)
+        /// <param name="serviceInfoAccessor">Предоставляет информацию о сервисе.</param>
+        public DefaultClientPropertyProvider(IServiceInfoAccessor serviceInfoAccessor)
         {
-            _currentVersion = typeof(IEventHandler<>).GetTypeInfo().Assembly.GetName().Version.ToString();
-            _serviceName = configuration.GetValue("ServiceName", "undefined-service-name");
-            _hostName = configuration.GetValue("HOSTNAME", Environment.MachineName);
+            _serviceInfoAccessor = serviceInfoAccessor;
         }
 
         #endregion Конструктор
@@ -59,10 +44,10 @@ namespace ReRabbit.Core
         {
             return new Dictionary<string, object>
             {
-                ["product"] = _serviceName,
-                ["version"] = _currentVersion,
+                ["product"] = _serviceInfoAccessor.ServiceInfo.ServiceName,
+                ["version"] = _serviceInfoAccessor.ServiceInfo.ApplicationVersion,
                 ["platform"] = RuntimeInformation.FrameworkDescription,
-                ["client_server"] = _hostName,
+                ["client_server"] = _serviceInfoAccessor.ServiceInfo.HostName,
                 ["broker_username"] = connectionSettings.UserName
             };
         }

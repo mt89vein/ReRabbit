@@ -45,6 +45,43 @@ namespace ReRabbit.Core.Configuration
         }
 
         /// <summary>
+        /// Попытаться получить секцию с настройками события.
+        /// </summary>
+        /// <param name="configuration">Конфигурация.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHostName">Виртуальный хост.</param>
+        /// <param name="eventName">Наименование события.</param>
+        /// <param name="eventConfigurationSection">Секция с настройками события.</param>
+        /// <param name="sectionPath">Путь к секции.</param>
+        /// <returns>True, если удалось получить секцию.</returns>
+        public static bool TryGetEventSection(
+            this IConfiguration configuration,
+            string connectionName,
+            string virtualHostName,
+            string eventName,
+            out IConfigurationSection eventConfigurationSection,
+            out string sectionPath
+        )
+        {
+            sectionPath = GetEventSectionPath(
+                connectionName,
+                virtualHostName,
+                eventName
+            );
+
+            eventConfigurationSection = configuration.GetSection(sectionPath);
+
+            if (eventConfigurationSection.Exists())
+            {
+                return true;
+            }
+
+            eventConfigurationSection = null;
+
+            return false;
+        }
+
+        /// <summary>
         /// Получить путь к конфигурации настроек очереди.
         /// </summary>
         /// <param name="connectionName">Наименование подключения.</param>
@@ -65,6 +102,30 @@ namespace ReRabbit.Core.Configuration
                 virtualHostName,
                 ConfigurationSectionConstants.QUEUES,
                 queueConfigurationSectionName
+            );
+        }
+
+        /// <summary>
+        /// Получить путь к конфигурации настроек события.
+        /// </summary>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHostName">Наименование виртуального хоста.</param>
+        /// <param name="eventName">Название события.</param>
+        /// <returns>Путь к секции.</returns>
+        private static string GetEventSectionPath(
+            string connectionName,
+            string virtualHostName,
+            string eventName
+        )
+        {
+            return string.Join(":",
+                ConfigurationSectionConstants.ROOT,
+                ConfigurationSectionConstants.CONNECTIONS,
+                connectionName,
+                ConfigurationSectionConstants.VIRTUAL_HOSTS,
+                virtualHostName,
+                ConfigurationSectionConstants.EVENTS,
+                eventName
             );
         }
     }

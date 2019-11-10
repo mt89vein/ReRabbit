@@ -49,7 +49,7 @@ namespace ReRabbit.Subscribers.Plugins
         /// <param name="ctx">Контекст.</param>
         /// <param name="plugins">Имена плагинов для вызова.</param>
         /// <returns>Результат обработки.</returns>
-        public async Task<Acknowledgement> ExecuteAsync(
+        public Task<Acknowledgement> ExecuteAsync(
             Func<MessageContext, Task<Acknowledgement>> next,
             MessageContext ctx,
             IEnumerable<string> plugins
@@ -59,7 +59,7 @@ namespace ReRabbit.Subscribers.Plugins
 
             if (!pluginInfos.Any())
             {
-                return await next(ctx);
+                return next(ctx);
             }
 
             var pluginsChain = new LinkedList<ISubscriberPlugin>();
@@ -86,7 +86,7 @@ namespace ReRabbit.Subscribers.Plugins
                 current = current.Previous;
             }
 
-            return await pluginsChain.First.Value.HandleAsync(ctx);
+            return pluginsChain.First.Value.HandleAsync(ctx);
         }
 
         #endregion Методы (public)

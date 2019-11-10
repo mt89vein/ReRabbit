@@ -1,4 +1,4 @@
-namespace ReRabbit.Abstractions
+namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Интерфейс события.

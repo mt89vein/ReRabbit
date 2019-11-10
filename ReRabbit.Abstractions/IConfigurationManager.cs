@@ -26,5 +26,12 @@ namespace ReRabbit.Abstractions
         /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
         /// <returns>Настройки подписчика.</returns>
         QueueSetting GetQueueSettings(string configurationSectionName);
+
+        /// <summary>
+        /// Получить конфигурацию события среди всех подключений и виртуальных хостов.
+        /// </summary>
+        /// <param name="eventName">Наименование события.</param>
+        /// <returns>Настройки события.</returns>
+        EventSettings GetEventSettings(string eventName);
     }
 }

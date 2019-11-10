@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
@@ -16,8 +15,6 @@ namespace ReRabbit.Core
     {
         #region Поля
 
-        private readonly ILogger<DefaultTopologyProvider> _logger;
-
         /// <summary>
         /// Конвенции именования.
         /// </summary>
@@ -30,14 +27,9 @@ namespace ReRabbit.Core
         /// <summary>
         /// Создает экземпляр класса <see cref="INamingConvention"/>.
         /// </summary>
-        /// <param name="logger">Логгер.</param>
         /// <param name="namingConvention">Конвенции именования.</param>
-        public DefaultTopologyProvider(
-            ILogger<DefaultTopologyProvider> logger,
-            INamingConvention namingConvention
-        )
+        public DefaultTopologyProvider(INamingConvention namingConvention)
         {
-            _logger = logger;
             _namingConvention = namingConvention;
         }
 
@@ -57,7 +49,7 @@ namespace ReRabbit.Core
 
             if (settings.UseDeadLetter)
             {
-                settings.Arguments[QueueArgument.DEAD_LETTER_EXCHANGE] =  _namingConvention.DeadLetterExchangeNamingConvention(messageType, settings);
+                settings.Arguments[QueueArgument.DEAD_LETTER_EXCHANGE] = _namingConvention.DeadLetterExchangeNamingConvention(messageType, settings);
                 settings.Arguments[QueueArgument.DEAD_LETTER_ROUTING_KEY] = queueName;
             }
 
@@ -148,12 +140,6 @@ namespace ReRabbit.Core
             var queueName = _namingConvention.QueueNamingConvention(messageType, settings);
             var deadLetterQueueName = _namingConvention.DeadLetterQueueNamingConvention(messageType, settings);
             var deadLetterExchangeName = _namingConvention.DeadLetterExchangeNamingConvention(messageType, settings);
-
-            // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди
-
-            //settings.ConnectionSettings.VirtualHost
-            //settings.ConnectionSettings.HostNames ->
-            //settings.ConnectionSettings.Port  -> ManagementPort default 15672
 
             channel.ExchangeDeclare(
                 exchange: deadLetterExchangeName,

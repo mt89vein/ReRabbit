@@ -1,7 +1,9 @@
- using NUnit.Framework;
+using NUnit.Framework;
 
 namespace ReRabbit.UnitTests
 {
+    // TODO: tests
+
     public class Tests
     {
         [SetUp]

@@ -1,6 +1,7 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core;
 using System.Collections.Generic;

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Attributes;
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Extensions;
 using System;
@@ -52,13 +53,13 @@ namespace ReRabbit.Subscribers
 
         #endregion Конструктор
 
-        #region Методы (public)
+        #region Методы (private)
 
         /// <summary>
         /// Зарегистрировать все обработчики событий, реализующих интерфейс <see cref="IEventHandler{T}"/>.
         /// </summary>
         /// <returns>Регистратор обработчиков.</returns>
-        public void RegisterAllEventHandlers()
+        private void RegisterAllEventHandlers()
         {
             var handlerGenericTypeDefinition = typeof(IEventHandler<>);
 
@@ -85,10 +86,6 @@ namespace ReRabbit.Subscribers
                 SubscribeToEvent(g.EventType, g.Handlers);
             }
         }
-
-        #endregion Методы (public)
-
-        #region Методы (private)
 
         /// <summary>
         /// Зарегистрировать на событие указанных обработчиков.

@@ -16,6 +16,16 @@
                         }
                     ]
                 }
+            },
+            "Events": {
+                "ExampleEvent": {
+                    "Exchange": {
+                        "Name": "example-exchange",
+                        "Durable": true
+                    },
+                    "RouteType": "Constant",
+                    "Route": "rk1"
+                }
             }
         }
     },
@@ -48,6 +58,9 @@
             },
             "Queues": {
                 "$ref": "./subscriber.schema.json"
+            },
+            "Events": {
+                "$ref": "./events.schema.json"
             }
         }
     }

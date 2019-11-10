@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using ReRabbit.Abstractions;
 using ReRabbit.Core;
+using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Serializations;
+using ReRabbit.Publishers;
 using ReRabbit.Subscribers;
 using ReRabbit.Subscribers.AcknowledgementBehaviours;
 using ReRabbit.Subscribers.Extensions;
@@ -45,7 +48,8 @@ namespace ReRabbit.Extensions
                 .AddConnectionServices(rabbitMqRegistrationOptions)
                 .AddSubscribers(rabbitMqRegistrationOptions)
                 .AddConfigurations(rabbitMqRegistrationOptions)
-                .AddSerializers(rabbitMqRegistrationOptions);
+                .AddSerializers(rabbitMqRegistrationOptions)
+                .AddPublishers(rabbitMqRegistrationOptions);
         }
 
         private static IServiceCollection AddConnectionServices(
@@ -99,6 +103,23 @@ namespace ReRabbit.Extensions
 
             services.AddScoped<ISubscriberPluginsExecutor, SubscriberPluginsExecutor>();
 
+            services.AddSingleton<UniqueMessagesSubscriberPlugin>();
+            services
+                .AddOptions<UniqueMessagesPluginSettings>()
+                .Configure<IConfiguration>((settings, configuration) =>
+                {
+                    var section =
+                        configuration.GetSection(ConfigurationSectionConstants.ROOT + ":" +
+                                                 nameof(UniqueMessagesPluginSettings));
+
+                    if (section.Exists())
+                    {
+                        section.Bind(settings);
+                    }
+
+                    settings.ServiceName = configuration.GetValue("ServiceName", "undefined-service-name");
+                });
+
             return services;
         }
 
@@ -125,6 +146,8 @@ namespace ReRabbit.Extensions
                 sp.GetRequiredService<DefaultTopologyProvider>()
             );
 
+            services.AddSingleton<IServiceInfoAccessor, ServiceInfoAccessor>();
+
             return services;
         }
 
@@ -133,13 +156,23 @@ namespace ReRabbit.Extensions
             RabbitMqRegistrationOptions options
         )
         {
-            // TODO: is Newtonsoft.json thread safe ?
             services.AddSingleton<JsonSerializer>();
             services.AddSingleton<DefaultJsonSerializer>();
             services.AddSingleton(
                 sp => options.Factories?.Serializer?.Invoke(sp) ??
                       sp.GetRequiredService<DefaultJsonSerializer>()
             );
+
+            return services;
+        }
+
+        private static IServiceCollection AddPublishers(
+            this IServiceCollection services,
+            RabbitMqRegistrationOptions options
+        )
+        {
+            services.AddSingleton<IRouteProvider, DefaultRouteProvider>();
+            services.AddSingleton<IEventPublisher, EventPublisher>();
 
             return services;
         }

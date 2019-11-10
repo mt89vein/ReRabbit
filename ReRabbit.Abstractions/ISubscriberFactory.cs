@@ -1,3 +1,4 @@
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 
 namespace ReRabbit.Abstractions

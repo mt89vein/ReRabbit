@@ -2,7 +2,6 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
-using System;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.RabbitMq.TestEvent
@@ -25,14 +24,14 @@ namespace SampleWebApplication.RabbitMq.TestEvent
             {
                 await Task.CompletedTask;
 
-                return Retry.In(TimeSpan.FromSeconds(5));
+                return Ack.Ok;
             }
         }
     }
 
-    public class Merics : IEvent
+    public class Metrics : IEvent
     {
-        public class MetricHandler : IEventHandler<Merics>
+        public class MetricHandler : IEventHandler<Metrics>
         {
             /// <summary>
             /// Обработать сообщение.
@@ -41,7 +40,7 @@ namespace SampleWebApplication.RabbitMq.TestEvent
             /// <param name="eventData">Данные о событии.</param>
             /// <returns>Результат выполнения обработчика.</returns>
             [SubscriberConfiguration("Q3Subscriber")]
-            public Task<Acknowledgement> HandleAsync(Merics @event, MqEventData eventData)
+            public Task<Acknowledgement> HandleAsync(Metrics @event, MqEventData eventData)
             {
                 return Task.FromResult<Acknowledgement>(Ack.Ok);
             }

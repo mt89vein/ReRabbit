@@ -373,8 +373,8 @@
                 "title": "Routing key.",
                 "default": "",
                 "examples": [
-                  "order.updated",
-                  "order.created"
+                  "example-routing-key",
+                  "another-routing-key"
                 ],
                 "pattern": "^(.*)$"
               }

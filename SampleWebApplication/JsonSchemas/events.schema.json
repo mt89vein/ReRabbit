@@ -1,0 +1,112 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "Virtual hosts",
+    "default": {
+        "ExampleEvent": {
+            "Exchange": {
+                "Name": "example-exchange",
+                "Type": "direct",
+                "Durable": true
+            },
+            "RouteType": "Constant",
+            "Route": "example-routing-key"
+        }
+    },
+    "additionalProperties": {
+        "type": "object",
+        "title": "Event name",
+        "properties": {
+            "Version": {
+                "$id": "#/properties/Version",
+                "type": "string",
+                "title": "Event format version",
+                "default": "v1",
+                "examples": [
+                    "v1",
+                    "v2"
+                ],
+                "pattern": "^(.*)$"
+            },
+            "Exchange": {
+                "$id": "#/properties/Exchange",
+                "type": "object",
+                "title": "Exchange settings.",
+                "default": {
+                    "Name": "example-exchange",
+                    "Type": "direct",
+                    "Durable": true,
+                    "AutoDelete": false
+                },
+                "required": [
+                    "Name"
+                ],
+                "properties": {
+                    "Name": {
+                        "$id": "#/properties/Exchange/properties/Name",
+                        "type": "string",
+                        "title": "Exchange name.",
+                        "default": "",
+                        "examples": [
+                            "example-exchange-name"
+                        ]
+                    },
+                    "Type": {
+                        "$id": "#/properties/Exchange/properties/Type",
+                        "type": "string",
+                        "title": "Rabbitmq exchange type.",
+                        "default": "direct",
+                        "examples": [
+                            "direct",
+                            "fanout",
+                            "topic",
+                            "headers"
+                        ]
+                    },
+                    "Durable": {
+                        "$id": "#/properties/Exchange/properties/Durable",
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Exchange will survive broker restart.",
+                        "examples": [
+                            true,
+                            false
+                        ]
+                    },
+                    "AutoDelete": {
+                        "$id": "#/properties/Exchange/properties/AutoDelete",
+                        "type": "boolean",
+                        "default": false,
+                        "title": "Exchange will be deleted, when all bindings removed.",
+                        "examples": [
+                            true,
+                            false
+                        ]
+                    }
+                }
+            },
+            "RouteType": {
+                "$id": "#/properties/RouteType",
+                "type": "string",
+                "title": "Route type",
+                "default": "Constant",
+                "enum": [
+                    "Constant",
+                    "Computed"
+                ],
+                "pattern": "^(.*)$"
+            },
+            "Route": {
+                "$id": "#/properties/Route",
+                "type": "string",
+                "title": "Route for publish.",
+                "default": "",
+                "examples": [
+                    "example-routing-key",
+                    "another-routing-key"
+                ],
+                "pattern": "^(.*)$"
+            }
+        }
+    }
+}

@@ -34,7 +34,7 @@ namespace ReRabbit.Abstractions.Acknowledgements
         /// <summary>
         /// Переобработать.
         /// </summary>
-        public static Nack WithRequeue { get; } = new Nack(true);
+        public static Nack WithRequeue { get; } = new Nack();
 
         /// <summary>
         /// Удалить из очереди.

@@ -95,6 +95,8 @@ namespace ReRabbit.Core
         public QueueSetting GetQueueSettings(string configurationSectionName)
         {
             // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
+
+            // TODO: понятное сообщение об ошибке
             return GetQueueSettings().Single();
 
             IEnumerable<QueueSetting> GetQueueSettings()
@@ -115,6 +117,43 @@ namespace ReRabbit.Core
                                 connectionSettings,
                                 virtualHostSettings,
                                 subscriberConfigurationSection
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Получить конфигурацию события среди всех подключений и виртуальных хостов.
+        /// </summary>
+        /// <param name="eventName">Наименование события.</param>
+        /// <returns>Настройки события.</returns>
+        public EventSettings GetEventSettings(string eventName)
+        {
+            // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
+
+            // TODO: понятное сообщение об ошибке
+            return GetEventsSettings().Single();
+
+            IEnumerable<EventSettings> GetEventsSettings()
+            {
+                foreach (var connectionSettings in Settings.Connections.Values)
+                {
+                    foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
+                    {
+                        if (_configuration.TryGetEventSection(
+                            connectionSettings.ConnectionName,
+                            virtualHostSettings.Name,
+                            eventName,
+                            out var eventConfigurationSection,
+                            out _)
+                        )
+                        {
+                            yield return BuildEventSettings(
+                                connectionSettings,
+                                virtualHostSettings,
+                                eventConfigurationSection
                             );
                         }
                     }
@@ -211,7 +250,62 @@ namespace ReRabbit.Core
             IConfigurationSection subscriberConfigurationSection
         )
         {
-            var mqConnectionSettings = new MqConnectionSettings(
+            var mqConnectionSettings = CreateConnectionSettings(connectionSettings, virtualHostSettings);
+            var queueSettings = new QueueSetting(mqConnectionSettings);
+
+            subscriberConfigurationSection.Bind(queueSettings);
+            if (string.IsNullOrWhiteSpace(queueSettings.ConsumerName))
+            {
+                queueSettings.ConsumerName = subscriberConfigurationSection.Key;
+            }
+
+            var bindings = Enumerable.Empty<ExchangeBinding>();
+            var arrayBindings = Array.Empty<ExchangeBinding>();
+            var listBindings = new List<ExchangeBinding>();
+
+            subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
+            subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
+            subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
+
+            // судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
+            Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
+
+            return queueSettings;
+        }
+
+        /// <summary>
+        /// Сформировать настройки события.
+        /// </summary>
+        /// <param name="connectionSettings">Настройки подключения.</param>
+        /// <param name="virtualHostSettings">Настройки виртуального хоста.</param>
+        /// <param name="eventConfigurationSection">Наименование секции конфигурации события.</param>
+        /// <returns>Настройки события.</returns>
+        private static EventSettings BuildEventSettings(
+            ConnectionSettings connectionSettings,
+            VirtualHostSetting virtualHostSettings,
+            IConfigurationSection eventConfigurationSection
+        )
+        {
+            var mqConnectionSettings = CreateConnectionSettings(connectionSettings, virtualHostSettings);
+            var eventSettings = new EventSettings(mqConnectionSettings, eventConfigurationSection.Key);
+
+            eventConfigurationSection.Bind(eventSettings);
+
+            return eventSettings;
+        }
+
+        /// <summary>
+        /// Сформировать настройки подключения.
+        /// </summary>
+        /// <param name="connectionSettings">Настройки подключения.</param>
+        /// <param name="virtualHostSettings">Настройки виртуального хоста.</param>
+        /// <returns>Настройки подключения.</returns>
+        private static MqConnectionSettings CreateConnectionSettings(
+            ConnectionSettings connectionSettings,
+            VirtualHostSetting virtualHostSettings
+        )
+        {
+            return new MqConnectionSettings(
                 connectionSettings.HostNames,
                 connectionSettings.Port,
                 virtualHostSettings.UserName,
@@ -236,27 +330,6 @@ namespace ReRabbit.Core
                 connectionSettings.TopologyRecoveryEnabled,
                 connectionSettings.SslOptions
             );
-
-            var queueSettings = new QueueSetting(mqConnectionSettings);
-
-            subscriberConfigurationSection.Bind(queueSettings);
-            if (string.IsNullOrWhiteSpace(queueSettings.ConsumerName))
-            {
-                queueSettings.ConsumerName = subscriberConfigurationSection.Key;
-            }
-
-            var bindings = Enumerable.Empty<ExchangeBinding>();
-            var arrayBindings = Array.Empty<ExchangeBinding>();
-            var listBindings = new List<ExchangeBinding>();
-
-            subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
-            subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
-            subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
-
-            // судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
-            Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
-
-            return queueSettings;
         }
 
         #endregion Методы (private)

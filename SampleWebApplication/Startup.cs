@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,13 @@ namespace SampleWebApplication
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
+
+        public Startup(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
@@ -20,12 +28,21 @@ namespace SampleWebApplication
             services.AddScoped<TestPlugin>();
             services.AddScoped<TestPlugin2>();
             services.AddScoped<GlobalTestPlugin>();
+            services.AddDistributedRedisCache(options =>
+            {
+                options.Configuration = _configuration.GetConnectionString("RedisConnection");
+                options.InstanceName = _configuration.GetValue<string>("ServiceName");
+            });
+
             services.AddRabbitMq(
                 x => x.SubscriberPlugins
+                    //.Add<UniqueMessagesSubscriberPlugin>(global:true)
                     .Add<GlobalTestPlugin>(global: true)
                     .Add<TestPlugin>()
                     .Add<TestPlugin2>()
             );
+
+            services.AddMvcCore(options => options.EnableEndpointRouting = false);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,6 +54,7 @@ namespace SampleWebApplication
             }
 
             app.UseRabbitMq();
+            app.UseMvc().UseMvcWithDefaultRoute();
         }
     }
 

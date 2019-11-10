@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using System;
@@ -47,13 +45,10 @@ namespace ReRabbit.Core
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultNamingConvention"/>.
         /// </summary>
-        /// <param name="configuration">Конфигурация.</param>
-        /// <param name="env">Переменные окружения.</param>
-        public DefaultNamingConvention(IConfiguration configuration, IHostEnvironment env)
+        /// <param name="serviceInfoAccessor">Предоставляет информацию о сервисе.</param>
+        public DefaultNamingConvention(IServiceInfoAccessor serviceInfoAccessor)
         {
             var currentVersion = typeof(IEventHandler<>).GetTypeInfo().Assembly.GetName().Version.ToString();
-            var serviceName = configuration.GetValue("ServiceName", "undefined-service-name");
-            var hostName = configuration.GetValue("HOSTNAME", Environment.MachineName);
 
             QueueNamingConvention = (messageType, setting) =>
             {
@@ -77,10 +72,10 @@ namespace ReRabbit.Core
                 retryDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) + "s-delayed-queue";
 
             ConsumerTagNamingConvention = (setting, channelNumber, consumerNumberInChannel) => string.Join("-",
-                serviceName,
-                hostName,
-                'v' + currentVersion,
-                env.EnvironmentName,
+                serviceInfoAccessor.ServiceInfo.ServiceName + "v" + serviceInfoAccessor.ServiceInfo.ApplicationVersion,
+                serviceInfoAccessor.ServiceInfo.HostName,
+                serviceInfoAccessor.ServiceInfo.EnvironmentName,
+                "v" + currentVersion,
                 setting.ConsumerName,
                 $"[{channelNumber}-{consumerNumberInChannel}]"
             );

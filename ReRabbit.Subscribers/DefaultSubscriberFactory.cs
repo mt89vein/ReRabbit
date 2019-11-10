@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 
 namespace ReRabbit.Subscribers

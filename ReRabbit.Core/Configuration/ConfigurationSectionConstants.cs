@@ -25,5 +25,10 @@ namespace ReRabbit.Core.Configuration
         /// Наименование секции с настройками очередей.
         /// </summary>
         public const string QUEUES = "Queues";
+
+        /// <summary>
+        /// Наименование секции с настройками событий.
+        /// </summary>
+        public const string EVENTS = "Events";
     }
 }

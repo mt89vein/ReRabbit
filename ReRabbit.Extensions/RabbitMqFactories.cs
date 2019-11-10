@@ -1,5 +1,5 @@
-using System;
 using ReRabbit.Abstractions;
+using System;
 
 namespace ReRabbit.Extensions
 {
@@ -57,5 +57,10 @@ namespace ReRabbit.Extensions
         /// Сервис сериализации/десериализации.
         /// </summary>
         public Func<IServiceProvider, ISerializer> Serializer { get; set; }
+
+        /// <summary>
+        /// Провайдер информации о роутах события для издателя.
+        /// </summary>
+        public Func<IServiceProvider, IRouteProvider> RouteProvider { get; set; }
     }
 }
