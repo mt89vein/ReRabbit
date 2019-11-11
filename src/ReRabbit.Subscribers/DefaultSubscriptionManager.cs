@@ -65,7 +65,6 @@ namespace ReRabbit.Subscribers
             using (_subscriberFactory
                 .CreateSubscriber<TMessage>(queueSetting)
                 .Bind())
-
             {
                 return true;
             }
@@ -123,7 +122,9 @@ namespace ReRabbit.Subscribers
         )
             where TMessage : IEvent
         {
-            return Register(eventHandler, _configurationManager.GetQueueSettings(
+            return Register(
+                eventHandler,
+                _configurationManager.GetQueueSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost

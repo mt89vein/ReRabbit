@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Subscribers.Models;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Plugins

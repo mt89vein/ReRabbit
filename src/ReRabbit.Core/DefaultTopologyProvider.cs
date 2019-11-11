@@ -1,5 +1,6 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using System;
@@ -155,7 +156,7 @@ namespace ReRabbit.Core
                 autoDelete: settings.AutoDelete,
                 arguments: new Dictionary<string, object>
                 {
-                    [QueueArgument.QUEUE_MODE] = "lazy"
+                    [QueueArgument.QUEUE_MODE] = QueueMode.Lazy
                 }
             );
 
@@ -186,7 +187,7 @@ namespace ReRabbit.Core
                 autoDelete: false,
                 arguments: new Dictionary<string, object>
                 {
-                    [QueueArgument.QUEUE_MODE] = "lazy"
+                    [QueueArgument.QUEUE_MODE] = QueueMode.Lazy
                 }
             );
 
@@ -223,7 +224,7 @@ namespace ReRabbit.Core
                 autoDelete: false,
                 arguments: new Dictionary<string, object>
                 {
-                    [QueueArgument.QUEUE_MODE] = "lazy"
+                    [QueueArgument.QUEUE_MODE] = QueueMode.Lazy
                 }
             );
 

@@ -6,7 +6,9 @@ namespace ReRabbit.Subscribers.Plugins
     /// <summary>
     /// Реестр плагинов.
     /// </summary>
-    internal sealed class SubscriberPluginsRegistry : ISubscriberPluginsRegistry, ISubscriberPluginsRegistryAccessor
+    internal sealed class SubscriberPluginsRegistry :
+        ISubscriberPluginsRegistry,
+        ISubscriberPluginsRegistryAccessor
     {
         #region Поля
 

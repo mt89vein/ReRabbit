@@ -12,6 +12,15 @@ namespace ReRabbit.Core
     /// </summary>
     public class ServiceInfoAccessor : IServiceInfoAccessor
     {
+        #region Свойства
+
+        /// <summary>
+        /// Информация о сервисе.
+        /// </summary>
+        public ServiceInfo ServiceInfo { get; }
+
+        #endregion  Свойства
+
         #region Конструктор
 
         /// <summary>
@@ -34,14 +43,5 @@ namespace ReRabbit.Core
         }
 
         #endregion Конструктор
-
-        #region Свойства
-
-        /// <summary>
-        /// Информация о сервисе.
-        /// </summary>
-        public ServiceInfo ServiceInfo { get; }
-
-        #endregion  Свойства
     }
 }

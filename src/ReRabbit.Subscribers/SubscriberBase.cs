@@ -9,6 +9,7 @@ using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
+using ReRabbit.Subscribers.Models;
 using ReRabbit.Subscribers.Plugins;
 using System;
 using System.Collections.Generic;

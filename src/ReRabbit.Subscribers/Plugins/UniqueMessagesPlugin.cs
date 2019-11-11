@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Subscribers.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
