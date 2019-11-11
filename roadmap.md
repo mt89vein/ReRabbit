@@ -24,6 +24,7 @@
 * UnitTests
 * FunctionalTests
 * Connection/permission problems handling (403, blocked connections etc)
+* TraceContext integration
 
 # v1.1.0
 
