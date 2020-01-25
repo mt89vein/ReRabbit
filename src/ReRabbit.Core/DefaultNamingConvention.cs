@@ -68,11 +68,14 @@ namespace ReRabbit.Core
                 QueueNamingConvention(messageType, setting) + "-" +
                 retryDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) + "s-delayed-queue";
 
-            ConsumerTagNamingConvention = (setting, channelNumber, consumerNumberInChannel) => string.Join("-",
+            var rerabbitVersion = "v" + GetType().Assembly.GetName().Version;
+            
+            ConsumerTagNamingConvention = (setting, channelNumber, consumerNumberInChannel) =>
+                string.Join("-",
                 serviceInfoAccessor.ServiceInfo.ServiceName + "v" + serviceInfoAccessor.ServiceInfo.ApplicationVersion,
                 serviceInfoAccessor.ServiceInfo.HostName,
                 serviceInfoAccessor.ServiceInfo.EnvironmentName,
-                "v" + GetType().Assembly.GetName().Version.ToString(),
+                rerabbitVersion,
                 setting.ConsumerName,
                 $"[{channelNumber}-{consumerNumberInChannel}]"
             );

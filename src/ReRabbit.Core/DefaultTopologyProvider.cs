@@ -74,6 +74,11 @@ namespace ReRabbit.Core
                         type: binding.ExchangeType
                     );
 
+                    if (binding.ExchangeType == "fanout")
+                    {
+                        binding.RoutingKeys.Add(string.Empty);
+                    }
+
                     foreach (var routingKey in binding.RoutingKeys)
                     {
                         channel.QueueBind(
