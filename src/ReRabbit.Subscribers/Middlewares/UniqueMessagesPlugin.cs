@@ -1,18 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Subscribers.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers.Plugins
+namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Настройки плагина для дедупликации сообщений.
+    /// Настройки middleware для дедупликации сообщений.
     /// </summary>
-    public class UniqueMessagesPluginSettings
+    public class UniqueMessagesMiddlewareSettings
     {
         /// <summary>
         /// Наименование сервиса.
@@ -26,16 +26,16 @@ namespace ReRabbit.Subscribers.Plugins
     }
 
     /// <summary>
-    /// Плагин дедупликации сообщений.
+    /// Middleware дедупликации сообщений.
     /// </summary>
-    public sealed class UniqueMessagesSubscriberPlugin : SubscriberPluginBase
+    public sealed class UniqueMessagesSubscriberMiddleware : MiddlewareBase
     {
         #region Поля
 
         /// <summary>
-        /// Настройки плагина для дедупликации сообщений.
+        /// Настройки middleware для дедупликации сообщений.
         /// </summary>
-        private readonly UniqueMessagesPluginSettings _options;
+        private readonly UniqueMessagesMiddlewareSettings _options;
 
         /// <summary>
         /// Интерфейс кэша.
@@ -45,22 +45,22 @@ namespace ReRabbit.Subscribers.Plugins
         /// <summary>
         /// Логгер.
         /// </summary>
-        private readonly ILogger<UniqueMessagesSubscriberPlugin> _logger;
+        private readonly ILogger<UniqueMessagesSubscriberMiddleware> _logger;
 
         #endregion Поля
 
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр класса <see cref="UniqueMessagesSubscriberPlugin"/>
+        /// Создает экземпляр класса <see cref="UniqueMessagesSubscriberMiddleware"/>
         /// </summary>
         /// <param name="cache">Интерфейс кэша.</param>
-        /// <param name="options">Настройки плагина для дедупликации сообщений.</param>
+        /// <param name="options">Настройки middleware для дедупликации сообщений.</param>
         /// <param name="logger">Логгер.</param>
-        public UniqueMessagesSubscriberPlugin(
+        public UniqueMessagesSubscriberMiddleware(
             IDistributedCache cache,
-            IOptions<UniqueMessagesPluginSettings> options,
-            ILogger<UniqueMessagesSubscriberPlugin> logger
+            IOptions<UniqueMessagesMiddlewareSettings> options,
+            ILogger<UniqueMessagesSubscriberMiddleware> logger
         )
         {
             _options = options.Value;

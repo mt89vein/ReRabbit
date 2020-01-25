@@ -1,4 +1,6 @@
-using ReRabbit.Subscribers.Plugins;
+using NamedResolver.Abstractions;
+using ReRabbit.Abstractions;
+using ReRabbit.Subscribers.Middlewares;
 
 namespace ReRabbit.Extensions
 {
@@ -17,7 +19,7 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Реестр плагинов подписчиков.
         /// </summary>
-        public ISubscriberPluginsRegistry SubscriberPlugins { get; }
+        public IMiddlewareRegistry SubscriberPlugins { get; }
 
         #endregion Свойства
 
@@ -30,10 +32,21 @@ namespace ReRabbit.Extensions
         /// Создает экземпляр класса <see cref="RabbitMqRegistrationOptions"/>.
         /// </summary>
         /// <param name="subscriberPluginsRegistry">Реестр плагинов подписчиков.</param>
-        public RabbitMqRegistrationOptions(ISubscriberPluginsRegistry subscriberPluginsRegistry)
+        /// <param name="subscriberRegistrator">
+        /// Регистратор именованных подписчиков.
+        /// </param>
+        /// <param name="acknowledgementBehaviourRegistrator">
+        /// Регистратор реализаций поведений оповещений брокера о результате обработки сообщения из шины.
+        /// </param>
+        public RabbitMqRegistrationOptions(
+            IMiddlewareRegistry subscriberPluginsRegistry,
+            INamedRegistratorBuilder<ISubscriber> subscriberRegistrator,
+            INamedRegistratorBuilder<IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator
+
+        )
         {
             SubscriberPlugins = subscriberPluginsRegistry;
-            Factories = new RabbitMqFactories();
+            Factories = new RabbitMqFactories(subscriberRegistrator, acknowledgementBehaviourRegistrator);
         }
 
         #endregion Конструктор

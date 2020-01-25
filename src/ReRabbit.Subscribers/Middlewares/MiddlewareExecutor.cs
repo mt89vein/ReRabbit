@@ -1,23 +1,24 @@
-using ReRabbit.Abstractions.Acknowledgements;
-using ReRabbit.Subscribers.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Subscribers.Models;
 
-namespace ReRabbit.Subscribers.Plugins
+namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Вызыватель реализаций плагинов.
+    /// Вызыватель реализаций middleware.
     /// </summary>
-    internal sealed class SubscriberPluginsExecutor : ISubscriberPluginsExecutor
+    internal sealed class MiddlewareExecutor : IMiddlewareExecutor
     {
         #region Поля
 
         /// <summary>
         /// Интерфейс, предоставляющий доступ к реестру плагинов.
         /// </summary>
-        private readonly ISubscriberPluginsRegistryAccessor _registry;
+        private readonly IMiddlewareRegistryAccessor _registry;
 
         /// <summary>
         /// Провайдер служб.
@@ -29,11 +30,11 @@ namespace ReRabbit.Subscribers.Plugins
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр класса <see cref="SubscriberPluginsExecutor"/>
+        /// Создает экземпляр класса <see cref="MiddlewareExecutor"/>
         /// </summary>
-        /// <param name="registry">Интерфейс, предоставляющий доступ к реестру плагинов.</param>
+        /// <param name="registry">Интерфейс, предоставляющий доступ к реестру middleware.</param>
         /// <param name="serviceProvider">Провайдер служб.</param>
-        public SubscriberPluginsExecutor(ISubscriberPluginsRegistryAccessor registry, IServiceProvider serviceProvider)
+        public MiddlewareExecutor(IMiddlewareRegistryAccessor registry, IServiceProvider serviceProvider)
         {
             _registry = registry;
             _serviceProvider = serviceProvider;
@@ -48,37 +49,38 @@ namespace ReRabbit.Subscribers.Plugins
         /// </summary>
         /// <param name="next">Финальный, основной обработчик.</param>
         /// <param name="ctx">Контекст.</param>
-        /// <param name="plugins">Имена плагинов для вызова.</param>
+        /// <param name="middlewareNames">Имена плагинов для вызова.</param>
         /// <returns>Результат обработки.</returns>
-        public Task<Acknowledgement> ExecuteAsync(
+        public async Task<Acknowledgement> ExecuteAsync(
             Func<MessageContext, Task<Acknowledgement>> next,
             MessageContext ctx,
-            IEnumerable<string> plugins
+            IEnumerable<string> middlewareNames
         )
         {
-            var pluginInfos = _registry.Get().Where(x => plugins.Contains(x.PluginType.Name) || x.IsGlobal);
+            var middlewareInfos = _registry.Get().Where(x => middlewareNames.Contains(x.MiddlewareType.Name) || x.IsGlobal);
 
-            if (!pluginInfos.Any())
+            if (!middlewareInfos.Any())
             {
-                return next(ctx);
+                return await next(ctx);
             }
 
-            var pluginsChain = new LinkedList<ISubscriberPlugin>();
+            var middlewareChain = new LinkedList<IMiddleware>();
+            using var scope = _serviceProvider.CreateScope();
 
-            foreach (var (pluginType, _) in pluginInfos)
+            foreach (var (middlewareType, _) in middlewareInfos)
             {
-                if (_serviceProvider.GetService(pluginType) is ISubscriberPlugin subscriberPlugin)
+                if (scope.ServiceProvider.GetService(middlewareType) is IMiddleware middleware)
                 {
-                    pluginsChain.AddLast(subscriberPlugin);
+                    middlewareChain.AddLast(middleware);
                 }
             }
 
-            var current = pluginsChain.Last;
+            var current = middlewareChain.Last;
 
             while (current != null)
             {
-                var plugin = current.Value as SubscriberPluginBase;
-                plugin?
+                var middleware = current.Value as MiddlewareBase;
+                middleware?
                     .SetNext(current.Next == null
                         ? next
                         : current.Next.Value.HandleAsync
@@ -87,7 +89,7 @@ namespace ReRabbit.Subscribers.Plugins
                 current = current.Previous;
             }
 
-            return pluginsChain.First.Value.HandleAsync(ctx);
+            return await middlewareChain.First.Value.HandleAsync(ctx);
         }
 
         #endregion Методы (public)

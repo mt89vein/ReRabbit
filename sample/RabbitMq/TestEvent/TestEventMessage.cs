@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SampleWebApplication.RabbitMq.TestEvent
 {
-    public class TestEventMessage : IEvent
+    public class TestEventMessage : IntegrationEvent
     {
         public string Message { get; set; }
 
@@ -29,7 +29,7 @@ namespace SampleWebApplication.RabbitMq.TestEvent
         }
     }
 
-    public class Metrics : IEvent
+    public class Metrics : IntegrationEvent
     {
         public class MetricHandler : IEventHandler<Metrics>
         {
@@ -47,7 +47,7 @@ namespace SampleWebApplication.RabbitMq.TestEvent
         }
     }
 
-    public class TopicTest : IEvent
+    public class TopicTest : IntegrationEvent
     {
         public class TopicHandler : IEventHandler<TopicTest>
         {
@@ -65,7 +65,7 @@ namespace SampleWebApplication.RabbitMq.TestEvent
         }
     }
 
-    public class HeadersTest : IEvent
+    public class HeadersTest : IntegrationEvent
     {
         public class HeadersHandler : IEventHandler<HeadersTest>
         {

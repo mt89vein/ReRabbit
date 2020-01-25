@@ -12,113 +12,104 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        /// <returns>True, если удалось выполнить привязку.</returns>
-        bool Bind<TMessage>(QueueSetting queueSetting)
-            where TMessage : IEvent;
+        void Bind<TEvent>(QueueSetting queueSetting)
+            where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        /// <returns>True, если удалось выполнить привязку.</returns>
-        bool Bind<TMessage>(string configurationSectionName)
-            where TMessage : IEvent;
+        void Bind<TEvent>(string configurationSectionName)
+            where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>True, если удалось выполнить привязку.</returns>
-        bool Bind<TMessage>(
+        void Bind<TEvent>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        bool Register<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+        void Register<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        bool Register<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+        void Register<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        bool Register<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+        void Register<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        bool Register<TMessage>(
-            MessageHandler<TMessage> eventHandler,
+        void Register<TEvent>(
+            MessageHandler<TEvent> eventHandler,
             string configurationSectionName
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        bool Register<TMessage>(
-            MessageHandler<TMessage> eventHandler,
+        void Register<TEvent>(
+            MessageHandler<TEvent> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        bool Register<TMessage>(
-            MessageHandler<TMessage> eventHandler,
+        void Register<TEvent>(
+            MessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
-        ) where TMessage : IEvent;
+        ) where TEvent : IEvent;
     }
 }

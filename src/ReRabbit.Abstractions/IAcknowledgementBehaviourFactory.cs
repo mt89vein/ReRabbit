@@ -12,6 +12,6 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="queueSetting">Настройки подписчика.</param>
         /// <returns>Поведение оповещения брокера сообщений.</returns>
-        IAcknowledgementBehaviour GetBehaviour<TMessageType>(QueueSetting queueSetting);
+        IAcknowledgementBehaviour GetBehaviour<TEventType>(QueueSetting queueSetting);
     }
 }

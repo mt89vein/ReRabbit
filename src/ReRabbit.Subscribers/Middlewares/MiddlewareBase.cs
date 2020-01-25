@@ -1,15 +1,15 @@
-using ReRabbit.Abstractions.Acknowledgements;
-using ReRabbit.Subscribers.Models;
 using System;
 using System.Threading.Tasks;
+using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Subscribers.Models;
 
-namespace ReRabbit.Subscribers.Plugins
+namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
     /// Базовая реализация плагина подписчика.
     /// Любой другой плагин должен наследоваться от него.
     /// </summary>
-    public abstract class SubscriberPluginBase : ISubscriberPlugin
+    public abstract class MiddlewareBase : IMiddleware
     {
         #region Свойства
 
@@ -34,7 +34,7 @@ namespace ReRabbit.Subscribers.Plugins
         #region Методы (internal)
 
         /// <summary>
-        /// Метод, для установки следующего цепочке выполнения плагинов.
+        /// Метод, для установки следующего цепочке выполнения middleware.
         /// </summary>
         /// <param name="next">Следующий делегат, для выполнения.</param>
         internal void SetNext(Func<MessageContext, Task<Acknowledgement>> next)

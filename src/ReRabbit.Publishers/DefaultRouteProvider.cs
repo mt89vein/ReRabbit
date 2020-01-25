@@ -52,7 +52,7 @@ namespace ReRabbit.Publishers
         /// <returns>Информация о роуте.</returns>
         public RouteInfo GetFor(IEvent @event, TimeSpan? delay = null)
         {
-            // TODO: Delay
+            // TODO: Delay publish
 
             var eventType = @event.GetType();
 

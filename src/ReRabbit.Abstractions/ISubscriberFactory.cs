@@ -1,5 +1,4 @@
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
 
 namespace ReRabbit.Abstractions
 {
@@ -9,12 +8,11 @@ namespace ReRabbit.Abstractions
     public interface ISubscriberFactory
     {
         /// <summary>
-        /// Создать подписчика.
+        /// Получить подписчика.
         /// </summary>
-        /// <typeparam name="TMessageType">Тип сообщения.</typeparam>
-        /// <param name="queueSettings">Настройки подписчика.</param>
+        /// <typeparam name="TEvent">Тип сообщения.</typeparam>
         /// <returns>Подписчик.</returns>
-        ISubscriber<TMessageType> CreateSubscriber<TMessageType>(QueueSetting queueSettings)
-            where TMessageType : IEvent;
+        ISubscriber GetSubscriber<TEvent>()
+            where TEvent : IEvent;
     }
 }

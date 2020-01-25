@@ -21,9 +21,9 @@ namespace ReRabbit.Core
         private readonly IClientPropertyProvider _clientPropertyProvider;
 
         /// <summary>
-        /// Фабрика логгеров.
+        /// Логгер.
         /// </summary>
-        private readonly ILoggerFactory _loggerFactory;
+        private readonly ILogger<DefaultPermanentConnection> _logger;
 
         /// <summary>
         /// Пул подключений.
@@ -38,14 +38,14 @@ namespace ReRabbit.Core
         /// Создает экземпляр класса <see cref="DefaultPermanentConnectionManager"/>.
         /// </summary>
         /// <param name="clientPropertyProvider">Провайдер свойств подключения.</param>
-        /// <param name="loggerFactory">Фабрика логгеров.</param>
+        /// <param name="logger">Логгер.</param>
         public DefaultPermanentConnectionManager(
             IClientPropertyProvider clientPropertyProvider,
-            ILoggerFactory loggerFactory
+            ILogger<DefaultPermanentConnection> logger
         )
         {
             _clientPropertyProvider = clientPropertyProvider;
-            _loggerFactory = loggerFactory;
+            _logger = logger;
             _permanentConnections = new ConcurrentDictionary<MqConnectionSettings, IPermanentConnection>();
         }
 
@@ -119,7 +119,7 @@ namespace ReRabbit.Core
             return new DefaultPermanentConnection(
                 settings,
                 connectionFactory,
-                _loggerFactory.CreateLogger<DefaultPermanentConnection>()
+                _logger
             );
         }
 

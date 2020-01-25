@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Extensions;
+using ReRabbit.Subscribers.Models;
 using ReRabbit.Subscribers.Plugins;
 using System.Threading.Tasks;
 
@@ -58,7 +59,7 @@ namespace SampleWebApplication
         }
     }
 
-    public class TestPlugin : SubscriberPluginBase
+    public class TestPlugin : MiddlewareBase
     {
         private readonly ILogger<TestPlugin> _logger;
 
@@ -82,7 +83,7 @@ namespace SampleWebApplication
         }
     }
 
-    public class TestPlugin2 : SubscriberPluginBase
+    public class TestPlugin2 : MiddlewareBase
     {
         private readonly ILogger<TestPlugin2> _logger;
 
@@ -106,7 +107,7 @@ namespace SampleWebApplication
         }
     }
 
-    public class GlobalTestPlugin : SubscriberPluginBase
+    public class GlobalTestPlugin : MiddlewareBase
     {
         private readonly ILogger<GlobalTestPlugin> _logger;
 

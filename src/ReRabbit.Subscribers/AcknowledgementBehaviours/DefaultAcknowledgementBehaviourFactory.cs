@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 
@@ -12,24 +12,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         #region Поля
 
         /// <summary>
-        /// Конвенции именования.
+        /// Резолвер реализаций поведений.
         /// </summary>
-        private readonly INamingConvention _namingConvention;
-
-        /// <summary>
-        /// Провайдер топологий.
-        /// </summary>
-        private readonly ITopologyProvider _topologyProvider;
-
-        /// <summary>
-        /// Вычислитель задержек между повторными обработками.
-        /// </summary>
-        private readonly IRetryDelayComputer _retryDelayComputer;
-
-        /// <summary>
-        /// Фабрика логгеров.
-        /// </summary>
-        private readonly ILoggerFactory _loggerFactory;
+        private readonly INamedResolver<IAcknowledgementBehaviour> _resolver;
 
         #endregion Поля
 
@@ -38,21 +23,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultAcknowledgementBehaviourFactory"/>.
         /// </summary>
-        /// <param name="namingConvention">Конвенции именования.</param>
-        /// <param name="topologyProvider">Провайдер топологий.</param>
-        /// <param name="retryDelayComputer">Вычислитель задержек между повторными обработками.</param>
-        /// <param name="loggerFactory">Фабрика логгеров.</param>
+        /// <param name="resolver">Резолвер реализаций поведений.</param>
         public DefaultAcknowledgementBehaviourFactory(
-            INamingConvention namingConvention,
-            ITopologyProvider topologyProvider,
-            IRetryDelayComputer retryDelayComputer,
-            ILoggerFactory loggerFactory
+            INamedResolver<IAcknowledgementBehaviour> resolver
         )
         {
-            _namingConvention = namingConvention;
-            _topologyProvider = topologyProvider;
-            _retryDelayComputer = retryDelayComputer;
-            _loggerFactory = loggerFactory;
+            _resolver = resolver;
         }
 
         #endregion Конструктор
@@ -62,19 +38,17 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Получить поведение.
         /// </summary>
-        /// <typeparam name="TMessageType">Тип сообщения.</typeparam>
+        /// <typeparam name="TEventType">Тип сообщения.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
         /// <returns>Поведение оповещения брокера сообщений.</returns>
-        public IAcknowledgementBehaviour GetBehaviour<TMessageType>(QueueSetting queueSetting)
+        public IAcknowledgementBehaviour GetBehaviour<TEventType>(QueueSetting queueSetting)
         {
-            return new DefaultAcknowledgementBehaviour(
-                queueSetting,
-                _retryDelayComputer,
-                _namingConvention,
-                _topologyProvider,
-                _loggerFactory.CreateLogger<TMessageType>(),
-                typeof(TMessageType)
-            );
+            if (_resolver.TryGet(out var acknowledgementBehaviour, typeof(TEventType).Name))
+            {
+                return acknowledgementBehaviour;
+            }
+
+            return _resolver.GetRequired();
         }
 
         #endregion Методы (public)

@@ -3,6 +3,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Extensions;
@@ -20,11 +21,6 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         #region Поля
 
         /// <summary>
-        /// Настройки очереди.
-        /// </summary>
-        private readonly QueueSetting _queueSettings;
-
-        /// <summary>
         /// Вычислитель задержек между повторными обработками.
         /// </summary>
         private readonly IRetryDelayComputer _retryDelayComputer;
@@ -40,14 +36,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private readonly ITopologyProvider _topologyProvider;
 
         /// <summary>
-        /// Тип сообщения.
-        /// </summary>
-        private readonly Type _messageType;
-
-        /// <summary>
         /// Логгер.
         /// </summary>
-        private readonly ILogger _logger;
+        private readonly ILogger<DefaultAcknowledgementBehaviour> _logger;
 
         #endregion Поля
 
@@ -56,26 +47,20 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultAcknowledgementBehaviour"/>.
         /// </summary>
-        /// <param name="queueSettings">Настройки очереди.</param>
         /// <param name="retryDelayComputer">Вычислитель задержек между повторными обработками.</param>
         /// <param name="namingConvention">Конвенция именования.</param>
         /// <param name="topologyProvider">Провайдер топологий.</param>
         /// <param name="logger">Логгер.</param>
-        /// <param name="messageType">Тип сообщения.</param>
         public DefaultAcknowledgementBehaviour(
-            QueueSetting queueSettings,
             IRetryDelayComputer retryDelayComputer,
             INamingConvention namingConvention,
             ITopologyProvider topologyProvider,
-            ILogger logger,
-            Type messageType
+            ILogger<DefaultAcknowledgementBehaviour> logger
         )
         {
-            _queueSettings = queueSettings;
             _retryDelayComputer = retryDelayComputer;
             _namingConvention = namingConvention;
             _topologyProvider = topologyProvider;
-            _messageType = messageType;
             _logger = logger;
         }
 
@@ -89,21 +74,27 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="acknowledgement">Данные о результате обработки.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="deliveryArgs">Параметры доставки.</param>
-        public void Handle(Acknowledgement acknowledgement, IModel channel, BasicDeliverEventArgs deliveryArgs)
+        /// <param name="settings">Настройки очереди.</param>
+        public void Handle<TEventType>(
+            Acknowledgement acknowledgement,
+            IModel channel,
+            BasicDeliverEventArgs deliveryArgs,
+            QueueSetting settings
+        ) where TEventType : IEvent
         {
             switch (acknowledgement)
             {
                 case Ack ack:
-                    HandleAck(ack, channel, deliveryArgs);
+                    HandleAck(ack, channel, deliveryArgs, settings);
                     break;
                 case Reject reject:
-                    HandleReject(reject, channel, deliveryArgs);
+                    HandleReject<TEventType>(reject, channel, deliveryArgs, settings);
                     break;
                 case Nack nack:
-                    HandleNack(nack, channel, deliveryArgs);
+                    HandleNack<TEventType>(nack, channel, deliveryArgs, settings);
                     break;
                 case Retry retry:
-                    HandleRetry(retry, channel, deliveryArgs);
+                    HandleRetry<TEventType>(retry, channel, deliveryArgs, settings);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -124,13 +115,19 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="retry">Информация о повторе обработки.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="deliveryArgs">Параметры доставки.</param>
-        private void HandleRetry(Retry retry, IModel channel, BasicDeliverEventArgs deliveryArgs)
+        /// <param name="settings">Настройки очереди.</param>
+        private void HandleRetry<TEventType>(
+            Retry retry,
+            IModel channel,
+            BasicDeliverEventArgs deliveryArgs,
+            QueueSetting settings
+        ) where TEventType : IEvent
         {
             try
             { }
             finally
             {
-                if (TryRetry(channel, deliveryArgs, retry.Span))
+                if (TryRetry<TEventType>(channel, deliveryArgs, settings, retry.Span))
                 {
                     channel.BasicAck(deliveryArgs.DeliveryTag, false);
                 }
@@ -147,9 +144,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="ack">Дополнительные данные об успешной обработке.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="deliveryArgs">Параметры доставки.</param>
-        private void HandleAck(Ack ack, IModel channel, BasicDeliverEventArgs deliveryArgs)
+        /// <param name="settings">Настройки очереди.</param>
+        private static void HandleAck(
+            Ack ack,
+            IModel channel,
+            BasicDeliverEventArgs deliveryArgs,
+            QueueSetting settings
+        )
         {
-            if (!_queueSettings.AutoAck)
+            if (!settings.AutoAck)
             {
                 channel.BasicAck(deliveryArgs.DeliveryTag, false);
             }
@@ -161,15 +164,21 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="nack">Дополнительные данные о неуспешной обработке.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="deliveryArgs">Параметры доставки.</param>
-        private void HandleNack(Nack nack, IModel channel, BasicDeliverEventArgs deliveryArgs)
+        /// <param name="settings">Настройки очереди.</param>
+        private void HandleNack<TEventType>(
+            Nack nack,
+            IModel channel,
+            BasicDeliverEventArgs deliveryArgs,
+            QueueSetting settings
+        ) where TEventType : IEvent
         {
             try
             { }
             finally
             {
-                if (TryRetry(channel, deliveryArgs))
+                if (TryRetry<TEventType>(channel, deliveryArgs, settings))
                 {
-                    if (!_queueSettings.AutoAck)
+                    if (!settings.AutoAck)
                     {
                         channel.BasicAck(deliveryArgs.DeliveryTag, false);
                     }
@@ -187,7 +196,13 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="reject">Дополнительные данные о неуспешной обработке.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="deliveryArgs">Параметры доставки.</param>
-        private void HandleReject(Reject reject, IModel channel, BasicDeliverEventArgs deliveryArgs)
+        /// <param name="settings">Настройки очереди.</param>
+        private void HandleReject<TEventType>(
+            Reject reject,
+            IModel channel,
+            BasicDeliverEventArgs deliveryArgs,
+            QueueSetting settings
+        ) where TEventType : IEvent
         {
             try
             { }
@@ -195,9 +210,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             {
                 if (reject is EmptyBodyReject || reject is FormatReject)
                 {
-                    _logger.LogWarning( "Сообщение перемещено в общую unrouted очередь. {Reason}", reject.Reason);
+                    _logger.LogWarning("Сообщение перемещено в общую unrouted очередь. {Reason}", reject.Reason);
 
-                    if (_queueSettings.ConnectionSettings.UseCommonUnroutedMessagesQueue)
+                    if (settings.ConnectionSettings.UseCommonUnroutedMessagesQueue)
                     {
                         channel.BasicPublish(
                             CommonQueuesConstants.UNROUTED_MESSAGES,
@@ -209,9 +224,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     channel.BasicAck(deliveryArgs.DeliveryTag, false);
                 }
-                else if (TryRetry(channel, deliveryArgs))
+                else if (TryRetry<TEventType>(channel, deliveryArgs, settings))
                 {
-                    if (!_queueSettings.AutoAck)
+                    if (!settings.AutoAck)
                     {
                         channel.BasicAck(deliveryArgs.DeliveryTag, false);
                     }
@@ -228,25 +243,31 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// </summary>
         /// <param name="channel">Канал.</param>
         /// <param name="deliveryArgs">Параметры доставки.</param>
+        /// <param name="settings">Настройки очереди.</param>
         /// <param name="retryDelay">Время, через которое необходимо повторить обработку.</param>
         /// <returns>True, если удалось успешно переотправить.</returns>
-        private bool TryRetry(IModel channel, BasicDeliverEventArgs deliveryArgs, TimeSpan? retryDelay = null)
+        private bool TryRetry<TEventType>(
+            IModel channel,
+            BasicDeliverEventArgs deliveryArgs,
+            QueueSetting settings,
+            TimeSpan? retryDelay = null
+        )
         {
             // если явно не указали время ретрая, то смотрим настройки и т.д. 
             if (retryDelay == null)
             {
-                if (!_queueSettings.RetrySettings.IsEnabled)
+                if (!settings.RetrySettings.IsEnabled)
                 {
                     return false;
                 }
 
-                if (deliveryArgs.BasicProperties.IsLastRetry(_queueSettings.RetrySettings))
+                if (deliveryArgs.BasicProperties.IsLastRetry(settings.RetrySettings))
                 {
-                    if (_queueSettings.RetrySettings.LogOnFailLastRetry)
+                    if (settings.RetrySettings.LogOnFailLastRetry)
                     {
                         _logger.LogError(
                             "Сообщение не было обработано за {RetryCount} попыток.",
-                            _queueSettings.RetrySettings.RetryCount
+                            settings.RetrySettings.RetryCount
                         );
                     }
 
@@ -255,21 +276,21 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             }
 
             var routingKey = string.Empty;
-            if (_queueSettings.RetrySettings.RetryDelayInSeconds == 0 && retryDelay == null)
+            if (settings.RetrySettings.RetryDelayInSeconds == 0 && retryDelay == null)
             {
-                routingKey = _namingConvention.QueueNamingConvention(_messageType, _queueSettings);
+                routingKey = _namingConvention.QueueNamingConvention(typeof(TEventType), settings);
             }
             else
             {
                 var actualRetryDelay = retryDelay ?? _retryDelayComputer.Compute(
-                                           _queueSettings.RetrySettings,
+                                           settings.RetrySettings,
                                            deliveryArgs.BasicProperties.GetRetryNumber()
                                        );
 
                 routingKey = _topologyProvider.DeclareDelayedQueue(
                     channel,
-                    _queueSettings,
-                    _messageType,
+                    settings,
+                    typeof(TEventType),
                     actualRetryDelay
                 );
 
@@ -277,7 +298,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     actualRetryDelay.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
             }
 
-            deliveryArgs.BasicProperties.SetRetryCount(deliveryArgs.BasicProperties.GetRetryNumber() + 1);
+            deliveryArgs.BasicProperties.IncrementRetryCount(1);
 
             channel.BasicPublish(
                 exchange: string.Empty,
@@ -286,7 +307,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 body: deliveryArgs.Body
             );
 
-            if (_queueSettings.RetrySettings.LogOnRetry)
+            if (settings.RetrySettings.LogOnRetry)
             {
                 _logger.LogInformation(
                     "Сообщение отправлено на повтор. Время задержки: {Delay:000} ms.",

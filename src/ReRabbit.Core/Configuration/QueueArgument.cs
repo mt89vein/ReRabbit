@@ -1,3 +1,5 @@
+using RabbitMQ.Client;
+
 namespace ReRabbit.Core.Configuration
 {
     /// <summary>
@@ -8,24 +10,24 @@ namespace ReRabbit.Core.Configuration
         /// <summary>
         /// Обменник, в которую будет переслано сообщение, если сделать basicReject или basicNack с параметром reEnqueue: false
         /// </summary>
-        public const string DEAD_LETTER_EXCHANGE = "x-dead-letter-exchange";
+        public const string DEAD_LETTER_EXCHANGE = Headers.XDeadLetterExchange;
 
         /// <summary>
         /// Опциональный маркер. Используется совместно с обменником <see cref="DEAD_LETTER_EXCHANGE"/>.
         /// </summary>
-        public const string DEAD_LETTER_ROUTING_KEY = "x-dead-letter-routing-key";
+        public const string DEAD_LETTER_ROUTING_KEY = Headers.XDeadLetterRoutingKey;
 
         /// <summary>
         /// Время жизни очереди.
         /// Очередь удалится, если в течении указанного времени не было активных потребителей или не был выполнен basic.Get.
         /// При повторных объявлениях очереди или рестарте брокера отсчёт времени жизни начинается заново.
         /// </summary>
-        public const string EXPIRES = "x-expires";
+        public const string EXPIRES = Headers.XExpires;
 
         /// <summary>
         /// Время жизни сообщения в очереди.
         /// </summary>
-        public const string MESSAGE_TTL = "x-message-ttl";
+        public const string MESSAGE_TTL = Headers.XMessageTTL;
 
         /// <summary>
         /// Мод очереди. 

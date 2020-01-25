@@ -1,19 +1,25 @@
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
 
 namespace SampleWebApplication
 {
     public class Program
     {
-        public static void Main(string[] args)
+#pragma warning disable IDE1006 // Naming Styles
+        public static async Task Main(string[] args)
+#pragma warning restore IDE1006 // Naming Styles
         {
-            CreateWebHostBuilder(args).Build().Run();
+            await CreateWebHostBuilder(args).RunAsync();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        public static IHost CreateWebHostBuilder(string[] args)
         {
-            return WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(wb =>
+                {
+                    wb.UseStartup<Startup>();
+                }).Build();
         }
     }
 }

@@ -153,21 +153,19 @@ namespace ReRabbit.Subscribers
 
             _subscriptionManager.Register<TEvent>((@event, mqData) =>
             {
-                using (var scope = serviceProvider.CreateScope())
+                using var scope = serviceProvider.CreateScope();
+
+                var handler = (IEventHandler<TEvent>)scope.ServiceProvider.GetService(eventHandler);
+
+                if (handler == null)
                 {
-                    var handler = (IEventHandler<TEvent>)scope.ServiceProvider.GetService(eventHandler);
-
-                    if (handler == null)
-                    {
-                        throw new InvalidOperationException(
-                            $"Ошибка конфигурирования обработчика {eventHandler}." +
-                            $"Проверьте зарегистрированы ли все обработчики реализующие {typeof(IEventHandler<IEvent>)}. Используйте services.AddRabbitMq() для авто-регистрации."
-                        );
-                    }
-
-                   return handler.HandleAsync(@event, mqData);
+                    throw new InvalidOperationException(
+                        $"Ошибка конфигурирования обработчика {eventHandler}." +
+                        $"Проверьте зарегистрированы ли все обработчики реализующие {typeof(IEventHandler<IEvent>)}. Используйте services.AddRabbitMq() для авто-регистрации."
+                    );
                 }
 
+                return handler.HandleAsync(@event, mqData);
             }, subscriberConfiguration.ConfigurationSectionName);
         }
 

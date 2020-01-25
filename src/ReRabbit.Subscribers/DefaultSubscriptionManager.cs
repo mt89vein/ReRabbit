@@ -10,6 +10,7 @@ namespace ReRabbit.Subscribers
 {
     /// <summary>
     /// Менеджер подписок по-умолчанию.
+    /// Этот класс не наследуется.
     /// </summary>
     public sealed class DefaultSubscriptionManager : ISubscriptionManager
     {
@@ -56,48 +57,43 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        /// <returns>True, если удалось выполнить привязку.</returns>
-        public bool Bind<TMessage>(QueueSetting queueSetting)
-            where TMessage : IEvent
+        public void Bind<TEvent>(QueueSetting queueSetting)
+            where TEvent : IEvent
         {
-            using (_subscriberFactory
-                .CreateSubscriber<TMessage>(queueSetting)
-                .Bind())
-            {
-                return true;
-            }
+            using var channel =
+                _subscriberFactory
+                    .GetSubscriber<TEvent>()
+                    .Bind<TEvent>(queueSetting);
         }
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        /// <returns>True, если удалось выполнить привязку.</returns>
-        public bool Bind<TMessage>(string configurationSectionName)
-            where TMessage : IEvent
+        public void Bind<TEvent>(string configurationSectionName)
+            where TEvent : IEvent
         {
-            return Bind<TMessage>(_configurationManager.GetQueueSettings(configurationSectionName));
+            Bind<TEvent>(_configurationManager.GetQueueSettings(configurationSectionName));
         }
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>True, если удалось выполнить привязку.</returns>
-        public bool Bind<TMessage>(
+        public void Bind<TEvent>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
-            return Bind<TMessage>(_configurationManager.GetQueueSettings(
+            Bind<TEvent>(_configurationManager.GetQueueSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost
@@ -108,21 +104,20 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+        public void Register<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
-            return Register(
+            Register(
                 eventHandler,
                 _configurationManager.GetQueueSettings(
                     configurationSectionName,
@@ -135,17 +130,16 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+        public void Register<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
-            return Register(
+            Register(
                 eventHandler,
                 _configurationManager.GetQueueSettings(configurationSectionName)
             );
@@ -154,62 +148,58 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+        public void Register<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
+            var subscriber = _subscriberFactory.GetSubscriber<TEvent>();
             for (var i = 0; i < queueSetting.ScalingSettings.ChannelsCount; i++)
             {
-                var channel = _subscriberFactory
-                    .CreateSubscriber<TMessage>(queueSetting)
-                    .Subscribe(eventHandler);
+                var channel = subscriber.Subscribe(eventHandler, queueSetting);
 
                 _channels.Add(channel);
             }
-
-            return true;
         }
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(
-            MessageHandler<TMessage> eventHandler,
+        public void Register<TEvent>(
+            MessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
-            return Register<TMessage>(async (message, eventData) =>
+            var handler = new AcknowledgableMessageHandler<TEvent>((message, eventData) =>
             {
-                return await eventHandler(message, eventData)
-                    .ContinueWith(x => Ack.Ok);
-            }, queueSetting);
+                return eventHandler(message, eventData)
+                    .ContinueWith<Acknowledgement>(_ => Ack.Ok);
+            });
+
+            Register(handler, queueSetting);
         }
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(
-            MessageHandler<TMessage> eventHandler,
+        public void Register<TEvent>(
+            MessageHandler<TEvent> eventHandler,
             string configurationSectionName
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
-            return Register(
+            Register(
                 eventHandler,
                 _configurationManager.GetQueueSettings(configurationSectionName)
             );
@@ -218,21 +208,20 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        /// <returns>True, если удалось зарегистрировать обработчика сообщений.</returns>
-        public bool Register<TMessage>(
-            MessageHandler<TMessage> eventHandler,
+        public void Register<TEvent>(
+            MessageHandler<TEvent> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
-            where TMessage : IEvent
+            where TEvent : IEvent
         {
-            return Register(
+            Register(
                 eventHandler,
                 _configurationManager.GetQueueSettings(
                     configurationSectionName,

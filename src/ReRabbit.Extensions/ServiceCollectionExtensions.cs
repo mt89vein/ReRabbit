@@ -1,16 +1,18 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NamedResolver.Extensions;
 using Newtonsoft.Json;
 using ReRabbit.Abstractions;
 using ReRabbit.Core;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Serializations;
 using ReRabbit.Publishers;
+using ReRabbit.Publishers.Common;
 using ReRabbit.Subscribers;
 using ReRabbit.Subscribers.AcknowledgementBehaviours;
 using ReRabbit.Subscribers.Extensions;
-using ReRabbit.Subscribers.Plugins;
+using ReRabbit.Subscribers.Middlewares;
 using ReRabbit.Subscribers.RetryDelayComputer;
 using System;
 
@@ -31,16 +33,28 @@ namespace ReRabbit.Extensions
             return new RabbitMqHandlerAutoRegistrator(app.ApplicationServices);
         }
 
-
         public static IServiceCollection AddRabbitMq(
             this IServiceCollection services,
             Action<RabbitMqRegistrationOptions> options = null
         )
         {
-            var pluginsRegistry = new SubscriberPluginsRegistry();
-            services.AddSingleton<ISubscriberPluginsRegistryAccessor>(pluginsRegistry);
+            var middlewareRegistry = new MiddlewareRegistry();
+            services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistry);
 
-            var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions(pluginsRegistry);
+            var subscriberRegistrator =
+                services.AddNamed<ISubscriber>(ServiceLifetime.Singleton)
+                        .Add<DefaultSubscriber>();
+
+            var acknowledgementRegistrator =
+                services.AddNamed<IAcknowledgementBehaviour>(ServiceLifetime.Singleton)
+                        .Add<DefaultAcknowledgementBehaviour>();
+
+            var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions(
+                middlewareRegistry,
+                subscriberRegistrator,
+                acknowledgementRegistrator
+            );
+
             options?.Invoke(rabbitMqRegistrationOptions);
 
             return services
@@ -101,24 +115,26 @@ namespace ReRabbit.Extensions
                       sp.GetRequiredService<DefaultRetryDelayComputer>()
             );
 
-            services.AddScoped<ISubscriberPluginsExecutor, SubscriberPluginsExecutor>();
+            services.AddSingleton<IMiddlewareExecutor, MiddlewareExecutor>();
 
-            services.AddSingleton<UniqueMessagesSubscriberPlugin>();
-            services
-                .AddOptions<UniqueMessagesPluginSettings>()
-                .Configure<IConfiguration>((settings, configuration) =>
-                {
-                    var section =
-                        configuration.GetSection(ConfigurationSectionConstants.ROOT + ":" +
-                                                 nameof(UniqueMessagesPluginSettings));
-
-                    if (section.Exists())
+            services.AddSingleton<UniqueMessagesSubscriberMiddleware>();
+            services.AddOptions<UniqueMessagesMiddlewareSettings>()
+                .Configure<IConfiguration, IServiceInfoAccessor>(
+                    (settings, configuration, serviceInfoAccessor) =>
                     {
-                        section.Bind(settings);
-                    }
+                        var section = configuration.GetSection(
+                            ConfigurationSectionConstants.ROOT + ":" +
+                            nameof(UniqueMessagesMiddlewareSettings)
+                        );
 
-                    settings.ServiceName = configuration.GetValue("ServiceName", "undefined-service-name");
-                });
+                        if (section.Exists())
+                        {
+                            section.Bind(settings);
+                        }
+
+                        settings.ServiceName = serviceInfoAccessor.ServiceInfo.ServiceName;
+                    }
+                );
 
             return services;
         }
@@ -171,7 +187,11 @@ namespace ReRabbit.Extensions
             RabbitMqRegistrationOptions options
         )
         {
-            services.AddSingleton<IRouteProvider, DefaultRouteProvider>();
+            services.AddSingleton<DefaultRouteProvider>();
+            services.AddSingleton(
+                sp => options.Factories?.RouteProvider?.Invoke(sp) ??
+                      sp.GetRequiredService<DefaultRouteProvider>()
+            );
             services.AddSingleton<IEventPublisher, EventPublisher>();
 
             return services;

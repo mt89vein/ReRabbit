@@ -97,9 +97,9 @@ namespace ReRabbit.Abstractions.Settings
         public ScalingSettings ScalingSettings { get; set; } = new ScalingSettings();
 
         /// <summary>
-        /// Плагины.
+        /// Middlewares.
         /// </summary>
-        public List<string> Plugins { get; set; } = new List<string>();
+        public List<string> Middlewares { get; set; } = new List<string>();
 
         /// <summary>
         /// Настройки подключения, используемые данной очередью.

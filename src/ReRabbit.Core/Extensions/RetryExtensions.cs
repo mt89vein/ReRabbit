@@ -84,14 +84,14 @@ namespace ReRabbit.Core.Extensions
         /// </summary>
         /// <param name="properties">Свойства сообщения.</param>
         /// <param name="retryCount">Счетчик повторных обработок.</param>
-        public static void SetRetryCount(this IBasicProperties properties, int retryCount)
+        public static void IncrementRetryCount(this IBasicProperties properties, int retryCount)
         {
             if (properties.Headers == null)
             {
                 properties.Headers = new Dictionary<string, object>();
             }
 
-            properties.Headers[RETRY_NUMBER_KEY] = retryCount;
+            properties.Headers[RETRY_NUMBER_KEY] = properties.GetRetryNumber() + retryCount;
         }
 
 

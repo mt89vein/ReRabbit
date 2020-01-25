@@ -1,13 +1,13 @@
+using System.Threading.Tasks;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Subscribers.Models;
-using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers.Plugins
+namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Плагин подписчика.
+    /// Middleware.
     /// </summary>
-    public interface ISubscriberPlugin
+    public interface IMiddleware
     {
         /// <summary>
         /// Выполнить полезную работу.

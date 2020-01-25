@@ -1,27 +1,27 @@
-using ReRabbit.Abstractions.Acknowledgements;
-using ReRabbit.Subscribers.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Subscribers.Models;
 
-namespace ReRabbit.Subscribers.Plugins
+namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Интерфейс вызывателя реализаций плагинов.
+    /// Интерфейс вызывателя реализаций middleware.
     /// </summary>
-    internal interface ISubscriberPluginsExecutor
+    public interface IMiddlewareExecutor
     {
         /// <summary>
-        /// Вызвать цепочку плагинов.
+        /// Вызвать цепочку middleware.
         /// </summary>
         /// <param name="next">Финальный, основной обработчик.</param>
         /// <param name="ctx">Контекст.</param>
-        /// <param name="plugins">Имена плагинов для вызова.</param>
+        /// <param name="middlewareNames">Имена middlewares для вызова.</param>
         /// <returns>Результат обработки.</returns>
         Task<Acknowledgement> ExecuteAsync(
             Func<MessageContext, Task<Acknowledgement>> next,
             MessageContext ctx,
-            IEnumerable<string> plugins
+            IEnumerable<string> middlewareNames
         );
     }
 }

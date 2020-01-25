@@ -3,8 +3,6 @@ using System;
 
 namespace ReRabbit.Abstractions.Models
 {
-    // TODO: поменять ли констрейт IEvent на IntegrationEvent ?
-
     /// <summary>
     /// Интеграционное событие.
     /// </summary>
@@ -12,20 +10,26 @@ namespace ReRabbit.Abstractions.Models
     {
         protected IntegrationEvent()
         {
-            Id = Guid.NewGuid();
+            EventId = Guid.NewGuid();
             EventCreatedAt = DateTime.UtcNow;
         }
 
         [JsonConstructor]
-        protected IntegrationEvent(Guid id, DateTime createDate)
+        protected IntegrationEvent(Guid id, DateTime createAt)
         {
-            Id = id;
-            EventCreatedAt = createDate;
+            EventId = id;
+            EventCreatedAt = createAt;
         }
 
+        /// <summary>
+        /// Идентификатор события.
+        /// </summary>
         [JsonProperty]
-        public Guid Id { get; private set; }
+        public Guid EventId { get; private set; }
 
+        /// <summary>
+        /// Дата-время возникновения события.
+        /// </summary>
         [JsonProperty]
         public DateTime EventCreatedAt { get; private set; }
     }
