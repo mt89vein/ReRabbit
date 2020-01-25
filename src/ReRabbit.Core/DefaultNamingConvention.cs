@@ -2,7 +2,6 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using System;
 using System.Globalization;
-using System.Reflection;
 
 namespace ReRabbit.Core
 {
@@ -48,8 +47,6 @@ namespace ReRabbit.Core
         /// <param name="serviceInfoAccessor">Предоставляет информацию о сервисе.</param>
         public DefaultNamingConvention(IServiceInfoAccessor serviceInfoAccessor)
         {
-            var currentVersion = typeof(IEventHandler<>).GetTypeInfo().Assembly.GetName().Version.ToString();
-
             QueueNamingConvention = (messageType, setting) =>
             {
                 if (string.IsNullOrWhiteSpace(setting.QueueName))
@@ -75,7 +72,7 @@ namespace ReRabbit.Core
                 serviceInfoAccessor.ServiceInfo.ServiceName + "v" + serviceInfoAccessor.ServiceInfo.ApplicationVersion,
                 serviceInfoAccessor.ServiceInfo.HostName,
                 serviceInfoAccessor.ServiceInfo.EnvironmentName,
-                "v" + currentVersion,
+                "v" + GetType().Assembly.GetName().Version.ToString(),
                 setting.ConsumerName,
                 $"[{channelNumber}-{consumerNumberInChannel}]"
             );

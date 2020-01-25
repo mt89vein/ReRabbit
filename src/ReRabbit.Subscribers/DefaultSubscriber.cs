@@ -9,7 +9,6 @@ using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using ReRabbit.Subscribers.Middlewares;
-using ReRabbit.Subscribers.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -190,7 +189,7 @@ namespace ReRabbit.Subscribers
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="queueName">Название очереди.</param>
         /// <returns>Результат обработки.</returns>
-        private async Task<Acknowledgement> HandleMessageAsync<TEvent>(
+        private async Task<(Acknowledgement, MessageContext)> HandleMessageAsync<TEvent>(
             BasicDeliverEventArgs ea,
             AcknowledgableMessageHandler<TEvent> eventHandler,
             QueueSetting settings,
@@ -216,6 +215,7 @@ namespace ReRabbit.Subscribers
 
             var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(settings.RetrySettings, loggingScope);
 
+            MessageContext messageContext = null;
             using (_logger.BeginScope(loggingScope))
             {
                 try
@@ -223,40 +223,44 @@ namespace ReRabbit.Subscribers
                     var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
                     var payload = mqMessage?.Payload?.ToString();
 
+                    var mqEventData = new MqEventData(
+                        mqMessage,
+                        ea.RoutingKey,
+                        ea.Exchange,
+                        ea.Redelivered || retryNumber != 0,
+                        traceId,
+                        retryNumber,
+                        isLastRetry
+                    );
+
                     if (string.IsNullOrEmpty(payload))
                     {
-                        return EmptyBodyReject.EmptyBody;
+                        return (EmptyBodyReject.EmptyBody, new MessageContext(null, mqEventData,  ea));
                     }
 
                     // TODO: automapper, deserialization etc.
 
-                    var messageContext = new MessageContext(
+                    messageContext = new MessageContext(
                         _serializer.Deserialize<TEvent>(payload),
-                        new MqEventData(
-                            mqMessage,
-                            ea.RoutingKey,
-                            ea.Exchange,
-                            ea.Redelivered || retryNumber != 0,
-                            traceId,
-                            retryNumber,
-                            isLastRetry
-                        ),
+                        mqEventData,
                         ea
                     );
 
-                    return await _middlewareExecutor.ExecuteAsync(ctx =>
-                            eventHandler((TEvent)ctx.Message, ctx.EventData),
+                    var acknowledgement = await _middlewareExecutor.ExecuteAsync(
+                        ctx => eventHandler((TEvent)ctx.Message, ctx.EventData),
                         messageContext,
                         settings.Middlewares
                     );
+
+                    return (acknowledgement, messageContext);
                 }
                 catch (Exception e)
                 {
-                    return new Reject(
+                    return (new Reject(
                         e,
                         "Ошибка обработки сообщения из очереди.",
                         settings.RetrySettings.IsEnabled && !isLastRetry
-                    );
+                    ), messageContext);
                 }
             }
         }
@@ -284,9 +288,9 @@ namespace ReRabbit.Subscribers
                 var consumer = new AsyncEventingBasicConsumer(channel);
                 consumer.Received += async (sender, ea) =>
                 {
-                    var acknowledgement = await HandleMessageAsync(ea, eventHandler, settings, queueName);
+                    var (acknowledgement, messageContext) = await HandleMessageAsync(ea, eventHandler, settings, queueName);
 
-                    acknowledgementBehaviour.Handle<TEvent>(acknowledgement, channel, ea, settings);
+                    acknowledgementBehaviour.Handle<TEvent>(acknowledgement, channel, messageContext, settings);
                 };
 
                 return consumer;
@@ -299,9 +303,9 @@ namespace ReRabbit.Subscribers
                 consumer.Received += (sender, ea) =>
                     AsyncHelper.RunSync(async () =>
                     {
-                        var acknowledgement = await HandleMessageAsync(ea, eventHandler, settings, queueName);
+                        var (acknowledgement, messageContext) = await HandleMessageAsync(ea, eventHandler, settings, queueName);
 
-                        acknowledgementBehaviour.Handle<TEvent>(acknowledgement, channel, ea, settings);
+                        acknowledgementBehaviour.Handle<TEvent>(acknowledgement, channel, messageContext, settings);
                     });
 
                 return consumer;

@@ -1,6 +1,6 @@
-using System.Threading.Tasks;
 using ReRabbit.Abstractions.Acknowledgements;
-using ReRabbit.Subscribers.Models;
+using ReRabbit.Abstractions.Models;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Middlewares
 {

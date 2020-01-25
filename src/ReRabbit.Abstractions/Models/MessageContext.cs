@@ -1,7 +1,6 @@
 using RabbitMQ.Client.Events;
-using ReRabbit.Abstractions.Models;
 
-namespace ReRabbit.Subscribers.Models
+namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Контекст сообщения для обработки.

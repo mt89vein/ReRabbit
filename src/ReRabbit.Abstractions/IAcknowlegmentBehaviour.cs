@@ -1,5 +1,4 @@
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
@@ -16,12 +15,12 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="acknowledgement">Данные о результате обработки.</param>
         /// <param name="channel">Канал.</param>
-        /// <param name="deliveryArgs">Параметры доставки.</param>
+        /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
         void Handle<TEventType>(
             Acknowledgement acknowledgement,
             IModel channel,
-            BasicDeliverEventArgs deliveryArgs,
+            MessageContext messageContext,
             QueueSetting settings
         ) where TEventType : IEvent;
     }

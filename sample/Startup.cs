@@ -5,9 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Extensions;
-using ReRabbit.Subscribers.Models;
-using ReRabbit.Subscribers.Plugins;
+using ReRabbit.Subscribers.Middlewares;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication
@@ -26,9 +26,9 @@ namespace SampleWebApplication
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddLogging();
-            services.AddScoped<TestPlugin>();
-            services.AddScoped<TestPlugin2>();
-            services.AddScoped<GlobalTestPlugin>();
+            services.AddSingleton<TestMiddleware>();
+            services.AddSingleton<TestMiddleware2>();
+            services.AddSingleton<GlobalTestMiddleware>();
             services.AddDistributedRedisCache(options =>
             {
                 options.Configuration = _configuration.GetConnectionString("RedisConnection");
@@ -36,46 +36,49 @@ namespace SampleWebApplication
             });
 
             services.AddRabbitMq(
-                x => x.SubscriberPlugins
-                    //.Add<UniqueMessagesSubscriberPlugin>(global:true)
-                    .Add<GlobalTestPlugin>(global: true)
-                    .Add<TestPlugin>()
-                    .Add<TestPlugin2>()
-            );
+                x =>
+                {
+                    x.SubscriberPlugins
+                        //.Add<UniqueMessagesSubscriberPlugin>(global:true)
+                        .Add<GlobalTestMiddleware>(global: true)
+                        .Add<TestMiddleware>()
+                        .Add<TestMiddleware2>();
+                });
 
-            services.AddMvcCore(options => options.EnableEndpointRouting = false);
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseRouting();
+            app.UseEndpoints(b => b.MapDefaultControllerRoute());
             app.UseRabbitMq();
-            app.UseMvc().UseMvcWithDefaultRoute();
         }
     }
 
-    public class TestPlugin : MiddlewareBase
+    public class TestMiddleware : MiddlewareBase
     {
-        private readonly ILogger<TestPlugin> _logger;
+        private readonly ILogger<TestMiddleware> _logger;
 
-        public TestPlugin(ILogger<TestPlugin> logger)
+        public TestMiddleware(ILogger<TestMiddleware> logger)
         {
             _logger = logger;
         }
 
         public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
         {
-            _logger.LogInformation("before TestPlugin");
+            _logger.LogInformation("before TestMiddleware");
             // before
 
             var result = await Next(ctx);
 
-            _logger.LogInformation("after TestPlugin");
+            _logger.LogInformation("after TestMiddleware");
 
             // after
 
@@ -83,23 +86,23 @@ namespace SampleWebApplication
         }
     }
 
-    public class TestPlugin2 : MiddlewareBase
+    public class TestMiddleware2 : MiddlewareBase
     {
-        private readonly ILogger<TestPlugin2> _logger;
+        private readonly ILogger<TestMiddleware2> _logger;
 
-        public TestPlugin2(ILogger<TestPlugin2> logger)
+        public TestMiddleware2(ILogger<TestMiddleware2> logger)
         {
             _logger = logger;
         }
 
         public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
         {
-            _logger.LogInformation("before TestPlugin2");
+            _logger.LogInformation("before TestMiddleware2");
             // before
 
             var result = await Next(ctx);
 
-            _logger.LogInformation("after TestPlugin2");
+            _logger.LogInformation("after TestMiddleware2");
 
             // after
 
@@ -107,23 +110,23 @@ namespace SampleWebApplication
         }
     }
 
-    public class GlobalTestPlugin : MiddlewareBase
+    public class GlobalTestMiddleware : MiddlewareBase
     {
-        private readonly ILogger<GlobalTestPlugin> _logger;
+        private readonly ILogger<GlobalTestMiddleware> _logger;
 
-        public GlobalTestPlugin(ILogger<GlobalTestPlugin> logger)
+        public GlobalTestMiddleware(ILogger<GlobalTestMiddleware> logger)
         {
             _logger = logger;
         }
 
         public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
         {
-            _logger.LogInformation("before GlobalTestPlugin");
+            _logger.LogInformation("before GlobalTestMiddleware");
             // before
 
             var result = await Next(ctx);
 
-            _logger.LogInformation("after GlobalTestPlugin");
+            _logger.LogInformation("after GlobalTestMiddleware");
 
             // after
 

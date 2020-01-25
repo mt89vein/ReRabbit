@@ -1,8 +1,8 @@
+using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ReRabbit.Abstractions.Acknowledgements;
-using ReRabbit.Subscribers.Models;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
