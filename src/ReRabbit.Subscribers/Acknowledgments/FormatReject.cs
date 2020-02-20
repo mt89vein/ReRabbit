@@ -14,7 +14,7 @@ namespace ReRabbit.Subscribers.Acknowledgments
         /// для использования в клиентском коде кэшированного результата обработки <see cref="IncorrectFormat"/>.
         /// </summary>
         private FormatReject()
-            : base(null, "Сообщение не поддерживаемого формата.", false)
+            : base("Сообщение не поддерживаемого формата.", requeue: false)
         {
         }
 

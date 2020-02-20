@@ -19,7 +19,7 @@ namespace SampleWebApplication.Controllers
         [HttpGet]
         public async Task<IActionResult> IndexAsync(string message)
         {
-            await _publisher.PublishAsync(new TestEventMessage
+            await _publisher.PublishAsync(new TestMessage
             {
                 Message = message
             });

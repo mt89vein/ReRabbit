@@ -10,7 +10,7 @@ namespace ReRabbit.Abstractions.Acknowledgements
         #region Свойства
 
         /// <summary>
-        /// Необходимо отправить в конец очереди.
+        /// Необходимо переотправить.
         /// </summary>
         public bool Requeue { get; }
 
@@ -31,10 +31,10 @@ namespace ReRabbit.Abstractions.Acknowledgements
         /// <summary>
         /// Создает экземпляр класса <see cref="Reject"/>.
         /// </summary>
-        /// <param name="exception"></param>
-        /// <param name="reason"></param>
-        /// <param name="requeue"></param>
-        public Reject(Exception exception, string reason, bool requeue = true)
+        /// <param name="reason">Причина.</param>
+        /// <param name="exception">Исключение.</param>
+        /// <param name="requeue">Необходимо переотправить.</param>
+        public Reject(string reason, Exception exception = null, bool requeue = true)
         {
             Requeue = requeue;
             Reason = reason;

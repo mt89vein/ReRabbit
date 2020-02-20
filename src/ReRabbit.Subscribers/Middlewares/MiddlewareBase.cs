@@ -1,6 +1,6 @@
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using System;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -16,7 +16,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Следующий делегат.
         /// </summary>
-        protected Func<MessageContext, Task<Acknowledgement>> Next { get; private set; }
+        protected AcknowledgableMessageHandler<IMessage> Next { get; private set; }
 
         #endregion Свойства
 
@@ -27,7 +27,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат выполнения.</returns>
-        public abstract Task<Acknowledgement> HandleAsync(MessageContext ctx);
+        public abstract Task<Acknowledgement> HandleAsync(MessageContext<IMessage> ctx);
 
         #endregion Методы (public)
 
@@ -37,7 +37,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Метод, для установки следующего цепочке выполнения middleware.
         /// </summary>
         /// <param name="next">Следующий делегат, для выполнения.</param>
-        internal void SetNext(Func<MessageContext, Task<Acknowledgement>> next)
+        internal void SetNext(AcknowledgableMessageHandler<IMessage> next)
         {
             Next = next;
         }

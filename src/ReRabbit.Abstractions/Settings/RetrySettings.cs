@@ -1,5 +1,5 @@
-using System;
 using ReRabbit.Abstractions.Enums;
+using System;
 
 namespace ReRabbit.Abstractions.Settings
 {
@@ -43,7 +43,7 @@ namespace ReRabbit.Abstractions.Settings
         /// По-умолчанию: <see cref="RetryPolicyType.Constant"/>.
         /// </para>
         /// </summary>
-        public RetryPolicyType RetryPolicy { get; set; } = RetryPolicyType.Constant;
+        public string RetryPolicy { get; set; } = RetryPolicyType.Constant;
 
         /// <summary>
         /// Повторять до победного.

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Attributes;
@@ -13,7 +12,7 @@ using System.Reflection;
 namespace ReRabbit.Subscribers
 {
     /// <summary>
-    /// Авторегистратор обработчиков <see cref="IEventHandler{TEvent}"/>.
+    /// Авторегистратор обработчиков <see cref="IMessageHandler{TMessage}"/>.
     /// </summary>
     public class RabbitMqHandlerAutoRegistrator
     {
@@ -23,11 +22,6 @@ namespace ReRabbit.Subscribers
         /// Интерфейс менеджера подписок.
         /// </summary>
         private readonly ISubscriptionManager _subscriptionManager;
-
-        /// <summary>
-        /// Конфигурация.
-        /// </summary>
-        private readonly IConfiguration _configuration;
 
         /// <summary>
         /// Провайдер служб.
@@ -42,13 +36,11 @@ namespace ReRabbit.Subscribers
         /// Создает экземпляр класса <see cref="RabbitMqHandlerAutoRegistrator"/>.
         /// </summary>
         /// <param name="serviceProvider">Провайдер служб.</param>
-
         public RabbitMqHandlerAutoRegistrator(IServiceProvider serviceProvider)
         {
             _subscriptionManager = serviceProvider.GetRequiredService<ISubscriptionManager>();
-            _configuration = serviceProvider.GetRequiredService<IConfiguration>();
             _serviceProvider = serviceProvider;
-            RegisterAllEventHandlers();
+            RegisterAllMessageHandlers();
         }
 
         #endregion Конструктор
@@ -56,51 +48,51 @@ namespace ReRabbit.Subscribers
         #region Методы (private)
 
         /// <summary>
-        /// Зарегистрировать все обработчики событий, реализующих интерфейс <see cref="IEventHandler{T}"/>.
+        /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>.
         /// </summary>
         /// <returns>Регистратор обработчиков.</returns>
-        private void RegisterAllEventHandlers()
+        private void RegisterAllMessageHandlers()
         {
-            var handlerGenericTypeDefinition = typeof(IEventHandler<>);
+            var handlerGenericTypeDefinition = typeof(IMessageHandler<>);
 
-            // достаем все реализации интерфейса IEventHandler<T>.
+            // достаем все реализации интерфейса IMessageHandler<T>.
             var handlerTypes = AssemblyScanner.GetClassesImplementingAnInterface(handlerGenericTypeDefinition);
 
-            // получаем все интерфейсы каждого из обработчиков и маппим { тип события - хэндлер }
+            // получаем все интерфейсы каждого из обработчиков и маппим { тип сообщения - хэндлер }
             var groups = handlerTypes
                 .SelectMany(t =>
                 {
                     var tt = t.GetInterfaces()
                         .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerGenericTypeDefinition)
-                        .Select(i => new { EventType = i.GetGenericArguments()[0], handler = t });
+                        .Select(i => new { MessageType = i.GetGenericArguments()[0], handler = t });
 
                     return tt;
                 })
-                // группируем по типу события, получая: { тип события : список хэндлеров события }
-                .GroupBy(h => h.EventType, arg => arg.handler)
-                // убираем дубликаты обработчиков (которые образовались на первом шаге), получив { тип события : список хэндлеров события }
+                // группируем по типу сообщения, получая: { тип сообщения : список хэндлеров сообщения }
+                .GroupBy(h => h.MessageType, arg => arg.handler)
+                // убираем дубликаты обработчиков (которые образовались на первом шаге), получив { тип события : список хэндлеров сообщения }
                 .Select(t => new { EventType = t.Key, Handlers = t.Distinct() });
 
             foreach (var g in groups)
             {
-                SubscribeToEvent(g.EventType, g.Handlers);
+                SubscribeToMessage(g.EventType, g.Handlers);
             }
         }
 
         /// <summary>
-        /// Зарегистрировать на событие указанных обработчиков.
+        /// Зарегистрировать на сообщение указанных обработчиков.
         /// </summary>
-        /// <param name="eventType">Событие.</param>
-        /// <param name="handlerTypes">Обработчики события.</param>
-        private void SubscribeToEvent(Type eventType, IEnumerable<Type> handlerTypes)
+        /// <param name="messageType">сообщение.</param>
+        /// <param name="handlerTypes">Обработчики сообщения.</param>
+        private void SubscribeToMessage(Type messageType, IEnumerable<Type> handlerTypes)
         {
             var handlerGroups = handlerTypes.SelectMany(handler =>
             {
-                var attributes = GetConfigurationAttributesFrom(handler, eventType);
+                var attributes = GetConfigurationAttributesFrom(handler, messageType);
 
                 if (!attributes.Any())
                 {
-                    throw new SubscriberNotConfiguredException(handler, eventType);
+                    throw new SubscriberNotConfiguredException(handler, messageType);
                 }
 
                 return attributes.Select(attribute => new
@@ -116,14 +108,14 @@ namespace ReRabbit.Subscribers
             );
 
             // ReSharper disable once PossibleNullReferenceException
-            var register = methodInfo.MakeGenericMethod(eventType);
+            var register = methodInfo.MakeGenericMethod(messageType);
 
             foreach (var group in handlerGroups)
             {
                 if (group.Count() > 1)
                 {
                     throw new NotSupportedException(
-                        "Несколько обработчиков одного и того же типа события в рамках одного сообщения не поддерживается."
+                        "Несколько обработчиков одного и того же типа сообщения в рамках одного сообщения не поддерживается."
                     );
                 }
 
@@ -143,44 +135,44 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Метод, который регистрирует обработчика.
         /// </summary>
-        /// <typeparam name="TEvent">Тип события.</typeparam>
-        /// <param name="eventHandler">Тип обработчика события.</param>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <param name="messageHandlerType">Тип обработчика сообщения..</param>
         /// <param name="subscriberConfiguration">Конфигурация обработчиков.</param>
-        private void Register<TEvent>(Type eventHandler, SubscriberConfigurationAttribute subscriberConfiguration)
-            where TEvent : IEvent
+        private void Register<TMessage>(Type messageHandlerType, SubscriberConfigurationAttribute subscriberConfiguration)
+            where TMessage : class, IMessage
         {
             var serviceProvider = _serviceProvider;
 
-            _subscriptionManager.Register<TEvent>((@event, mqData) =>
+            _subscriptionManager.Register<TMessage>(ctx =>
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var handler = (IEventHandler<TEvent>)scope.ServiceProvider.GetService(eventHandler);
+                var handler = (IMessageHandler<TMessage>)scope.ServiceProvider.GetService(messageHandlerType);
 
                 if (handler == null)
                 {
                     throw new InvalidOperationException(
-                        $"Ошибка конфигурирования обработчика {eventHandler}." +
-                        $"Проверьте зарегистрированы ли все обработчики реализующие {typeof(IEventHandler<IEvent>)}. Используйте services.AddRabbitMq() для авто-регистрации."
+                        $"Ошибка конфигурирования обработчика {messageHandlerType}." +
+                        $"Проверьте зарегистрированы ли все обработчики реализующие {typeof(IMessageHandler<IMessage>)}. Используйте services.AddRabbitMq() для авто-регистрации."
                     );
                 }
 
-                return handler.HandleAsync(@event, mqData);
+                return handler.HandleAsync(ctx);
             }, subscriberConfiguration.ConfigurationSectionName);
         }
 
         /// <summary>
         /// Получить атрибут <see cref="SubscriberConfigurationAttribute"/> из обработчика.
         /// </summary>
-        /// <param name="handler">Обработчик события.</param>
-        /// <param name="eventType">Тип события.</param>
+        /// <param name="handler">Обработчик сообщения.</param>
+        /// <param name="messageType">Тип сообщения.</param>
         /// <returns>Атрибут с наименованием секции конфигурации, в котором находится конфигурация подписчика.</returns>
-        private IEnumerable<SubscriberConfigurationAttribute> GetConfigurationAttributesFrom(Type handler, Type eventType)
+        private IEnumerable<SubscriberConfigurationAttribute> GetConfigurationAttributesFrom(Type handler, Type messageType)
         {
             return handler?.GetMethods()
                           .FirstOrDefault(m =>
-                                              m.Name == nameof(IEventHandler<IEvent>.HandleAsync) &&
-                                              m.GetParameters()[0].ParameterType == eventType)
+                                              m.Name == nameof(IMessageHandler<IMessage>.HandleAsync) &&
+                                              m.GetParameters()[0].ParameterType.GenericTypeArguments[0] == messageType)
                           ?.GetCustomAttributes(false)
                           .OfType<SubscriberConfigurationAttribute>();
         }

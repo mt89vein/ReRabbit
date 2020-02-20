@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ReRabbit.Abstractions;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
@@ -52,12 +53,14 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <param name="middlewareNames">Имена плагинов для вызова.</param>
         /// <returns>Результат обработки.</returns>
         public async Task<Acknowledgement> ExecuteAsync(
-            Func<MessageContext, Task<Acknowledgement>> next,
-            MessageContext ctx,
+            AcknowledgableMessageHandler<IMessage> next,
+            MessageContext<IMessage> ctx,
             IEnumerable<string> middlewareNames
         )
         {
-            var middlewareInfos = _registry.Get().Where(x => middlewareNames.Contains(x.MiddlewareType.Name) || x.IsGlobal);
+            var middlewareInfos = _registry.Get()
+                .Where(x => middlewareNames.Contains(x.MiddlewareType.Name) || x.IsGlobal)
+                .ToList();
 
             if (!middlewareInfos.Any())
             {

@@ -60,7 +60,7 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
         public void Bind<TEvent>(QueueSetting queueSetting)
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             using var channel =
                 _subscriberFactory
@@ -74,7 +74,7 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         public void Bind<TEvent>(string configurationSectionName)
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             Bind<TEvent>(_configurationManager.GetQueueSettings(configurationSectionName));
         }
@@ -91,7 +91,7 @@ namespace ReRabbit.Subscribers
             string connectionName,
             string virtualHost
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             Bind<TEvent>(_configurationManager.GetQueueSettings(
                     configurationSectionName,
@@ -115,7 +115,7 @@ namespace ReRabbit.Subscribers
             string connectionName,
             string virtualHost
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             Register(
                 eventHandler,
@@ -137,7 +137,7 @@ namespace ReRabbit.Subscribers
             AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             Register(
                 eventHandler,
@@ -155,7 +155,7 @@ namespace ReRabbit.Subscribers
             AcknowledgableMessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             var subscriber = _subscriberFactory.GetSubscriber<TEvent>();
             for (var i = 0; i < queueSetting.ScalingSettings.ChannelsCount; i++)
@@ -176,11 +176,11 @@ namespace ReRabbit.Subscribers
             MessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
-            var handler = new AcknowledgableMessageHandler<TEvent>((message, eventData) =>
+            var handler = new AcknowledgableMessageHandler<TEvent>(message =>
             {
-                return eventHandler(message, eventData)
+                return eventHandler(message)
                     .ContinueWith<Acknowledgement>(_ => Ack.Ok);
             });
 
@@ -197,7 +197,7 @@ namespace ReRabbit.Subscribers
             MessageHandler<TEvent> eventHandler,
             string configurationSectionName
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             Register(
                 eventHandler,
@@ -219,7 +219,7 @@ namespace ReRabbit.Subscribers
             string connectionName,
             string virtualHost
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             Register(
                 eventHandler,

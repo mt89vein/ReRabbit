@@ -73,7 +73,7 @@ namespace ReRabbit.Core.Exceptions
     }
 
 
-    public sealed class InvlidConfigurationException : ReRabbitException
+    public sealed class InvalidConfigurationException : ReRabbitException
     {
         /// <summary>
         /// Код ошибки.
@@ -82,12 +82,12 @@ namespace ReRabbit.Core.Exceptions
 
         #region Конструкторы
 
-        public InvlidConfigurationException(string message)
+        public InvalidConfigurationException(string message)
             : base(message)
         {
         }
 
-        public InvlidConfigurationException(
+        public InvalidConfigurationException(
             string message,
             Exception innerException
         ) : base(message, innerException)

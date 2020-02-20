@@ -21,6 +21,21 @@ namespace ReRabbit.Extensions
         /// </summary>
         public IMiddlewareRegistry SubscriberPlugins { get; }
 
+        /// <summary>
+        /// Регистратор реализаций подписчиков.
+        /// </summary>
+        public INamedRegistratorBuilder<ISubscriber> SubscriberRegistrator { get; }
+
+        /// <summary>
+        /// Регистратор реализаций поведений оповещений брокера о результате обработки сообщения из шины.
+        /// </summary>
+        public INamedRegistratorBuilder<IAcknowledgementBehaviour> AcknowledgementBehaviourRegistrator { get; }
+
+        /// <summary>
+        /// Регистратор реализаций вычислителей задержек между повторными обработками.
+        /// </summary>
+        public INamedRegistratorBuilder<IRetryDelayComputer> RetryDelayComputerRegistrator { get; }
+
         #endregion Свойства
 
         // TODO: outbox pattern
@@ -33,20 +48,27 @@ namespace ReRabbit.Extensions
         /// </summary>
         /// <param name="subscriberPluginsRegistry">Реестр плагинов подписчиков.</param>
         /// <param name="subscriberRegistrator">
-        /// Регистратор именованных подписчиков.
+        /// Регистратор реализаций подписчиков.
         /// </param>
         /// <param name="acknowledgementBehaviourRegistrator">
         /// Регистратор реализаций поведений оповещений брокера о результате обработки сообщения из шины.
         /// </param>
+        /// <param name="retryDelayComputerRegistrator">
+        /// Регистратор реализаций вычислителей задержек между повторными обработками.
+        /// </param>
         public RabbitMqRegistrationOptions(
             IMiddlewareRegistry subscriberPluginsRegistry,
             INamedRegistratorBuilder<ISubscriber> subscriberRegistrator,
-            INamedRegistratorBuilder<IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator
+            INamedRegistratorBuilder<IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
+            INamedRegistratorBuilder<IRetryDelayComputer> retryDelayComputerRegistrator
 
         )
         {
             SubscriberPlugins = subscriberPluginsRegistry;
-            Factories = new RabbitMqFactories(subscriberRegistrator, acknowledgementBehaviourRegistrator);
+            AcknowledgementBehaviourRegistrator = acknowledgementBehaviourRegistrator;
+            RetryDelayComputerRegistrator = retryDelayComputerRegistrator;
+            SubscriberRegistrator = subscriberRegistrator;
+            Factories = new RabbitMqFactories();
         }
 
         #endregion Конструктор

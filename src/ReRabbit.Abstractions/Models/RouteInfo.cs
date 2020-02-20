@@ -11,6 +11,11 @@ namespace ReRabbit.Abstractions.Models
         #region Свойства
 
         /// <summary>
+        /// Наименование события.
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
         /// Наименование обменника.
         /// </summary>
         public string Exchange { get; }
@@ -70,10 +75,12 @@ namespace ReRabbit.Abstractions.Models
             bool autoDelete,
             string route,
             int retryCount,
+            string eventName,
             string eventVersion,
             MqConnectionSettings connectionSettings
         )
         {
+            Name = eventName;
             Exchange = exchange;
             Durable = durable;
             AutoDelete = autoDelete;
@@ -90,6 +97,7 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         public RouteInfo(EventSettings eventSettings, string route)
         {
+            Name = eventSettings.Name;
             Exchange = eventSettings.Exchange.Name;
             ExchangeType = eventSettings.Exchange.Type;
             Arguments = eventSettings.Arguments;

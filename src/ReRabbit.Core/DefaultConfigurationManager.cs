@@ -34,7 +34,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Настройки RabbitMq.
         /// </summary>
-        public RabbitMqSettings Settings => _settings ?? (_settings = ConfigureRabbitMqSettings());
+        public RabbitMqSettings Settings => _settings ??= ConfigureRabbitMqSettings();
 
         #endregion Свойства
 
@@ -74,7 +74,7 @@ namespace ReRabbit.Core
                 out var sectionPath)
             )
             {
-                throw new InvlidConfigurationException($"Конфигурация подписчика по пути {sectionPath} не найдена");
+                throw new InvalidConfigurationException($"Конфигурация подписчика по пути {sectionPath} не найдена");
             }
 
             var connectionSettings = Settings.Connections[connectionName];
@@ -179,7 +179,7 @@ namespace ReRabbit.Core
 
             if (!mqConfigurationSection.Exists())
             {
-                throw new InvlidConfigurationException($"Конфгируация {rabbitMqConfigurationPath} не задана.");
+                throw new InvalidConfigurationException($"Конфигурация {rabbitMqConfigurationPath} не задана.");
             }
 
             mqConfigurationSection.Bind(rabbitMqSettings);
@@ -224,8 +224,8 @@ namespace ReRabbit.Core
 
                 if (!virtualHostsSection.Exists())
                 {
-                    throw new InvlidConfigurationException(
-                        $"Конфигируация виртуального хоста {connectionConfSection.Path}:{virtualHostsConfigurationSectionPath} не задана.");
+                    throw new InvalidConfigurationException(
+                        $"Конфигурация виртуального хоста {connectionConfSection.Path}:{virtualHostsConfigurationSectionPath} не задана.");
                 }
 
                 connectionSettings.VirtualHosts = virtualHostsSection

@@ -20,8 +20,8 @@ namespace ReRabbit.Abstractions
         void Handle<TEventType>(
             Acknowledgement acknowledgement,
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEventType> messageContext,
             QueueSetting settings
-        ) where TEventType : IEvent;
+        ) where TEventType : class, IMessage;
     }
 }

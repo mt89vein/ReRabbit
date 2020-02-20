@@ -5,14 +5,15 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Контекст сообщения для обработки.
     /// </summary>
-    public class MessageContext
+    public class MessageContext<TMessage>
+        where TMessage : class, IMessage
     {
         #region Свойства
 
         /// <summary>
         /// Десериализованное сообщение.
         /// </summary>
-        public object Message { get; }
+        public TMessage Message { get; }
 
         /// <summary>
         /// Данные события.
@@ -29,9 +30,9 @@ namespace ReRabbit.Abstractions.Models
         #region Конструктор
 
         /// <summary>
-        /// Создает новый экземпляр класса <see cref="MessageContext"/>.
+        /// Создает новый экземпляр класса <see cref="MessageContext{TMessage}"/>.
         /// </summary>
-        public MessageContext(object message, MqEventData eventData, BasicDeliverEventArgs eventArgs)
+        public MessageContext(TMessage message, MqEventData eventData, BasicDeliverEventArgs eventArgs)
         {
             Message = message;
             EventData = eventData;

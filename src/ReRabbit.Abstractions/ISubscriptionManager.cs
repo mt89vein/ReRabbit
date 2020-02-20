@@ -15,7 +15,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
         void Bind<TEvent>(QueueSetting queueSetting)
-            where TEvent : IEvent;
+            where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить привязку.
@@ -23,7 +23,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         void Bind<TEvent>(string configurationSectionName)
-            where TEvent : IEvent;
+            where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить привязку.
@@ -36,7 +36,7 @@ namespace ReRabbit.Abstractions
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -51,7 +51,7 @@ namespace ReRabbit.Abstractions
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -62,7 +62,7 @@ namespace ReRabbit.Abstractions
         void Register<TEvent>(
             AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -73,7 +73,7 @@ namespace ReRabbit.Abstractions
         void Register<TEvent>(
             AcknowledgableMessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -84,7 +84,7 @@ namespace ReRabbit.Abstractions
         void Register<TEvent>(
             MessageHandler<TEvent> eventHandler,
             string configurationSectionName
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -99,7 +99,7 @@ namespace ReRabbit.Abstractions
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
@@ -110,6 +110,6 @@ namespace ReRabbit.Abstractions
         void Register<TEvent>(
             MessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
-        ) where TEvent : IEvent;
+        ) where TEvent : class, IMessage;
     }
 }

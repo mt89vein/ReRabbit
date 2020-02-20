@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using NamedResolver.Abstractions;
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
@@ -20,9 +21,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         #region Поля
 
         /// <summary>
-        /// Вычислитель задержек между повторными обработками.
+        /// Получатель вычислителей задержек между повторными обработками.
         /// </summary>
-        private readonly IRetryDelayComputer _retryDelayComputer;
+        private readonly INamedResolver<IRetryDelayComputer> _retryDelayComputerResolver;
 
         /// <summary>
         /// Конвенция именования.
@@ -46,18 +47,20 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Создает экземпляр класса <see cref="DefaultAcknowledgementBehaviour"/>.
         /// </summary>
-        /// <param name="retryDelayComputer">Вычислитель задержек между повторными обработками.</param>
+        /// <param name="retryDelayComputerResolver">
+        /// Получатель вычислителей задержек между повторными обработками.
+        /// </param>
         /// <param name="namingConvention">Конвенция именования.</param>
         /// <param name="topologyProvider">Провайдер топологий.</param>
         /// <param name="logger">Логгер.</param>
         public DefaultAcknowledgementBehaviour(
-            IRetryDelayComputer retryDelayComputer,
+            INamedResolver<IRetryDelayComputer> retryDelayComputerResolver,
             INamingConvention namingConvention,
             ITopologyProvider topologyProvider,
             ILogger<DefaultAcknowledgementBehaviour> logger
         )
         {
-            _retryDelayComputer = retryDelayComputer;
+            _retryDelayComputerResolver = retryDelayComputerResolver;
             _namingConvention = namingConvention;
             _topologyProvider = topologyProvider;
             _logger = logger;
@@ -77,9 +80,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         public void Handle<TEventType>(
             Acknowledgement acknowledgement,
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEventType> messageContext,
             QueueSetting settings
-        ) where TEventType : IEvent
+        ) where TEventType : class, IMessage
         {
             switch (acknowledgement)
             {
@@ -87,13 +90,13 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     HandleAck(ack, channel, messageContext, settings);
                     break;
                 case Reject reject:
-                    HandleReject<TEventType>(reject, channel, messageContext, settings);
+                    HandleReject(reject, channel, messageContext, settings);
                     break;
                 case Nack nack:
-                    HandleNack<TEventType>(nack, channel, messageContext, settings);
+                    HandleNack(nack, channel, messageContext, settings);
                     break;
                 case Retry retry:
-                    HandleRetry<TEventType>(retry, channel, messageContext, settings);
+                    HandleRetry(retry, channel, messageContext, settings);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -118,15 +121,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private void HandleRetry<TEventType>(
             Retry retry,
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEventType> messageContext,
             QueueSetting settings
-        ) where TEventType : IEvent
+        ) where TEventType : class, IMessage
         {
             try
             { }
             finally
             {
-                if (TryRetry<TEventType>(channel, messageContext, settings, retry.Span))
+                if (TryRetry(channel, messageContext, settings, retry.Span))
                 {
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
@@ -144,12 +147,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private static void HandleAck(
+        private static void HandleAck<TEvent>(
             Ack ack,
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEvent> messageContext,
             QueueSetting settings
-        )
+        ) where TEvent: class, IMessage
         {
             if (!settings.AutoAck)
             {
@@ -167,15 +170,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private void HandleNack<TEventType>(
             Nack nack,
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEventType> messageContext,
             QueueSetting settings
-        ) where TEventType : IEvent
+        ) where TEventType : class, IMessage
         {
             try
             { }
             finally
             {
-                if (TryRetry<TEventType>(channel, messageContext, settings))
+                if (TryRetry(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -199,9 +202,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private void HandleReject<TEventType>(
             Reject reject,
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEventType> messageContext,
             QueueSetting settings
-        ) where TEventType : IEvent
+        ) where TEventType : class, IMessage
         {
             try
             { }
@@ -247,12 +250,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <returns>True, если удалось успешно переотправить.</returns>
         private bool TryRetry<TEventType>(
             IModel channel,
-            MessageContext messageContext,
+            MessageContext<TEventType> messageContext,
             QueueSetting settings,
             TimeSpan? retryDelay = null
-        )
+        ) where TEventType : class, IMessage
         {
-            // если явно не указали время ретрая, то смотрим настройки и т.д. 
+            // если явно не указали время ретрая, то смотрим настройки и т.д.
             if (retryDelay == null)
             {
                 if (!settings.RetrySettings.IsEnabled)
@@ -281,10 +284,22 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             }
             else
             {
-                var actualRetryDelay = retryDelay ?? _retryDelayComputer.Compute(
-                                           settings.RetrySettings,
-                                           messageContext.EventArgs.BasicProperties.GetRetryNumber()
-                                       );
+                TimeSpan actualRetryDelay;
+
+                if (retryDelay != null)
+                {
+                    actualRetryDelay = retryDelay.Value;
+                }
+                else
+                {
+                    var retryDelayComputer =
+                        _retryDelayComputerResolver.GetRequired(settings.RetrySettings.RetryPolicy);
+
+                    actualRetryDelay = retryDelayComputer.Compute(
+                        settings.RetrySettings,
+                        messageContext.EventArgs.BasicProperties.GetRetryNumber()
+                    );
+                }
 
                 routingKey = _topologyProvider.DeclareDelayedQueue(
                     channel,

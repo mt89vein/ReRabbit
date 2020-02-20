@@ -89,10 +89,6 @@ namespace ReRabbit.Core
             _settings = connectionSetting;
             _connectionFactory = connectionFactory;
             _logger = logger;
-            _logger.BeginScope(new Dictionary<string, string>
-            {
-                ["ConnectionString"] = _connectionFactory.Uri.ToString()
-            });
             _connectionRetryPolicy =
                 Policy.Handle<SocketException>()
                     .Or<BrokerUnreachableException>()
@@ -162,6 +158,11 @@ namespace ReRabbit.Core
             {
                 return true;
             }
+
+            using var _ = _logger.BeginScope(new Dictionary<string, string>
+            {
+                ["ConnectionString"] = _connectionFactory.Uri.ToString()
+            });
 
             _logger.LogInformation("Подключение к RabbitMq");
 

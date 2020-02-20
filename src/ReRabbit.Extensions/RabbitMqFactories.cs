@@ -1,4 +1,3 @@
-using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using System;
 
@@ -24,10 +23,6 @@ namespace ReRabbit.Extensions
         /// </summary>
         public Func<IServiceProvider, ISubscriberFactory> SubscriberFactory { get; set; }
 
-        /// <summary>
-        /// Регистратор реализаций подписчиков.
-        /// </summary>
-        public INamedRegistratorBuilder<ISubscriber> SubscribersRegistrator { get; }
 
         /// <summary>
         /// Менеджер подписок.
@@ -45,11 +40,6 @@ namespace ReRabbit.Extensions
         public Func<IServiceProvider, IAcknowledgementBehaviourFactory> AcknowledgementBehaviourFactory { get; set; }
 
         /// <summary>
-        /// Регистратор реализаций поведений оповещений брокера о результате обработки сообщения из шины.
-        /// </summary>
-        public INamedRegistratorBuilder<IAcknowledgementBehaviour> AcknowledgementBehaviourRegistrator { get; }
-
-        /// <summary>
         /// Конвенции именования.
         /// </summary>
         public Func<IServiceProvider, INamingConvention> NamingConvention { get; set; }
@@ -60,11 +50,6 @@ namespace ReRabbit.Extensions
         public Func<IServiceProvider, ITopologyProvider> TopologyProvider { get; set; }
 
         /// <summary>
-        /// Вычислитель задержек между повторными обработками.
-        /// </summary>
-        public Func<IServiceProvider, IRetryDelayComputer> RetryDelayComputer { get; set; }
-
-        /// <summary>
         /// Сервис сериализации/десериализации.
         /// </summary>
         public Func<IServiceProvider, ISerializer> Serializer { get; set; }
@@ -73,23 +58,5 @@ namespace ReRabbit.Extensions
         /// Провайдер информации о роутах события для издателя.
         /// </summary>
         public Func<IServiceProvider, IRouteProvider> RouteProvider { get; set; }
-
-        /// <summary>
-        /// Создает экземпляр класса <see cref="RabbitMqFactories"/>.
-        /// </summary>
-        /// <param name="subscriberRegistrator">
-        /// Регистратор именованных подписчиков.
-        /// </param>
-        /// <param name="acknowledgementBehaviourRegistrator">
-        /// Регистратор реализаций поведений оповещений брокера о результате обработки сообщения из шины.
-        /// </param>
-        public RabbitMqFactories(
-            INamedRegistratorBuilder<ISubscriber> subscriberRegistrator,
-            INamedRegistratorBuilder<IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator
-        )
-        {
-            SubscribersRegistrator = subscriberRegistrator;
-            AcknowledgementBehaviourRegistrator = acknowledgementBehaviourRegistrator;
-        }
     }
 }

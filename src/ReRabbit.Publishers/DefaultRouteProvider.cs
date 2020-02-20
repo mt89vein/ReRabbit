@@ -47,14 +47,14 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Получить информацию о роутах для события.
         /// </summary>
-        /// <param name="event">Событие.</param>
+        /// <param name="message">Событие.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роуте.</returns>
-        public RouteInfo GetFor(IEvent @event, TimeSpan? delay = null)
+        public RouteInfo GetFor(IMessage message, TimeSpan? delay = null)
         {
             // TODO: Delay publish
 
-            var eventType = @event.GetType();
+            var eventType = message.GetType();
 
             var eventSettings = _eventSettingsCache.GetOrAdd(
                 eventType.Name,
@@ -63,7 +63,7 @@ namespace ReRabbit.Publishers
 
             var route = eventSettings.RouteType == RouteType.Constant
                 ? eventSettings.Route
-                : Smart.Format(eventSettings.Route, @event);
+                : Smart.Format(eventSettings.Route, message);
 
             return new RouteInfo(eventSettings, route.ToLower());
         }

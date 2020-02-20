@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NamedResolver.Extensions;
+using NamedResolver;
 using Newtonsoft.Json;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Core;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Serializations;
@@ -49,16 +50,23 @@ namespace ReRabbit.Extensions
                 services.AddNamed<IAcknowledgementBehaviour>(ServiceLifetime.Singleton)
                         .Add<DefaultAcknowledgementBehaviour>();
 
+            var retryDelayComputerRegistrator =
+                services.AddNamed<IRetryDelayComputer>(ServiceLifetime.Singleton)
+                    .Add<ConstantRetryDelayComputer>(RetryPolicyType.Constant)
+                    .Add<ExponentialRetryDelayComputer>(RetryPolicyType.Exponential)
+                    .Add<LinearRetryDelayComputer>(RetryPolicyType.Linear);
+
             var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions(
                 middlewareRegistry,
                 subscriberRegistrator,
-                acknowledgementRegistrator
+                acknowledgementRegistrator,
+                retryDelayComputerRegistrator
             );
 
             options?.Invoke(rabbitMqRegistrationOptions);
 
             return services
-                .AddClassesAsImplementedInterface(typeof(IEventHandler<>))
+                .AddClassesAsImplementedInterface(typeof(IMessageHandler<>))
                 .AddConnectionServices(rabbitMqRegistrationOptions)
                 .AddSubscribers(rabbitMqRegistrationOptions)
                 .AddConfigurations(rabbitMqRegistrationOptions)
@@ -107,12 +115,6 @@ namespace ReRabbit.Extensions
             services.AddSingleton(sp =>
                 options.Factories?.AcknowledgementBehaviourFactory?.Invoke(sp) ??
                 sp.GetRequiredService<DefaultAcknowledgementBehaviourFactory>()
-            );
-
-            services.AddSingleton<DefaultRetryDelayComputer>();
-            services.AddSingleton(
-                sp => options.Factories?.RetryDelayComputer?.Invoke(sp) ??
-                      sp.GetRequiredService<DefaultRetryDelayComputer>()
             );
 
             services.AddSingleton<IMiddlewareExecutor, MiddlewareExecutor>();
@@ -192,6 +194,9 @@ namespace ReRabbit.Extensions
                 sp => options.Factories?.RouteProvider?.Invoke(sp) ??
                       sp.GetRequiredService<DefaultRouteProvider>()
             );
+
+            services.AddSingleton<IExclusiveLock, ExclusiveLock>();
+
             services.AddSingleton<IEventPublisher, EventPublisher>();
 
             return services;

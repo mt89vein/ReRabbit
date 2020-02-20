@@ -15,7 +15,7 @@ namespace ReRabbit.Subscribers.Extensions
         /// Получает все типы, которые реализуют интерфейс (generic, or not generic).
         /// Если тип реализует 2 интерфейса, он будет продублирован.
         /// </summary>
-        /// <param name="implementedInterface">Тип интерфейса. Например IEventHandler{T}.</param>
+        /// <param name="implementedInterface">Тип интерфейса. Например IMessageHandler{T}.</param>
         /// <returns>Список типов, реализующий указанный интерфейс.</returns>
         public static IEnumerable<Type> GetClassesImplementingAnInterface(Type implementedInterface)
         {

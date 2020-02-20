@@ -105,7 +105,7 @@ namespace ReRabbit.Subscribers
         /// <returns>Канал, на котором работает подписчик.</returns>
         /// <typeparam name="TEvent">Тип сообщения.</typeparam>
         public IModel Subscribe<TEvent>(AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings)
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             var channel = Bind<TEvent>(settings);
 
@@ -150,7 +150,7 @@ namespace ReRabbit.Subscribers
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
         public IModel Bind<TEvent>(QueueSetting settings)
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             var channel =
                 _permanentConnectionManager
@@ -189,13 +189,13 @@ namespace ReRabbit.Subscribers
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="queueName">Название очереди.</param>
         /// <returns>Результат обработки.</returns>
-        private async Task<(Acknowledgement, MessageContext)> HandleMessageAsync<TEvent>(
+        private async Task<(Acknowledgement, MessageContext<TMessage>)> HandleMessageAsync<TMessage>(
             BasicDeliverEventArgs ea,
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+            AcknowledgableMessageHandler<TMessage> eventHandler,
             QueueSetting settings,
             string queueName
         )
-            where TEvent : IEvent
+            where TMessage : class, IMessage
         {
             var traceId = default(Guid);
 
@@ -204,8 +204,10 @@ namespace ReRabbit.Subscribers
                 ["Exchange"] = ea.Exchange,
                 ["RoutingKey"] = ea.RoutingKey,
                 ["QueueName"] = queueName,
-                ["EventName"] = typeof(TEvent).Name
-                // TODO: header exchange params
+                ["EventName"] = typeof(TMessage).Name,
+                ["Arguments"] = ea.BasicProperties.Headers,
+                ["MessageId"] = ea.BasicProperties.MessageId,
+                ["TraceId"] = ea.BasicProperties.CorrelationId
             };
 
             if (settings.TracingSettings.IsEnabled)
@@ -215,7 +217,7 @@ namespace ReRabbit.Subscribers
 
             var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(settings.RetrySettings, loggingScope);
 
-            MessageContext messageContext = null;
+            MessageContext<TMessage> messageContext = null;
             using (_logger.BeginScope(loggingScope))
             {
                 try
@@ -235,20 +237,42 @@ namespace ReRabbit.Subscribers
 
                     if (string.IsNullOrEmpty(payload))
                     {
-                        return (EmptyBodyReject.EmptyBody, new MessageContext(null, mqEventData,  ea));
+                        return (EmptyBodyReject.EmptyBody, new MessageContext<TMessage>(null, mqEventData,  ea));
                     }
 
                     // TODO: automapper, deserialization etc.
 
-                    messageContext = new MessageContext(
-                        _serializer.Deserialize<TEvent>(payload),
+                    var message = _serializer.Deserialize<TMessage>(payload);
+
+                    if (ea.BasicProperties.IsTimestampPresent())
+                    {
+                        message.MessageCreatedAt =
+                            DateTimeOffset.FromUnixTimeSeconds(ea.BasicProperties.Timestamp.UnixTime)
+                                          .DateTime;
+                    }
+                    else if (message.MessageCreatedAt == default)
+                    {
+                        message.MessageCreatedAt = DateTime.UtcNow;
+                    }
+
+                    if (ea.BasicProperties.IsMessageIdPresent() && Guid.TryParse(ea.BasicProperties.MessageId, out var gMessageId))
+                    {
+                        message.MessageId = gMessageId;
+                    }
+                    else if (message.MessageId == default)
+                    {
+                        message.MessageId = Guid.NewGuid();
+                    }
+
+                    messageContext = new MessageContext<TMessage>(
+                        message,
                         mqEventData,
                         ea
                     );
 
                     var acknowledgement = await _middlewareExecutor.ExecuteAsync(
-                        ctx => eventHandler((TEvent)ctx.Message, ctx.EventData),
-                        messageContext,
+                        ctx => eventHandler(new MessageContext<TMessage>((TMessage)ctx.Message, ctx.EventData, ctx.EventArgs)),
+                        new MessageContext<IMessage>(messageContext.Message, messageContext.EventData, messageContext.EventArgs),
                         settings.Middlewares
                     );
 
@@ -257,8 +281,8 @@ namespace ReRabbit.Subscribers
                 catch (Exception e)
                 {
                     return (new Reject(
-                        e,
                         "Ошибка обработки сообщения из очереди.",
+                        e,
                         settings.RetrySettings.IsEnabled && !isLastRetry
                     ), messageContext);
                 }
@@ -279,7 +303,7 @@ namespace ReRabbit.Subscribers
             QueueSetting settings,
             string queueName
         )
-            where TEvent : IEvent
+            where TEvent : class, IMessage
         {
             var acknowledgementBehaviour = _acknowledgementBehaviourFactory.GetBehaviour<TEvent>(settings);
 

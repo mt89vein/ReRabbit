@@ -14,7 +14,7 @@ namespace ReRabbit.Subscribers.Acknowledgments
         /// для использования в клиентском коде кэшированного результата обработки <see cref="EmptyBody"/>.
         /// </summary>
         private EmptyBodyReject()
-            : base(null, "Сообщение без тела.", false)
+            : base( "Сообщение без тела.", requeue: false)
         {
         }
 

@@ -18,8 +18,9 @@ namespace ReRabbit.Abstractions
         /// <param name="settings">Настройки очереди.</param>
         /// <typeparam name="TEvent">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором работает подписчик.</returns>
-        IModel Subscribe<TEvent>(AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings)
-            where TEvent : IEvent;
+        IModel Subscribe<TEvent>(
+            AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings
+        ) where TEvent : class, IMessage;
 
         /// <summary>
         /// Выполнить привязку.
@@ -28,7 +29,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
         IModel Bind<TEvent>(QueueSetting settings)
-            where TEvent : IEvent;
+            where TEvent : class, IMessage;
     }
 
     /// <summary>
@@ -36,21 +37,15 @@ namespace ReRabbit.Abstractions
     /// </summary>
     /// <typeparam name="TEvent">Тип сообщения.</typeparam>
     /// <param name="message">Сообщение.</param>
-    /// <param name="eventData">Данные события.</param>
     /// <returns>Результат выполнения.</returns>
-    public delegate Task<Acknowledgement> AcknowledgableMessageHandler<in TEvent>(
-        TEvent message,
-        MqEventData eventData
-    ) where TEvent : IEvent;
+    public delegate Task<Acknowledgement> AcknowledgableMessageHandler<TEvent>(MessageContext<TEvent> message)
+        where TEvent : class, IMessage;
 
     /// <summary>
     /// Обработчк сообщений с неявным (успешным) результатом выполнения.
     /// </summary>
     /// <typeparam name="TEvent">Тип сообщения.</typeparam>
     /// <param name="message">Сообщение.</param>
-    /// <param name="eventData">Данные события.</param>
-    public delegate Task MessageHandler<in TEvent>(
-        TEvent message,
-        MqEventData eventData
-    ) where TEvent : IEvent;
+    public delegate Task MessageHandler<TEvent>(MessageContext<TEvent> message)
+        where TEvent : class, IMessage;
 }

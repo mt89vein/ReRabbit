@@ -3,21 +3,21 @@ namespace ReRabbit.Abstractions.Enums
     /// <summary>
     /// Закон по которому высчитывается интервал (задержка) между повторениями.
     /// </summary>
-    public enum RetryPolicyType
+    public class RetryPolicyType
     {
         /// <summary>
         /// Константный закон.
         /// </summary>
-        Constant = 0,
+        public const string Constant = "Constant";
 
         /// <summary>
         /// Линейный закон.
         /// </summary>
-        Linear = 1,
+        public const string Linear = "Linear";
 
         /// <summary>
         /// Экспоненциальный закон.
         /// </summary>
-        Exponential = 2
+        public const string Exponential = "Exponential";
     }
 }

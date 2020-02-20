@@ -6,77 +6,78 @@ using System.Threading.Tasks;
 
 namespace SampleWebApplication.RabbitMq.TestEvent
 {
-    public class TestEventMessage : IntegrationEvent
+    public class TestMessage : IntegrationMessage
     {
         public string Message { get; set; }
 
-        public class TestEventMessageHandler : IEventHandler<TestEventMessage>
+        public class TestMessageHandler : IMessageHandler<TestMessage>
         {
             /// <summary>
             /// Обработать сообщение.
             /// </summary>
-            /// <param name="eventMessage">Событие.</param>
-            /// <param name="eventData">Данные о событии.</param>
+            /// <param name="ctx">Данные сообщения.</param>
             /// <returns>Результат выполнения обработчика.</returns>
             [SubscriberConfiguration("Q1Subscriber")]
             [SubscriberConfiguration("Q2Subscriber")]
-            public async Task<Acknowledgement> HandleAsync(TestEventMessage eventMessage, MqEventData eventData)
+            public async Task<Acknowledgement> HandleAsync(MessageContext<TestMessage> ctx)
             {
                 await Task.CompletedTask;
 
-                return Ack.Ok;
+                if (ctx.EventData.IsLastRetry)
+                {
+                    return Ack.Ok;
+                }
+
+                return new Reject( "1"); // Ack.Ok;
             }
         }
     }
 
-    public class Metrics : IntegrationEvent
+    public class Metrics : IntegrationMessage
     {
-        public class MetricHandler : IEventHandler<Metrics>
+        public class MetricHandler : IMessageHandler<Metrics>
         {
             /// <summary>
             /// Обработать сообщение.
             /// </summary>
-            /// <param name="event">Событие.</param>
-            /// <param name="eventData">Данные о событии.</param>
+            /// <param name="ctx">Данные сообщения.</param>
             /// <returns>Результат выполнения обработчика.</returns>
             [SubscriberConfiguration("Q3Subscriber")]
-            public Task<Acknowledgement> HandleAsync(Metrics @event, MqEventData eventData)
+            public Task<Acknowledgement> HandleAsync(MessageContext<Metrics> ctx)
             {
                 return Task.FromResult<Acknowledgement>(Ack.Ok);
             }
         }
     }
 
-    public class TopicTest : IntegrationEvent
+    public class TopicTest : IntegrationMessage
     {
-        public class TopicHandler : IEventHandler<TopicTest>
+        public class TopicHandler : IMessageHandler<TopicTest>
         {
             /// <summary>
             /// Обработать сообщение.
             /// </summary>
-            /// <param name="event">Событие.</param>
-            /// <param name="eventData">Данные о событии.</param>
+            /// <param name="ctx">Данные сообщения.</param>
             /// <returns>Результат выполнения обработчика.</returns>
             [SubscriberConfiguration("Q4Subscriber")]
-            public Task<Acknowledgement> HandleAsync(TopicTest @event, MqEventData eventData)
+            public Task<Acknowledgement> HandleAsync(MessageContext<TopicTest> ctx)
             {
                 return Task.FromResult<Acknowledgement>(Ack.Ok);
             }
         }
     }
 
-    public class HeadersTest : IntegrationEvent
+    public class HeadersTest : IntegrationMessage
     {
-        public class HeadersHandler : IEventHandler<HeadersTest>
+        public class HeadersHandler : IMessageHandler<HeadersTest>
         {
             /// <summary>
             /// Обработать сообщение.
             /// </summary>
-            /// <param name="event">Событие.</param>
-            /// <param name="eventData">Данные о событии.</param>
+            /// <param name="ctx">Данные сообщения.</param>
             /// <returns>Результат выполнения обработчика.</returns>
             [SubscriberConfiguration("Q5Subscriber")]
-            public Task<Acknowledgement> HandleAsync(HeadersTest @event, MqEventData eventData)
+            public Task<Acknowledgement> HandleAsync(MessageContext<HeadersTest> ctx)
             {
                 return Task.FromResult<Acknowledgement>(Ack.Ok);
             }

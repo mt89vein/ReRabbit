@@ -1,6 +1,6 @@
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -19,8 +19,8 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <param name="middlewareNames">Имена middlewares для вызова.</param>
         /// <returns>Результат обработки.</returns>
         Task<Acknowledgement> ExecuteAsync(
-            Func<MessageContext, Task<Acknowledgement>> next,
-            MessageContext ctx,
+            AcknowledgableMessageHandler<IMessage> next,
+            MessageContext<IMessage> ctx,
             IEnumerable<string> middlewareNames
         );
     }

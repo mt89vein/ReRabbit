@@ -11,9 +11,9 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Получить информацию о роутах для события.
         /// </summary>
-        /// <param name="event">Событие.</param>
+        /// <param name="message">Событие.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роутах.</returns>
-        RouteInfo GetFor(IEvent @event, TimeSpan? delay = null);
+        RouteInfo GetFor(IMessage message, TimeSpan? delay = null);
     }
 }

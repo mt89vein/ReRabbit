@@ -10,22 +10,6 @@ using System.Threading.Tasks;
 namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Настройки middleware для дедупликации сообщений.
-    /// </summary>
-    public class UniqueMessagesMiddlewareSettings
-    {
-        /// <summary>
-        /// Наименование сервиса.
-        /// </summary>
-        public string ServiceName { get; set; } = Guid.NewGuid().ToString("N");
-
-        /// <summary>
-        /// Время истечения хранения метки.
-        /// </summary>
-        public int? MessageExpirySeconds { get; set; } = 600;
-    }
-
-    /// <summary>
     /// Middleware дедупликации сообщений.
     /// </summary>
     public sealed class UniqueMessagesSubscriberMiddleware : MiddlewareBase
@@ -77,7 +61,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат выполнения.</returns>
-        public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
+        public override async Task<Acknowledgement> HandleAsync(MessageContext<IMessage> ctx)
         {
             var messageId = ctx.EventArgs.BasicProperties.MessageId;
 
@@ -95,13 +79,13 @@ namespace ReRabbit.Subscribers.Middlewares
 
             using (_logger.BeginScope(loggingScope))
             {
-                _logger.LogTrace($"Получено сообщение для обработки.");
+                _logger.LogTrace("Получено сообщение для обработки.");
 
                 if (!await TryProcessAsync(messageId))
                 {
                     _logger.LogTrace("Сообщение уже было обработано");
 
-                    return new Reject(null, "Already processed", false);
+                    return new Reject("Already processed", requeue: false);
                 }
 
                 try

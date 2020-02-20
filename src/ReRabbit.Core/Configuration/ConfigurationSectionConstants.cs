@@ -5,7 +5,6 @@ namespace ReRabbit.Core.Configuration
     /// </summary>
     public static class ConfigurationSectionConstants
     {
-
         /// <summary>
         /// Наименование корневой секции настроек.
         /// </summary>
