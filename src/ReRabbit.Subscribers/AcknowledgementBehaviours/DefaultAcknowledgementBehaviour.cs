@@ -226,7 +226,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
-                else if (TryRetry<TEventType>(channel, messageContext, settings))
+                else if (TryRetry(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {

@@ -6,7 +6,6 @@ using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
-using ReRabbit.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -91,7 +90,29 @@ namespace ReRabbit.Core
             _logger = logger;
             _connectionRetryPolicy =
                 Policy.Handle<SocketException>()
-                    .Or<BrokerUnreachableException>()
+                    .Or<BrokerUnreachableException>(exception =>
+                    {
+                        if (exception?.InnerException is AuthenticationFailureException authenticationFailureException)
+                        {
+                            _logger.LogCritical(authenticationFailureException, "Доступ к RabbitMQ запрещен.");
+
+                            return false;
+                        }
+
+                        if (exception?.InnerException is OperationInterruptedException operationInterruptedException)
+                        {
+                            _logger.LogCritical(
+                                operationInterruptedException,
+                                "Доступ к RabbitMQ запрещен. {ReplyCode}-{ReplyText}",
+                                operationInterruptedException.ShutdownReason.ReplyCode,
+                                operationInterruptedException.ShutdownReason.ReplyText
+                            );
+
+                            return false;
+                        }
+
+                        return true;
+                    })
                     .WaitAndRetry(
                         retryCount: _settings.ConnectionRetryCount,
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -111,14 +132,14 @@ namespace ReRabbit.Core
         /// <summary>
         /// Создает общую AMQP-модель (канал).
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Если подключение не установлено.
+        /// </exception>
         public IModel CreateModel()
         {
             if (!TryConnect())
             {
-                throw new ConnectionException(
-                    $"Нет активного подключения к RabbitMq {_connectionFactory.Uri} для создания канала",
-                    ReRabbitErrorCode.UnnableToConnect
-                );
+                throw new InvalidOperationException("Нет активного подключения к RabbitMQ для создания канала");
             }
 
             return _connection.CreateModel();
@@ -169,26 +190,25 @@ namespace ReRabbit.Core
             lock (_syncRoot)
             {
                 _connectionRetryPolicy.Execute(() =>
-                    _connection = _connectionFactory.CreateConnection(
-                        _settings.HostNames.ToList(),
-                        _settings.ConnectionName
-                    )
-                );
+                {
+                    if (_connection != null)
+                    {
+                        TryDisconnect();
+                    }
+
+                    return _connection = _connectionFactory.CreateConnection(_settings.HostNames.ToList());
+                });
 
                 if (IsConnected)
                 {
                     _connection.ConnectionShutdown += OnConnectionShutdown;
-                    _connection.CallbackException += OnCallbackException;
                     _connection.ConnectionBlocked += OnConnectionBlocked;
-
                     _logger.LogInformation("Подключение к RabbitMq установлено.");
 
                     _disposed = false;
 
                     return true;
                 }
-
-                _logger.LogCritical("Не удалось установить подключение к RabbitMq");
 
                 return false;
             }
@@ -206,7 +226,6 @@ namespace ReRabbit.Core
             }
 
             _connection.ConnectionShutdown -= OnConnectionShutdown;
-            _connection.CallbackException -= OnCallbackException;
             _connection.ConnectionBlocked -= OnConnectionBlocked;
 
             _connection.Close();
@@ -227,23 +246,9 @@ namespace ReRabbit.Core
                 return;
             }
 
-            _connection.Dispose();
+            _logger.LogCritical("Соединение с RabbitMQ заблокировано. Причина: {Reason}", e.Reason);
 
-            _logger.LogCritical("Соединение с RabbitMQ разорвано. Причина: {Reason}", e.Reason);
-            // TODO: отловить ошибки авторизации, на случай если неправильный юзер или не существует виртуального хоста / отсутствуют права у юзера
-        }
-
-        private void OnCallbackException(object sender, CallbackExceptionEventArgs e)
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            _logger.LogWarning(e.Exception,
-                "Соединение с RabbitMQ разорвано в связи с необработанной ошибкой: {Details}", e.Detail);
-
-            TryConnect();
+            // действий никаких не требуется. после завершения блокировки, автоматически все должно быть норм.
         }
 
         private void OnConnectionShutdown(object sender, ShutdownEventArgs reason)
@@ -253,16 +258,10 @@ namespace ReRabbit.Core
                 return;
             }
 
-            _logger.LogWarning("Соединение с RabbitMQ отключено. Причина: {Reason}", reason);
-
-            if (reason.Initiator == ShutdownInitiator.Application)
+            if (reason.Initiator == ShutdownInitiator.Peer)
             {
-                _logger.LogInformation("Соединение было закрыто приложением.");
-                Dispose();
-            }
-            else
-            {
-                TryConnect();
+                _logger.LogInformation("Соединение было закрыто из брокера. {Message}", reason.ReplyText);
+                TryDisconnect();
             }
         }
 

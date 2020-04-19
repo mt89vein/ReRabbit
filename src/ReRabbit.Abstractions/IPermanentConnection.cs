@@ -27,6 +27,9 @@ namespace ReRabbit.Abstractions
 
         /// <summary>
         /// Создает AMQP-модель (канал).
+        /// <exception cref="InvalidOperationException">
+        /// Если подключение не установлено.
+        /// </exception>
         /// </summary>
         IModel CreateModel();
     }

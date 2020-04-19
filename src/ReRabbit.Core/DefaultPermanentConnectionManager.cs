@@ -112,7 +112,8 @@ namespace ReRabbit.Core
                         settings.Ssl.ServerName,
                         settings.Ssl.CertificatePath,
                         settings.Ssl.IsEnabled
-                    ) 
+                    ),
+                ClientProvidedName = settings.ConnectionName
             };
             connectionFactory.Uri = new Uri(connectionFactory.Endpoint.ToString());
 

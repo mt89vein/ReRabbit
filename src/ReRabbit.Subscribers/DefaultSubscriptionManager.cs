@@ -71,29 +71,29 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        public void Bind<TEvent>(string configurationSectionName)
-            where TEvent : class, IMessage
+        public void Bind<TMessage>(string configurationSectionName)
+            where TMessage : class, IMessage
         {
-            Bind<TEvent>(_configurationManager.GetQueueSettings(configurationSectionName));
+            Bind<TMessage>(_configurationManager.GetQueueSettings(configurationSectionName));
         }
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        public void Bind<TEvent>(
+        public void Bind<TMessage>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
-            Bind<TEvent>(_configurationManager.GetQueueSettings(
+            Bind<TMessage>(_configurationManager.GetQueueSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost
@@ -104,18 +104,18 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        public void Register<TEvent>(
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+        public void Register<TMessage>(
+            AcknowledgableMessageHandler<TMessage> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
             Register(
                 eventHandler,
@@ -130,14 +130,14 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        public void Register<TEvent>(
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+        public void Register<TMessage>(
+            AcknowledgableMessageHandler<TMessage> eventHandler,
             string configurationSectionName
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
             Register(
                 eventHandler,
@@ -148,16 +148,16 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        public void Register<TEvent>(
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+        public void Register<TMessage>(
+            AcknowledgableMessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
-            var subscriber = _subscriberFactory.GetSubscriber<TEvent>();
+            var subscriber = _subscriberFactory.GetSubscriber<TMessage>();
             for (var i = 0; i < queueSetting.ScalingSettings.ChannelsCount; i++)
             {
                 var channel = subscriber.Subscribe(eventHandler, queueSetting);
@@ -169,16 +169,16 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        public void Register<TEvent>(
-            MessageHandler<TEvent> eventHandler,
+        public void Register<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
-            var handler = new AcknowledgableMessageHandler<TEvent>(message =>
+            var handler = new AcknowledgableMessageHandler<TMessage>(message =>
             {
                 return eventHandler(message)
                     .ContinueWith<Acknowledgement>(_ => Ack.Ok);
@@ -190,14 +190,14 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        public void Register<TEvent>(
-            MessageHandler<TEvent> eventHandler,
+        public void Register<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             string configurationSectionName
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
             Register(
                 eventHandler,
@@ -208,18 +208,18 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        public void Register<TEvent>(
-            MessageHandler<TEvent> eventHandler,
+        public void Register<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
-            where TEvent : class, IMessage
+            where TMessage : class, IMessage
         {
             Register(
                 eventHandler,
@@ -237,6 +237,7 @@ namespace ReRabbit.Subscribers
         public void Dispose()
         {
             _channels.ForEach(x => x?.Dispose());
+            _channels.Clear();
         }
 
         #endregion Методы (public)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace ReRabbit.Abstractions.Settings
@@ -79,17 +80,17 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Таймаут запроса на подключение.
         /// </summary>
-        public int RequestedConnectionTimeoutInMs { get; set; } = 30000;
+        public TimeSpan RequestedConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Таймаут на чтение из сокета.
         /// </summary>
-        public int SocketReadTimeoutInMs { get; set; } = 30000;
+        public TimeSpan SocketReadTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Таймаут на запись в сокет.
         /// </summary>
-        public int SocketWriteTimeoutInMs { get; set; } = 30000;
+        public TimeSpan SocketWriteTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Лимит каналов на подключение.
@@ -104,7 +105,7 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Период опроса для поддержания подключения открытым.
         /// </summary>
-        public ushort RequestedHeartbeatInSeconds { get; set; } = 60;
+        public TimeSpan RequestedHeartbeat { get; set; } = TimeSpan.FromSeconds(60);
 
         /// <summary>
         /// Максимальное время для продолжения подключения после первичного хендшейка до таймата.
@@ -112,7 +113,7 @@ namespace ReRabbit.Abstractions.Settings
         /// По-умолчанию 10 секунд.
         /// </para>
         /// </summary>
-        public uint HandshakeContinuationTimeoutInSeconds { get; set; } = 10;
+        public TimeSpan HandshakeContinuationTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Максимальное время для продолжения действий (например декларирования очереди) до таймаута.
@@ -120,7 +121,7 @@ namespace ReRabbit.Abstractions.Settings
         /// По-умолчанию 10 секунд.
         /// </para>
         /// </summary>
-        public uint ContinuationTimeoutInSeconds { get; set; } = 10;
+        public TimeSpan ContinuationTimeout { get; set; }  = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Время в между восстановлением подключения.
@@ -128,7 +129,7 @@ namespace ReRabbit.Abstractions.Settings
         /// По-умолчанию 10 секунд.
         /// </para>
         /// </summary>
-        public uint NetworkRecoveryIntervalInSeconds { get; set; } = 10;
+        public TimeSpan NetworkRecoveryInterval { get; set; } = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Автоматическое восстановление подключения.

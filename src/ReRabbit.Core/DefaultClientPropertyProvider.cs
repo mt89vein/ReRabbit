@@ -46,9 +46,12 @@ namespace ReRabbit.Core
             {
                 ["product"] = _serviceInfoAccessor.ServiceInfo.ServiceName,
                 ["version"] = _serviceInfoAccessor.ServiceInfo.ApplicationVersion,
-                ["platform"] = RuntimeInformation.FrameworkDescription,
-                ["client_server"] = _serviceInfoAccessor.ServiceInfo.HostName,
-                ["broker_username"] = connectionSettings.UserName
+                ["OS"] = RuntimeInformation.OSDescription + " " + RuntimeInformation.OSArchitecture,
+                ["platform"] = "Process architecture: " +
+                               RuntimeInformation.ProcessArchitecture + " " +
+                               RuntimeInformation.FrameworkDescription,
+                ["host_name"] = _serviceInfoAccessor.ServiceInfo.HostName,
+                ["username"] = connectionSettings.UserName,
             };
         }
 

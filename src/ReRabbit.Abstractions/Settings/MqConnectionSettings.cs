@@ -69,17 +69,17 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Таймаут запроса на подключение в милисекундах.
         /// </summary>
-        public int RequestedConnectionTimeout { get; }
+        public TimeSpan RequestedConnectionTimeout { get; }
 
         /// <summary>
         /// Таймаут на чтение из сокета в милисекундах.
         /// </summary>
-        public int SocketReadTimeout { get; }
+        public TimeSpan SocketReadTimeout { get; }
 
         /// <summary>
         /// Таймаут на запись в сокет в милисекундах.
         /// </summary>
-        public int SocketWriteTimeout { get; }
+        public TimeSpan SocketWriteTimeout { get; }
 
         /// <summary>
         /// Лимит каналов на подключение.
@@ -94,7 +94,7 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Период опроса в секундах для поддержания подключения открытым.
         /// </summary>
-        public ushort RequestedHeartbeat { get; }
+        public TimeSpan RequestedHeartbeat { get; }
 
         /// <summary>
         /// Максимальное время для продолжения подключения после первичного хендшейка до таймата.
@@ -145,12 +145,12 @@ namespace ReRabbit.Abstractions.Settings
             bool useCommonUnroutedMessagesQueue,
             bool useAsyncConsumer,
             bool useBackgroundThreadsForIo,
-            int requestedConnectionTimeout,
-            int socketReadTimeout,
-            int socketWriteTimeout,
+            TimeSpan requestedConnectionTimeout,
+            TimeSpan socketReadTimeout,
+            TimeSpan socketWriteTimeout,
             ushort requestedChannelMax,
             uint requestedFrameMax,
-            ushort requestedHeartbeat,
+            TimeSpan requestedHeartbeat,
             TimeSpan handshakeContinuationTimeout,
             TimeSpan continuationTimeout,
             bool authomaticRecoveryEnabled,

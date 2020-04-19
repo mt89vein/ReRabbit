@@ -9,7 +9,6 @@ using ReRabbit.Core;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Serializations;
 using ReRabbit.Publishers;
-using ReRabbit.Publishers.Common;
 using ReRabbit.Subscribers;
 using ReRabbit.Subscribers.AcknowledgementBehaviours;
 using ReRabbit.Subscribers.Extensions;
@@ -195,9 +194,7 @@ namespace ReRabbit.Extensions
                       sp.GetRequiredService<DefaultRouteProvider>()
             );
 
-            services.AddSingleton<IExclusiveLock, ExclusiveLock>();
-
-            services.AddSingleton<IEventPublisher, EventPublisher>();
+            services.AddSingleton<IMessagePublisher, MessagePublisher>();
 
             return services;
         }

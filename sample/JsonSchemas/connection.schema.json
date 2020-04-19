@@ -133,20 +133,20 @@
                 "title": "Number of retries to connect.",
                 "default": 5
             },
-            "RequestedConnectionTimeoutInMs": {
-                "$id": "#RabbitMq/Connections/properties/RequestedConnectionTimeoutInMs",
+            "RequestedConnectionTimeout": {
+                "$id": "#RabbitMq/Connections/properties/RequestedConnectionTimeout",
                 "type": "integer",
                 "title": "Connection timeout in miliseconds.",
                 "default": 30000
             },
-            "SocketReadTimeoutInMs": {
-                "$id": "#RabbitMq/Connections/properties/SocketReadTimeoutInMs",
+            "SocketReadTimeout": {
+                "$id": "#RabbitMq/Connections/properties/SocketReadTimeout",
                 "type": "integer",
                 "title": "Read from socket timeout in miliseconds.",
                 "default": 30000
             },
-            "SocketWriteTimeoutInMs": {
-                "$id": "#RabbitMq/Connections/properties/SocketWriteTimeoutInMs",
+            "SocketWriteTimeout": {
+                "$id": "#RabbitMq/Connections/properties/SocketWriteTimeout",
                 "type": "integer",
                 "title": "Write to socket timeout in miliseconds.",
                 "default": 30000
@@ -163,26 +163,26 @@
                 "title": "Frame max size in bytes.",
                 "default": 0
             },
-            "RequestedHeartbeatInSeconds": {
-                "$id": "#RabbitMq/Connections/properties/RequestedHeartbeatInSeconds",
+            "RequestedHeartbeat": {
+                "$id": "#RabbitMq/Connections/properties/RequestedHeartbeat",
                 "type": "integer",
                 "title": "Heartbeat period.",
                 "default": 60
             },
-            "HandshakeContinuationTimeoutInSeconds": {
-                "$id": "#RabbitMq/Connections/properties/HandshakeContinuationTimeoutInSeconds",
+            "HandshakeContinuationTimeout": {
+                "$id": "#RabbitMq/Connections/properties/HandshakeContinuationTimeout",
                 "type": "integer",
                 "title": "Handshake timeout.",
                 "default": 10
             },
-            "ContinuationTimeoutInSeconds": {
-                "$id": "#RabbitMq/Connections/properties/ContinuationTimeoutInSeconds",
+            "ContinuationTimeout": {
+                "$id": "#RabbitMq/Connections/properties/ContinuationTimeout",
                 "type": "integer",
                 "title": "Timeout for declaring queue etc.",
                 "default": 10
             },
-            "NetworkRecoveryIntervalInSeconds": {
-                "$id": "#RabbitMq/Connections/properties/NetworkRecoveryIntervalInSeconds",
+            "NetworkRecoveryInterval": {
+                "$id": "#RabbitMq/Connections/properties/NetworkRecoveryInterval",
                 "type": "integer",
                 "title": "Time between retries to recover.",
                 "default": 10
