@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace ReRabbit.Abstractions.Settings
@@ -43,6 +44,16 @@ namespace ReRabbit.Abstractions.Settings
         /// Количество пыток отправки события.
         /// </summary>
         public int RetryCount { get; set; } = 5;
+
+        /// <summary>
+        /// Нужно дождаться подтверждения от брокера.
+        /// </summary>
+        public bool AwaitAck { get; set; } = true;
+
+        /// <summary>
+        /// Таймаут на подтверждения.
+        /// </summary>
+        public TimeSpan ConfirmationTimeout { get; set; } = TimeSpan.FromSeconds(10);
         
         /// <summary>
         /// Настройки подключения, используемые данной очередью.

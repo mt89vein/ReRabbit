@@ -54,10 +54,8 @@ namespace ReRabbit.Publishers
         {
             // TODO: Delay publish
 
-            var eventType = message.GetType();
-
             var eventSettings = _eventSettingsCache.GetOrAdd(
-                eventType.Name,
+                message.GetType().Name,
                 eventName => _configurationManager.GetEventSettings(eventName)
             );
 
@@ -65,7 +63,7 @@ namespace ReRabbit.Publishers
                 ? eventSettings.Route
                 : Smart.Format(eventSettings.Route, message);
 
-            return new RouteInfo(eventSettings, route.ToLower());
+            return new RouteInfo(eventSettings, route.ToLower(), delay);
         }
 
         #endregion Методы (public)

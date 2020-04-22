@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions.Models;
+using System;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
@@ -13,7 +14,8 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщение..</typeparam>
         /// <param name="message">Данные сообщения.</param>
-        Task PublishAsync<TMessage>(TMessage message)
+        /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
+        Task PublishAsync<TMessage>(TMessage message, TimeSpan? delay = null)
             where TMessage : class, IMessage;
     }
 }

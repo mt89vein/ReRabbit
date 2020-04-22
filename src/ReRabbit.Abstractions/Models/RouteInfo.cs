@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions.Settings;
+using System;
 using System.Collections.Generic;
 
 namespace ReRabbit.Abstractions.Models
@@ -6,7 +7,7 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Информация о роуте.
     /// </summary>
-    public class RouteInfo
+    public readonly struct RouteInfo
     {
         #region Свойства
 
@@ -60,6 +61,21 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         public MqConnectionSettings ConnectionSettings { get; }
 
+        /// <summary>
+        /// Отложенная отправка.
+        /// </summary>
+        public TimeSpan? Delay { get; }
+
+        /// <summary>
+        /// Нужно дождаться подтверждения от брокера.
+        /// </summary>
+        public bool AwaitAck { get; }
+
+        /// <summary>
+        /// Таймаут на подтверждения.
+        /// </summary>
+        public TimeSpan ConfirmationTimeout { get; }
+
         #endregion Свойства
 
         #region Конструкторы
@@ -77,7 +93,10 @@ namespace ReRabbit.Abstractions.Models
             int retryCount,
             string eventName,
             string eventVersion,
-            MqConnectionSettings connectionSettings
+            MqConnectionSettings connectionSettings,
+            TimeSpan? delay,
+            bool awaitAck,
+            TimeSpan confirmationTimeout
         )
         {
             Name = eventName;
@@ -90,12 +109,15 @@ namespace ReRabbit.Abstractions.Models
             ConnectionSettings = connectionSettings;
             ExchangeType = exchangeType;
             Arguments = arguments;
+            Delay = delay;
+            AwaitAck = awaitAck;
+            ConfirmationTimeout = confirmationTimeout;
         }
 
         /// <summary>
         /// Создает экземпляр класса <see cref="RouteInfo"/>.
         /// </summary>
-        public RouteInfo(EventSettings eventSettings, string route)
+        public RouteInfo(EventSettings eventSettings, string route, TimeSpan? delay = null)
         {
             Name = eventSettings.Name;
             Exchange = eventSettings.Exchange.Name;
@@ -107,6 +129,9 @@ namespace ReRabbit.Abstractions.Models
             RetryCount = eventSettings.RetryCount;
             EventVersion = eventSettings.Version;
             ConnectionSettings = eventSettings.ConnectionSettings;
+            Delay = delay;
+            AwaitAck = eventSettings.AwaitAck;
+            ConfirmationTimeout = eventSettings.ConfirmationTimeout;
         }
 
         #endregion Конструкторы

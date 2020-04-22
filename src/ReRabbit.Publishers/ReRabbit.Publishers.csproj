@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
+    <ProjectReference Include="..\ReRabbit.Core\ReRabbit.Core.csproj" />
   </ItemGroup>
 
 </Project>
