@@ -239,7 +239,7 @@ namespace ReRabbit.Subscribers
 
             var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(settings.RetrySettings, loggingScope);
 
-            MessageContext<TMessage> messageContext = null;
+            MessageContext<TMessage> messageContext = default;
             using (_logger.BeginScope(loggingScope))
             {
                 try
@@ -249,8 +249,6 @@ namespace ReRabbit.Subscribers
 
                     var mqEventData = new MqEventData(
                         mqMessage,
-                        ea.RoutingKey,
-                        ea.Exchange,
                         ea.Redelivered || retryNumber != 0,
                         traceId,
                         retryNumber,
@@ -294,8 +292,18 @@ namespace ReRabbit.Subscribers
                     );
 
                     var acknowledgement = await _middlewareExecutor.ExecuteAsync(
-                        ctx => eventHandler(new MessageContext<TMessage>((TMessage)ctx.Message, ctx.EventData, ctx.EventArgs)),
-                        new MessageContext<IMessage>(messageContext.Message, messageContext.EventData, messageContext.EventArgs),
+                        ctx => eventHandler(
+                            new MessageContext<TMessage>(
+                                ctx.Message as TMessage,
+                                ctx.EventData,
+                                ctx.EventArgs
+                            )
+                        ),
+                        new MessageContext<IMessage>(
+                            messageContext.Message,
+                            messageContext.EventData,
+                            messageContext.EventArgs
+                        ),
                         settings.Middlewares
                     );
 

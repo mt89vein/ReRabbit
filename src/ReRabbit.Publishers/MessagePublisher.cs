@@ -15,9 +15,6 @@ using System.Threading.Tasks;
 namespace ReRabbit.Publishers
 {
     // декоратором обмазать IModel, для outbox pattern и делегировать другому интерфейсу сохранение и получение недоставленных сообщений.
-    // еще не забывать про токен отмены и таймауты, чтобы не получить дедлок из-за TaskCompletionSource
-
-    // убедиться что после получения таймаута, TaskCompletionSource будет Canceled (или завершен и PublishTasks будет пустым)
 
     /// <summary>
     /// Издатель сообщений.
@@ -59,7 +56,7 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Пул каналов.
         /// </summary>
-        private readonly ConcurrentDictionary<string, (IModel, SemaphoreSlim)> _channelPool;
+        private readonly ConcurrentDictionary<string, ExclusiveChannel> _channelPool;
 
         #endregion Поля
 
@@ -83,7 +80,7 @@ namespace ReRabbit.Publishers
             _serializer = serializer;
             _topologyProvider = topologyProvider;
             _logger = logger;
-            _channelPool = new ConcurrentDictionary<string, (IModel, SemaphoreSlim)>();
+            _channelPool = new ConcurrentDictionary<string, ExclusiveChannel>();
         }
 
         #endregion Конструктор
@@ -139,6 +136,7 @@ namespace ReRabbit.Publishers
             {
                 await connection.TryConnectAsync();
                 var (channel, semaphoreSlim) = await GetChannelAsync(eventName, connection);
+
                 await semaphoreSlim.WaitAsync();
                 try
                 {
@@ -211,22 +209,85 @@ namespace ReRabbit.Publishers
             return properties;
         }
 
-        private async ValueTask<(IModel, SemaphoreSlim)> GetChannelAsync(string eventName, IPermanentConnection connection)
+        private async ValueTask<ExclusiveChannel> GetChannelAsync(string eventName, IPermanentConnection connection)
         {
-            if (_channelPool.TryGetValue(eventName, out var channelInfo) && channelInfo.Item1.IsOpen)
+            if (_channelPool.TryGetValue(eventName, out var exclusiveChannel) && exclusiveChannel.Channel.IsOpen)
             {
-                return channelInfo;
+                return exclusiveChannel;
             }
 
-            channelInfo.Item1?.Dispose();
             _channelPool.TryRemove(eventName, out _);
 
-            channelInfo.Item1 = new PublishConfirmableChannel(await connection.CreateModelAsync(), _logger);
-            channelInfo.Item2 = new SemaphoreSlim(1,1);
+            if (exclusiveChannel == null)
+            {
+                exclusiveChannel = new ExclusiveChannel(
+                    new PublishConfirmableChannel(await connection.CreateModelAsync(), _logger),
+                    new SemaphoreSlim(1, 1)
+                );
+            }
+            else
+            {
+                exclusiveChannel.ReplaceChannel(
+                    new PublishConfirmableChannel(await connection.CreateModelAsync(), _logger)
+                );
+            }
 
-            _channelPool.TryAdd(eventName, channelInfo);
+            _channelPool.TryAdd(eventName, exclusiveChannel);
 
-            return channelInfo;
+            return exclusiveChannel;
+        }
+
+        /// <summary>
+        /// Предоставляет эксклюзивный доступ к каналу.
+        /// </summary>
+        private sealed class ExclusiveChannel
+        {
+            #region Свойства
+
+            /// <summary>
+            /// Канал.
+            /// </summary>
+            public IModel Channel { get; private set; }
+
+            /// <summary>
+            /// Семафор, предоставляющий экслюзивный доступ.
+            /// </summary>
+            public SemaphoreSlim SemaphoreSlim { get; }
+
+            #endregion Свойства
+
+            #region Конструктор
+
+            /// <summary>
+            /// Создает новый экземпляр класса <see cref="ExclusiveChannel"/>.
+            /// </summary>
+            public ExclusiveChannel(IModel channel, SemaphoreSlim semaphoreSlim)
+            {
+                Channel = channel;
+                SemaphoreSlim = semaphoreSlim;
+            }
+
+            #endregion Конструктор
+
+            #region Методы (public)
+
+            /// <summary>
+            /// Заменить текущий канал на новый.
+            /// </summary>
+            /// <param name="channel">Канал.</param>
+            public void ReplaceChannel(IModel channel)
+            {
+                Channel?.Dispose();
+                Channel = channel;
+            }
+
+            public void Deconstruct(out IModel channel, out SemaphoreSlim semaphoreSlim)
+            {
+                channel = Channel;
+                semaphoreSlim = SemaphoreSlim;
+            }
+
+            #endregion Методы (public)
         }
 
         #endregion Методы (private)

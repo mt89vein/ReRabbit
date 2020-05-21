@@ -1,11 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ReRabbit.Abstractions;
 
 namespace ReRabbit.Subscribers.Middlewares
 {

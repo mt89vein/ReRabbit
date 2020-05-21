@@ -5,7 +5,7 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Контекст сообщения для обработки.
     /// </summary>
-    public class MessageContext<TMessage>
+    public readonly struct MessageContext<TMessage>
         where TMessage : class, IMessage
     {
         #region Свойства
@@ -32,7 +32,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageContext{TMessage}"/>.
         /// </summary>
-        public MessageContext(TMessage message, MqEventData eventData, BasicDeliverEventArgs eventArgs)
+        public MessageContext(TMessage message, in MqEventData eventData, BasicDeliverEventArgs eventArgs)
         {
             Message = message;
             EventData = eventData;

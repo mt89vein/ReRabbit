@@ -5,24 +5,14 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Данные о сообщении (событии) полученным обработчиком.
     /// </summary>
-    public class MqEventData
+    public readonly struct MqEventData
     {
         #region Свойства
 
         /// <summary>
-        /// Принятое сообщение.
+        /// Оригинальное принятое сообщение.
         /// </summary>
         public MqMessage MqMessage { get; }
-
-        /// <summary>
-        /// Роут, с которым сообщение было отправлено.
-        /// </summary>
-        public string RoutingKey { get; }
-
-        /// <summary>
-        /// Обменник, на который было отправлено сообщение.
-        /// </summary>
-        public string Exchange { get; }
 
         /// <summary>
         /// Сообщение было отправлено повторно.
@@ -49,12 +39,10 @@ namespace ReRabbit.Abstractions.Models
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр класса <see cref="MqEventData"/>.
+        /// Создает экземпляр структуры <see cref="MqEventData"/>.
         /// </summary>
         public MqEventData(
             MqMessage mqMessage,
-            string routingKey,
-            string exchange,
             bool isRedelivered,
             Guid? traceId,
             int retryNumber,
@@ -62,8 +50,6 @@ namespace ReRabbit.Abstractions.Models
         )
         {
             MqMessage = mqMessage;
-            RoutingKey = routingKey;
-            Exchange = exchange;
             IsRedelivered = isRedelivered;
             TraceId = traceId;
             RetryNumber = retryNumber;

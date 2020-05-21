@@ -12,7 +12,11 @@ namespace ReRabbit.Subscribers.Middlewares
     {
         #region Поля
 
-        // register middlewares by message type
+        // TODO: register middlewares by message type
+        // коротко - сделать апи для регистрации по конкретному типу события
+        // и к каждому из них явно указывать какие мидлварки должы их обрабатывать
+        // сделать глобальные хендлеры
+        // от подключения через конфиги отказаться
 
         /// <summary>
         /// Двусвязный список middlewares.

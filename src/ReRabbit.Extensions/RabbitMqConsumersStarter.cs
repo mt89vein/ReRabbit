@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Extensions
 {
-    public class RabbitMqStarter : BackgroundService
+    public class RabbitMqConsumersStarter : BackgroundService
     {
         private readonly RabbitMqHandlerAutoRegistrator _rabbitMqHandlerAutoRegistrator;
 
-        public RabbitMqStarter(RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator)
+        public RabbitMqConsumersStarter(RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator)
         {
             _rabbitMqHandlerAutoRegistrator = rabbitMqHandlerAutoRegistrator;
         }
