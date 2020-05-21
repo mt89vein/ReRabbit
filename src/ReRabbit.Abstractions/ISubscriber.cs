@@ -18,7 +18,7 @@ namespace ReRabbit.Abstractions
         /// <param name="settings">Настройки очереди.</param>
         /// <typeparam name="TEvent">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором работает подписчик.</returns>
-        IModel Subscribe<TEvent>(
+        Task<IModel> SubscribeAsync<TEvent>(
             AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings
         ) where TEvent : class, IMessage;
 
@@ -28,7 +28,7 @@ namespace ReRabbit.Abstractions
         /// <param name="settings">Настройки очереди.</param>
         /// <typeparam name="TEvent">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
-        IModel Bind<TEvent>(QueueSetting settings)
+        Task<IModel> BindAsync<TEvent>(QueueSetting settings)
             where TEvent : class, IMessage;
     }
 

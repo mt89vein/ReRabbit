@@ -9,9 +9,9 @@ namespace SampleWebApplication.Controllers
     [Route("api/[controller]")]
     public class HomeController : ControllerBase
     {
-        private readonly IEventPublisher _publisher;
+        private readonly IMessagePublisher _publisher;
 
-        public HomeController(IEventPublisher publisher)
+        public HomeController(IMessagePublisher publisher)
         {
             _publisher = publisher;
         }
@@ -19,10 +19,22 @@ namespace SampleWebApplication.Controllers
         [HttpGet]
         public async Task<IActionResult> IndexAsync(string message)
         {
-            await _publisher.PublishAsync(new TestMessage
+            if (message == "test")
             {
-                Message = message
-            });
+                await _publisher.PublishAsync(new TestMessage
+                {
+                    Message = message
+                });
+            }
+            else
+            {
+                await _publisher.PublishAsync(new Metrics
+                {
+                    Name = 1,
+                    Value = 2
+                });
+            }
+
             return Ok();
         }
     }

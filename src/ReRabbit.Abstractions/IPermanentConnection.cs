@@ -1,5 +1,6 @@
 using RabbitMQ.Client;
 using System;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
 {
@@ -17,7 +18,7 @@ namespace ReRabbit.Abstractions
         /// Попытаться установить соединение.
         /// </summary>
         /// <returns>True, если удалось успешно подключиться.</returns>
-        bool TryConnect();
+        ValueTask<bool> TryConnectAsync();
 
         /// <summary>
         /// Попытаться отключиться.
@@ -27,10 +28,10 @@ namespace ReRabbit.Abstractions
 
         /// <summary>
         /// Создает AMQP-модель (канал).
+        /// </summary>
         /// <exception cref="InvalidOperationException">
         /// Если подключение не установлено.
         /// </exception>
-        /// </summary>
-        IModel CreateModel();
+        ValueTask<IModel> CreateModelAsync();
     }
 }

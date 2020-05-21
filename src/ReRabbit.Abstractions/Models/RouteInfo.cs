@@ -32,6 +32,11 @@ namespace ReRabbit.Abstractions.Models
         public IDictionary<string, object> Arguments { get; }
 
         /// <summary>
+        /// Роут.
+        /// </summary>
+        public string Route { get; }
+
+        /// <summary>
         /// Персистеность сообщений.
         /// </summary>
         public bool Durable { get; }
@@ -40,11 +45,6 @@ namespace ReRabbit.Abstractions.Models
         /// Автоудаление.
         /// </summary>
         public bool AutoDelete { get; }
-
-        /// <summary>
-        /// Роут.
-        /// </summary>
-        public string Route { get; }
 
         /// <summary>
         /// Количество повторных попыток в случае неудачи.
@@ -65,11 +65,6 @@ namespace ReRabbit.Abstractions.Models
         /// Отложенная отправка.
         /// </summary>
         public TimeSpan? Delay { get; }
-
-        /// <summary>
-        /// Нужно дождаться подтверждения от брокера.
-        /// </summary>
-        public bool AwaitAck { get; }
 
         /// <summary>
         /// Таймаут на подтверждения.
@@ -95,7 +90,6 @@ namespace ReRabbit.Abstractions.Models
             string eventVersion,
             MqConnectionSettings connectionSettings,
             TimeSpan? delay,
-            bool awaitAck,
             TimeSpan confirmationTimeout
         )
         {
@@ -110,28 +104,26 @@ namespace ReRabbit.Abstractions.Models
             ExchangeType = exchangeType;
             Arguments = arguments;
             Delay = delay;
-            AwaitAck = awaitAck;
             ConfirmationTimeout = confirmationTimeout;
         }
 
         /// <summary>
         /// Создает экземпляр класса <see cref="RouteInfo"/>.
         /// </summary>
-        public RouteInfo(EventSettings eventSettings, string route, TimeSpan? delay = null)
+        public RouteInfo(MessageSettings messageSettings, string route, TimeSpan? delay = null)
         {
-            Name = eventSettings.Name;
-            Exchange = eventSettings.Exchange.Name;
-            ExchangeType = eventSettings.Exchange.Type;
-            Arguments = eventSettings.Arguments;
-            Durable = eventSettings.Exchange.Durable;
-            AutoDelete = eventSettings.Exchange.AutoDelete;
-            Route = route.ToLower();
-            RetryCount = eventSettings.RetryCount;
-            EventVersion = eventSettings.Version;
-            ConnectionSettings = eventSettings.ConnectionSettings;
+            Name = messageSettings.Name;
+            Exchange = messageSettings.Exchange.Name;
+            ExchangeType = messageSettings.Exchange.Type;
+            Arguments = messageSettings.Arguments;
+            Durable = messageSettings.Exchange.Durable;
+            AutoDelete = messageSettings.Exchange.AutoDelete;
+            Route = route?.ToLower() ?? string.Empty;
+            RetryCount = messageSettings.RetryCount;
+            EventVersion = messageSettings.Version;
+            ConnectionSettings = messageSettings.ConnectionSettings;
             Delay = delay;
-            AwaitAck = eventSettings.AwaitAck;
-            ConfirmationTimeout = eventSettings.ConfirmationTimeout;
+            ConfirmationTimeout = messageSettings.ConfirmationTimeout;
         }
 
         #endregion Конструкторы

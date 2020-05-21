@@ -12,6 +12,8 @@ namespace ReRabbit.Subscribers.Middlewares
     {
         #region Поля
 
+        // register middlewares by message type
+
         /// <summary>
         /// Двусвязный список middlewares.
         /// </summary>

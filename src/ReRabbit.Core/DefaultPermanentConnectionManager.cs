@@ -10,6 +10,7 @@ namespace ReRabbit.Core
 {
     /// <summary>
     /// Менеджер постоянных соединений.
+    /// Этот класс не наследуется.
     /// </summary>
     public sealed class DefaultPermanentConnectionManager : IPermanentConnectionManager
     {
@@ -28,7 +29,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Пул подключений.
         /// </summary>
-        private readonly ConcurrentDictionary<MqConnectionSettings, IPermanentConnection> _permanentConnections;
+        private readonly ConcurrentDictionary<(MqConnectionSettings, ConnectionPurposeType), IPermanentConnection> _permanentConnections;
 
         #endregion Поля
 
@@ -46,7 +47,7 @@ namespace ReRabbit.Core
         {
             _clientPropertyProvider = clientPropertyProvider;
             _logger = logger;
-            _permanentConnections = new ConcurrentDictionary<MqConnectionSettings, IPermanentConnection>();
+            _permanentConnections = new ConcurrentDictionary<(MqConnectionSettings, ConnectionPurposeType), IPermanentConnection>();
         }
 
         #endregion Конструктор
@@ -57,10 +58,14 @@ namespace ReRabbit.Core
         /// Получить соединение для определенного виртуального хоста.
         /// </summary>
         /// <param name="connectionSettings">Настройки подключения.</param>
+        /// <param name="purposeType">Цель подключения.</param>
         /// <returns>Постоянное соединение.</returns>
-        public IPermanentConnection GetConnection(MqConnectionSettings connectionSettings)
+        public IPermanentConnection GetConnection(MqConnectionSettings connectionSettings, ConnectionPurposeType purposeType)
         {
-            return _permanentConnections.GetOrAdd(connectionSettings, PermanentConnectionFactory);
+            return _permanentConnections.GetOrAdd(
+                (connectionSettings, purposeType),
+                settings => PermanentConnectionFactory(settings.Item1)
+            );
         }
 
         /// <summary>

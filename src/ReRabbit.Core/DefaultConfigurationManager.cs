@@ -125,35 +125,35 @@ namespace ReRabbit.Core
         }
 
         /// <summary>
-        /// Получить конфигурацию события среди всех подключений и виртуальных хостов.
+        /// Получить конфигурацию сообщения среди всех подключений и виртуальных хостов.
         /// </summary>
-        /// <param name="eventName">Наименование события.</param>
-        /// <returns>Настройки события.</returns>
-        public EventSettings GetEventSettings(string eventName)
+        /// <param name="messageName">Наименование сообщения.</param>
+        /// <returns>Настройки сообщения.</returns>
+        public MessageSettings GetMessageSettings(string messageName)
         {
             // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
             // TODO: понятное сообщение об ошибке
             return GetEventsSettings().Single();
 
-            IEnumerable<EventSettings> GetEventsSettings()
+            IEnumerable<MessageSettings> GetEventsSettings()
             {
                 foreach (var connectionSettings in Settings.Connections.Values)
                 {
                     foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
                     {
-                        if (_configuration.TryGetEventSection(
+                        if (_configuration.TryGetMessageSection(
                             connectionSettings.ConnectionName,
                             virtualHostSettings.Name,
-                            eventName,
-                            out var eventConfigurationSection,
+                            messageName,
+                            out var messageConfigurationSection,
                             out _)
                         )
                         {
-                            yield return BuildEventSettings(
+                            yield return BuildMessageSettings(
                                 connectionSettings,
                                 virtualHostSettings,
-                                eventConfigurationSection
+                                messageConfigurationSection
                             );
                         }
                     }
@@ -193,7 +193,7 @@ namespace ReRabbit.Core
 
             return rabbitMqSettings;
 
-            KeyValuePair<string, VirtualHostSetting> BuildConnectionVirtualHosts(
+            static KeyValuePair<string, VirtualHostSetting> BuildConnectionVirtualHosts(
                 IConfigurationSection virtualHostConfSection
             )
             {
@@ -208,7 +208,7 @@ namespace ReRabbit.Core
                 );
             }
 
-            KeyValuePair<string, ConnectionSettings> BuildConnectionSettings(
+            static KeyValuePair<string, ConnectionSettings> BuildConnectionSettings(
                 IConfigurationSection connectionConfSection
             )
             {
@@ -263,6 +263,7 @@ namespace ReRabbit.Core
             var arrayBindings = Array.Empty<ExchangeBinding>();
             var listBindings = new List<ExchangeBinding>();
 
+            // TODO: bindings 
             subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
             subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
             subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
@@ -274,24 +275,24 @@ namespace ReRabbit.Core
         }
 
         /// <summary>
-        /// Сформировать настройки события.
+        /// Сформировать настройки сообщения.
         /// </summary>
         /// <param name="connectionSettings">Настройки подключения.</param>
         /// <param name="virtualHostSettings">Настройки виртуального хоста.</param>
-        /// <param name="eventConfigurationSection">Наименование секции конфигурации события.</param>
-        /// <returns>Настройки события.</returns>
-        private static EventSettings BuildEventSettings(
+        /// <param name="messageConfigurationSection">Наименование секции конфигурации сообщения.</param>
+        /// <returns>Настройки сообщения.</returns>
+        private static MessageSettings BuildMessageSettings(
             ConnectionSettings connectionSettings,
             VirtualHostSetting virtualHostSettings,
-            IConfigurationSection eventConfigurationSection
+            IConfigurationSection messageConfigurationSection
         )
         {
             var mqConnectionSettings = CreateConnectionSettings(connectionSettings, virtualHostSettings);
-            var eventSettings = new EventSettings(mqConnectionSettings, eventConfigurationSection.Key);
+            var messageSettings = new MessageSettings(mqConnectionSettings, messageConfigurationSection.Key);
 
-            eventConfigurationSection.Bind(eventSettings);
+            messageConfigurationSection.Bind(messageSettings);
 
-            return eventSettings;
+            return messageSettings;
         }
 
         /// <summary>

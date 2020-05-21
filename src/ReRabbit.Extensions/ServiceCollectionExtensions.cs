@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NamedResolver;
@@ -23,16 +22,6 @@ namespace ReRabbit.Extensions
     /// </summary>
     public static class ServiceCollectionExtensions
     {
-        /// <summary>
-        /// Задействовать RabbitMq.
-        /// </summary>
-        /// <param name="app">Построитель приложения.</param>
-        /// <returns>Регистратор сервисов.</returns>
-        public static RabbitMqHandlerAutoRegistrator UseRabbitMq(this IApplicationBuilder app)
-        {
-            return new RabbitMqHandlerAutoRegistrator(app.ApplicationServices);
-        }
-
         public static IServiceCollection AddRabbitMq(
             this IServiceCollection services,
             Action<RabbitMqRegistrationOptions> options = null
@@ -40,6 +29,9 @@ namespace ReRabbit.Extensions
         {
             var middlewareRegistry = new MiddlewareRegistry();
             services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistry);
+
+            services.AddSingleton<RabbitMqHandlerAutoRegistrator>();
+            services.AddHostedService<RabbitMqStarter>();
 
             var subscriberRegistrator =
                 services.AddNamed<ISubscriber>(ServiceLifetime.Singleton)

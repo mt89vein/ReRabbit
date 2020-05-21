@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Extensions;
-using SampleWebApplication.Middlewares;
 using SampleWebApplication.RetryDelayComputers;
 
 namespace SampleWebApplication
@@ -57,7 +56,6 @@ namespace SampleWebApplication
 
             app.UseRouting();
             app.UseEndpoints(b => b.MapDefaultControllerRoute());
-            app.UseRabbitMq();
         }
     }
 }

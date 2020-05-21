@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Publishers
+namespace ReRabbit.Core
 {
     public readonly struct PublishTaskInfo
     {
@@ -13,7 +13,7 @@ namespace ReRabbit.Publishers
         public PublishTaskInfo(ulong publishTag)
         {
             _publishTag = publishTag;
-            _completionSource = new TaskCompletionSource<ulong>();
+            _completionSource = new TaskCompletionSource<ulong>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         public void Ack()

@@ -5,9 +5,10 @@ using System.IO;
 namespace ReRabbit.Core.Serializations
 {
     /// <summary>
-    /// Стандартный сериализатор Newtonsoft.Json
+    /// Стандартный сериализатор Newtonsoft.Json.
+    /// Этот класс не наследуется.
     /// </summary>
-    public class DefaultJsonSerializer : StringSerializerBase
+    public sealed class DefaultJsonSerializer : StringSerializerBase
     {
         #region Поля
 

@@ -17,7 +17,7 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="obj">Объект для сериализации.</param>
         /// <returns>Массив байт.</returns>
-        byte[] Serialize(object obj);
+        ReadOnlyMemory<byte> Serialize(object obj);
 
         /// <summary>
         /// Десериализовать массив байт в объект указанного типа.
@@ -25,7 +25,7 @@ namespace ReRabbit.Abstractions
         /// <param name="type">Тип объекта для десериализации.</param>
         /// <param name="bytes">Массив байт.</param>
         /// <returns>Десериализованный объект.</returns>
-        object Deserialize(Type type, byte[] bytes);
+        object Deserialize(Type type, ReadOnlyMemory<byte> bytes);
 
         /// <summary>
         /// Десериализовать массив байт в объект указанного типа.
@@ -33,7 +33,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TType">Тип объекта для десериализации.</typeparam>
         /// <param name="bytes">Массив байт.</param>
         /// <returns>Десериализованный объект.</returns>
-        TType Deserialize<TType>(byte[] bytes);
+        TType Deserialize<TType>(ReadOnlyMemory<byte> bytes);
 
         /// <summary>
         /// Десериализовать строку в объект указанного типа.

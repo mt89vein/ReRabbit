@@ -40,7 +40,7 @@ namespace ReRabbit.Core.Serializations
         /// </summary>
         /// <param name="obj">Объект для сериализации.</param>
         /// <returns>Массив байт.</returns>
-        public byte[] Serialize(object obj)
+        public ReadOnlyMemory<byte> Serialize(object obj)
         {
             var serialized = SerializeToString(obj);
             return ConvertToBytes(serialized);
@@ -52,9 +52,9 @@ namespace ReRabbit.Core.Serializations
         /// <param name="type">Тип объекта для десериализации.</param>
         /// <param name="bytes">Массив байт.</param>
         /// <returns>Десериализованный объект.</returns>
-        public object Deserialize(Type type, byte[] bytes)
+        public object Deserialize(Type type, ReadOnlyMemory<byte> bytes)
         {
-            if (bytes == null)
+            if (bytes.IsEmpty)
             {
                 return null;
             }
@@ -69,7 +69,7 @@ namespace ReRabbit.Core.Serializations
         /// <typeparam name="TType">Тип объекта для десериализации.</typeparam>
         /// <param name="bytes">Массив байт.</param>
         /// <returns>Десериализованный объект.</returns>
-        public TType Deserialize<TType>(byte[] bytes)
+        public TType Deserialize<TType>(ReadOnlyMemory<byte> bytes)
         {
             var serialized = ConvertToString(bytes);
             return (TType)Deserialize(typeof(TType), serialized);
@@ -95,7 +95,7 @@ namespace ReRabbit.Core.Serializations
         /// </summary>
         /// <param name="serialzed">Строка.</param>
         /// <returns>Массив байт.</returns>
-        protected virtual byte[] ConvertToBytes(string serialzed)
+        protected virtual ReadOnlyMemory<byte> ConvertToBytes(string serialzed)
         {
             return Encoding.UTF8.GetBytes(serialzed);
         }
@@ -105,9 +105,9 @@ namespace ReRabbit.Core.Serializations
         /// </summary>
         /// <param name="bytes">Массив байт.</param>
         /// <returns>Строка.</returns>
-        protected virtual string ConvertToString(byte[] bytes)
+        protected virtual string ConvertToString(ReadOnlyMemory<byte> bytes)
         {
-            return Encoding.UTF8.GetString(bytes);
+            return Encoding.UTF8.GetString(bytes.Span);
         }
 
         #endregion Методы (protected)

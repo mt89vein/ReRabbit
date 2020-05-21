@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers
 {
@@ -40,7 +41,6 @@ namespace ReRabbit.Subscribers
         {
             _subscriptionManager = serviceProvider.GetRequiredService<ISubscriptionManager>();
             _serviceProvider = serviceProvider;
-            RegisterAllMessageHandlers();
         }
 
         #endregion Конструктор
@@ -51,7 +51,7 @@ namespace ReRabbit.Subscribers
         /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>.
         /// </summary>
         /// <returns>Регистратор обработчиков.</returns>
-        private void RegisterAllMessageHandlers()
+        public async Task RegisterAllMessageHandlersAsync()
         {
             var handlerGenericTypeDefinition = typeof(IMessageHandler<>);
 
@@ -75,7 +75,7 @@ namespace ReRabbit.Subscribers
 
             foreach (var g in groups)
             {
-                SubscribeToMessage(g.EventType, g.Handlers);
+                await SubscribeToMessageAsync(g.EventType, g.Handlers).ConfigureAwait(false);
             }
         }
 
@@ -84,7 +84,7 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <param name="messageType">сообщение.</param>
         /// <param name="handlerTypes">Обработчики сообщения.</param>
-        private void SubscribeToMessage(Type messageType, IEnumerable<Type> handlerTypes)
+        private async Task SubscribeToMessageAsync(Type messageType, IEnumerable<Type> handlerTypes)
         {
             var handlerGroups = handlerTypes.SelectMany(handler =>
             {
@@ -121,7 +121,7 @@ namespace ReRabbit.Subscribers
 
                 var handlerInfo = group.Single();
 
-                register.Invoke(
+                var task = (Task)register.Invoke(
                     this,
                     new object[]
                     {
@@ -129,6 +129,8 @@ namespace ReRabbit.Subscribers
                         handlerInfo.Attribute
                     }
                 );
+
+                await task.ConfigureAwait(false);
             }
         }
 
@@ -138,18 +140,16 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <param name="messageHandlerType">Тип обработчика сообщения..</param>
         /// <param name="subscriberConfiguration">Конфигурация обработчиков.</param>
-        private void Register<TMessage>(Type messageHandlerType, SubscriberConfigurationAttribute subscriberConfiguration)
+        private Task Register<TMessage>(Type messageHandlerType, SubscriberConfigurationAttribute subscriberConfiguration)
             where TMessage : class, IMessage
         {
             var serviceProvider = _serviceProvider;
 
-            _subscriptionManager.Register<TMessage>(ctx =>
+            return _subscriptionManager.RegisterAsync<TMessage>(ctx =>
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var handler = (IMessageHandler<TMessage>)scope.ServiceProvider.GetService(messageHandlerType);
-
-                if (handler == null)
+                if (!(scope.ServiceProvider.GetService(messageHandlerType) is IMessageHandler<TMessage> handler))
                 {
                     throw new InvalidOperationException(
                         $"Ошибка конфигурирования обработчика {messageHandlerType}." +

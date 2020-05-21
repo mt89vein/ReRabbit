@@ -1,6 +1,7 @@
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using System;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
 {
@@ -14,7 +15,7 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        void Bind<TEvent>(QueueSetting queueSetting)
+        Task BindAsync<TEvent>(QueueSetting queueSetting)
             where TEvent : class, IMessage;
 
         /// <summary>
@@ -22,7 +23,7 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        void Bind<TEvent>(string configurationSectionName)
+        Task BindAsync<TEvent>(string configurationSectionName)
             where TEvent : class, IMessage;
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace ReRabbit.Abstractions
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        void Bind<TEvent>(
+        Task BindAsync<TEvent>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
@@ -46,7 +47,7 @@ namespace ReRabbit.Abstractions
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        void Register<TEvent>(
+        Task RegisterAsync<TEvent>(
             AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName,
             string connectionName,
@@ -59,7 +60,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        void Register<TEvent>(
+        Task RegisterAsync<TEvent>(
             AcknowledgableMessageHandler<TEvent> eventHandler,
             string configurationSectionName
         ) where TEvent : class, IMessage;
@@ -70,7 +71,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        void Register<TEvent>(
+        Task RegisterAsync<TEvent>(
             AcknowledgableMessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
         ) where TEvent : class, IMessage;
@@ -81,7 +82,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        void Register<TEvent>(
+        Task RegisterAsync<TEvent>(
             MessageHandler<TEvent> eventHandler,
             string configurationSectionName
         ) where TEvent : class, IMessage;
@@ -94,7 +95,7 @@ namespace ReRabbit.Abstractions
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        void Register<TEvent>(
+        Task RegisterAsync<TEvent>(
             MessageHandler<TEvent> eventHandler,
             string configurationSectionName,
             string connectionName,
@@ -107,7 +108,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        void Register<TEvent>(
+        Task RegisterAsync<TEvent>(
             MessageHandler<TEvent> eventHandler,
             QueueSetting queueSetting
         ) where TEvent : class, IMessage;

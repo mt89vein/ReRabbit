@@ -20,9 +20,9 @@ namespace ReRabbit.Publishers
         private readonly IConfigurationManager _configurationManager;
 
         /// <summary>
-        /// Кэш настроек событий.
+        /// Кэш настроек сообщений.
         /// </summary>
-        private readonly ConcurrentDictionary<string, EventSettings> _eventSettingsCache;
+        private readonly ConcurrentDictionary<string, MessageSettings> _messagesSettingsCache;
 
         #endregion Поля
 
@@ -35,7 +35,7 @@ namespace ReRabbit.Publishers
         public DefaultRouteProvider(IConfigurationManager configurationManager)
         {
             _configurationManager = configurationManager;
-            _eventSettingsCache = new ConcurrentDictionary<string, EventSettings>();
+            _messagesSettingsCache = new ConcurrentDictionary<string, MessageSettings>();
         }
 
         #endregion Конструктор
@@ -52,18 +52,16 @@ namespace ReRabbit.Publishers
         /// <returns>Информация о роуте.</returns>
         public RouteInfo GetFor(IMessage message, TimeSpan? delay = null)
         {
-            // TODO: Delay publish
-
-            var eventSettings = _eventSettingsCache.GetOrAdd(
+            var messageSettings = _messagesSettingsCache.GetOrAdd(
                 message.GetType().Name,
-                eventName => _configurationManager.GetEventSettings(eventName)
+                eventName => _configurationManager.GetMessageSettings(eventName)
             );
 
-            var route = eventSettings.RouteType == RouteType.Constant
-                ? eventSettings.Route
-                : Smart.Format(eventSettings.Route, message);
+            var route = messageSettings.RouteType == RouteType.Constant
+                ? messageSettings.Route
+                : Smart.Format(messageSettings.Route, message);
 
-            return new RouteInfo(eventSettings, route.ToLower(), delay);
+            return new RouteInfo(messageSettings, route, delay);
         }
 
         #endregion Методы (public)

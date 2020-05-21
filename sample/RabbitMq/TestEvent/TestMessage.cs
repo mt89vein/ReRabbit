@@ -23,6 +23,7 @@ namespace SampleWebApplication.RabbitMq.TestEvent
             {
                 await Task.CompletedTask;
 
+                //return Ack.Ok;
                 if (ctx.EventData.IsLastRetry)
                 {
                     return Ack.Ok;
@@ -35,6 +36,10 @@ namespace SampleWebApplication.RabbitMq.TestEvent
 
     public class Metrics : IntegrationMessage
     {
+        public int Value { get; set; }
+
+        public int Name { get; set; }
+
         public class MetricHandler : IMessageHandler<Metrics>
         {
             /// <summary>

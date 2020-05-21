@@ -2,6 +2,7 @@ using RabbitMQ.Client;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
 {
@@ -17,7 +18,7 @@ namespace ReRabbit.Abstractions
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        void Handle<TEventType>(
+        Task HandleAsync<TEventType>(
             Acknowledgement acknowledgement,
             IModel channel,
             MessageContext<TEventType> messageContext,

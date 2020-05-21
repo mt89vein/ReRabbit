@@ -6,7 +6,7 @@ namespace ReRabbit.Abstractions.Settings
     /// <summary>
     /// Настройки события.
     /// </summary>
-    public class EventSettings
+    public class MessageSettings
     {
         #region Свойства
 
@@ -46,11 +46,6 @@ namespace ReRabbit.Abstractions.Settings
         public int RetryCount { get; set; } = 5;
 
         /// <summary>
-        /// Нужно дождаться подтверждения от брокера.
-        /// </summary>
-        public bool AwaitAck { get; set; } = true;
-
-        /// <summary>
         /// Таймаут на подтверждения.
         /// </summary>
         public TimeSpan ConfirmationTimeout { get; set; } = TimeSpan.FromSeconds(10);
@@ -65,11 +60,11 @@ namespace ReRabbit.Abstractions.Settings
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр класса <see cref="EventSettings"/>.
+        /// Создает экземпляр класса <see cref="MessageSettings"/>.
         /// </summary>
         /// <param name="connectionSettings">Настройки подключения.</param>
         /// <param name="eventName">Наименование события.</param>
-        public EventSettings(MqConnectionSettings connectionSettings, string eventName)
+        public MessageSettings(MqConnectionSettings connectionSettings, string eventName)
         {
             ConnectionSettings = connectionSettings;
             Name = eventName;

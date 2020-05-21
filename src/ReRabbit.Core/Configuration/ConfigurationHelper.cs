@@ -45,38 +45,38 @@ namespace ReRabbit.Core.Configuration
         }
 
         /// <summary>
-        /// Попытаться получить секцию с настройками события.
+        /// Попытаться получить секцию с настройками сообщения.
         /// </summary>
         /// <param name="configuration">Конфигурация.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHostName">Виртуальный хост.</param>
-        /// <param name="eventName">Наименование события.</param>
-        /// <param name="eventConfigurationSection">Секция с настройками события.</param>
+        /// <param name="messageName">Наименование сообщения.</param>
+        /// <param name="messageConfigurationSection">Секция с настройками сообщения.</param>
         /// <param name="sectionPath">Путь к секции.</param>
         /// <returns>True, если удалось получить секцию.</returns>
-        public static bool TryGetEventSection(
+        public static bool TryGetMessageSection(
             this IConfiguration configuration,
             string connectionName,
             string virtualHostName,
-            string eventName,
-            out IConfigurationSection eventConfigurationSection,
+            string messageName,
+            out IConfigurationSection messageConfigurationSection,
             out string sectionPath
         )
         {
-            sectionPath = GetEventSectionPath(
+            sectionPath = GetMessagesSectionPath(
                 connectionName,
                 virtualHostName,
-                eventName
+                messageName
             );
 
-            eventConfigurationSection = configuration.GetSection(sectionPath);
+            messageConfigurationSection = configuration.GetSection(sectionPath);
 
-            if (eventConfigurationSection.Exists())
+            if (messageConfigurationSection.Exists())
             {
                 return true;
             }
 
-            eventConfigurationSection = null;
+            messageConfigurationSection = null;
 
             return false;
         }
@@ -106,16 +106,16 @@ namespace ReRabbit.Core.Configuration
         }
 
         /// <summary>
-        /// Получить путь к конфигурации настроек события.
+        /// Получить путь к конфигурации настроек сообщений.
         /// </summary>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHostName">Наименование виртуального хоста.</param>
-        /// <param name="eventName">Название события.</param>
+        /// <param name="messageName">Название сообщения.</param>
         /// <returns>Путь к секции.</returns>
-        private static string GetEventSectionPath(
+        private static string GetMessagesSectionPath(
             string connectionName,
             string virtualHostName,
-            string eventName
+            string messageName
         )
         {
             return string.Join(":",
@@ -124,8 +124,8 @@ namespace ReRabbit.Core.Configuration
                 connectionName,
                 ConfigurationSectionConstants.VIRTUAL_HOSTS,
                 virtualHostName,
-                ConfigurationSectionConstants.EVENTS,
-                eventName
+                ConfigurationSectionConstants.MESSAGES,
+                messageName
             );
         }
     }

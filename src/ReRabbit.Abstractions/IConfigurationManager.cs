@@ -30,8 +30,8 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Получить конфигурацию события среди всех подключений и виртуальных хостов.
         /// </summary>
-        /// <param name="eventName">Наименование события.</param>
+        /// <param name="messageName">Наименование события.</param>
         /// <returns>Настройки события.</returns>
-        EventSettings GetEventSettings(string eventName);
+        MessageSettings GetMessageSettings(string messageName);
     }
 }

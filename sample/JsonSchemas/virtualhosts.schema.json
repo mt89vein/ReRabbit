@@ -17,8 +17,8 @@
                     ]
                 }
             },
-            "Events": {
-                "ExampleEvent": {
+            "Messages": {
+                "ExampleMessage": {
                     "Exchange": {
                         "Name": "example-exchange",
                         "Durable": true
@@ -59,8 +59,8 @@
             "Queues": {
                 "$ref": "./subscriber.schema.json"
             },
-            "Events": {
-                "$ref": "./events.schema.json"
+            "Messages": {
+                "$ref": "./messages.schema.json"
             }
         }
     }

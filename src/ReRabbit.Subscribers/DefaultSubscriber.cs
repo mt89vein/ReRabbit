@@ -5,6 +5,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
+using ReRabbit.Core;
 using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
@@ -105,10 +106,10 @@ namespace ReRabbit.Subscribers
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором работает подписчик.</returns>
         /// <typeparam name="TEvent">Тип сообщения.</typeparam>
-        public IModel Subscribe<TEvent>(AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings)
+        public async Task<IModel> SubscribeAsync<TEvent>(AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings)
             where TEvent : class, IMessage
         {
-            var channel = Bind<TEvent>(settings);
+            var channel = await BindAsync<TEvent>(settings);
 
             channel.BasicQos(0, settings.ScalingSettings.MessagesPerConsumer, false);
 
@@ -137,7 +138,7 @@ namespace ReRabbit.Subscribers
 
                 _logger.LogWarning(ea.Exception, "Потребитель сообщений из очереди инициализирован повторно.");
 
-                channel = Subscribe(eventHandler, settings);
+                channel = AsyncHelper.RunSync(() => SubscribeAsync(eventHandler, settings));
             };
 
             channel.ModelShutdown += (sender, ea) =>
@@ -148,7 +149,7 @@ namespace ReRabbit.Subscribers
 
                     _logger.LogWarning("Соединение сброшено {Reason}. Потребитель сообщений из очереди инициализирован повторно.", ea.ReplyText);
 
-                    channel = Subscribe(eventHandler, settings);
+                    channel = AsyncHelper.RunSync(() => SubscribeAsync(eventHandler, settings));
                 }
             };
 
@@ -160,13 +161,17 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
-        public IModel Bind<TEvent>(QueueSetting settings)
+        public async Task<IModel> BindAsync<TEvent>(QueueSetting settings)
             where TEvent : class, IMessage
         {
-            var channel =
-                _permanentConnectionManager
-                    .GetConnection(settings.ConnectionSettings)
-                    .CreateModel();
+            var channel = await _permanentConnectionManager
+                .GetConnection(settings.ConnectionSettings, ConnectionPurposeType.Consumer)
+                .CreateModelAsync();
+
+            channel = new PublishConfirmableChannel(
+                channel,
+                _logger
+            );
 
             _topologyProvider.DeclareQueue(channel, settings, typeof(TEvent));
 
@@ -239,8 +244,8 @@ namespace ReRabbit.Subscribers
             {
                 try
                 {
-                    var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body.ToArray());
-                    var payload = mqMessage?.Payload?.ToString();
+                    var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
+                    var payload = mqMessage?.Payload.ToString();
 
                     var mqEventData = new MqEventData(
                         mqMessage,
@@ -333,7 +338,7 @@ namespace ReRabbit.Subscribers
                 {
                     var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, queueName);
 
-                    acknowledgementBehaviour.Handle(acknowledgement, channel, messageContext, settings);
+                    await acknowledgementBehaviour.HandleAsync(acknowledgement, channel, messageContext, settings);
                 };
 
                 return consumer;
@@ -348,7 +353,7 @@ namespace ReRabbit.Subscribers
                     {
                         var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, queueName);
 
-                        acknowledgementBehaviour.Handle(acknowledgement, channel, messageContext, settings);
+                        await acknowledgementBehaviour.HandleAsync(acknowledgement, channel, messageContext, settings);
                     });
 
                 return consumer;

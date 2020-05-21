@@ -10,6 +10,7 @@ using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 {
@@ -77,34 +78,25 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        public void Handle<TEventType>(
+        public Task HandleAsync<TEventType>(
             Acknowledgement acknowledgement,
             IModel channel,
             MessageContext<TEventType> messageContext,
             QueueSetting settings
         ) where TEventType : class, IMessage
         {
-            switch (acknowledgement)
+            return acknowledgement switch
             {
-                case Ack ack:
-                    HandleAck(ack, channel, messageContext, settings);
-                    break;
-                case Reject reject:
-                    HandleReject(reject, channel, messageContext, settings);
-                    break;
-                case Nack nack:
-                    HandleNack(nack, channel, messageContext, settings);
-                    break;
-                case Retry retry:
-                    HandleRetry(retry, channel, messageContext, settings);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(acknowledgement),
-                        typeof(Acknowledgement),
-                        "Передан неизвестный подтип Acknowledgement."
-                    );
-            }
+                Ack ack => HandleAck(ack, channel, messageContext, settings),
+                Reject reject => HandleRejectAsync(reject, channel, messageContext, settings),
+                Nack nack => HandleNackAsync(nack, channel, messageContext, settings),
+                Retry retry => HandleRetryAsync(retry, channel, messageContext, settings),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(acknowledgement),
+                    typeof(Acknowledgement),
+                    "Передан неизвестный подтип Acknowledgement."
+                )
+            };
         }
 
         #endregion Методы (public)
@@ -118,7 +110,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private void HandleRetry<TEventType>(
+        private async Task HandleRetryAsync<TEventType>(
             Retry retry,
             IModel channel,
             MessageContext<TEventType> messageContext,
@@ -129,7 +121,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                if (TryRetry(channel, messageContext, settings, retry.Span))
+                if (await TryRetryAsync(channel, messageContext, settings, retry.Span))
                 {
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
@@ -147,7 +139,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private static void HandleAck<TEvent>(
+        private static Task HandleAck<TEvent>(
             Ack ack,
             IModel channel,
             MessageContext<TEvent> messageContext,
@@ -158,6 +150,8 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             {
                 channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -167,7 +161,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private void HandleNack<TEventType>(
+        private async Task HandleNackAsync<TEventType>(
             Nack nack,
             IModel channel,
             MessageContext<TEventType> messageContext,
@@ -178,7 +172,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                if (TryRetry(channel, messageContext, settings))
+                if (await TryRetryAsync(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -199,7 +193,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private void HandleReject<TEventType>(
+        private async Task HandleRejectAsync<TEventType>(
             Reject reject,
             IModel channel,
             MessageContext<TEventType> messageContext,
@@ -216,17 +210,31 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
                     {
-                        channel.BasicPublish(
-                            CommonQueuesConstants.ERROR_MESSAGES,
-                            string.Empty,
-                            messageContext.EventArgs.BasicProperties,
-                            messageContext.EventArgs.Body
-                        );
+                        if (channel is IAsyncChannel asyncChannel)
+                        {
+                            await asyncChannel.BasicPublishAsync(
+                                CommonQueuesConstants.ERROR_MESSAGES,
+                                string.Empty,
+                                mandatory: true,
+                                messageContext.EventArgs.BasicProperties,
+                                messageContext.EventArgs.Body
+                            );
+                        }
+                        else
+                        {
+                            channel.BasicPublish(
+                                CommonQueuesConstants.ERROR_MESSAGES,
+                                string.Empty,
+                                mandatory: true,
+                                messageContext.EventArgs.BasicProperties,
+                                messageContext.EventArgs.Body
+                            );
+                        }
                     }
 
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
-                else if (TryRetry(channel, messageContext, settings))
+                else if (await TryRetryAsync(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -248,7 +256,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="settings">Настройки очереди.</param>
         /// <param name="retryDelay">Время, через которое необходимо повторить обработку.</param>
         /// <returns>True, если удалось успешно переотправить.</returns>
-        private bool TryRetry<TEventType>(
+        private async Task<bool> TryRetryAsync<TEventType>(
             IModel channel,
             MessageContext<TEventType> messageContext,
             QueueSetting settings,
@@ -314,12 +322,25 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
             messageContext.EventArgs.BasicProperties.IncrementRetryCount(1);
 
-            channel.BasicPublish(
-                exchange: string.Empty,
-                routingKey: routingKey,
-                basicProperties: messageContext.EventArgs.BasicProperties,
-                body: messageContext.EventArgs.Body
-            );
+            if (channel is IAsyncChannel asyncChannel)
+            {
+                await asyncChannel.BasicPublishAsync(
+                    string.Empty,
+                    routingKey,
+                    true,
+                    messageContext.EventArgs.BasicProperties,
+                    messageContext.EventArgs.Body
+                );
+            }
+            else
+            {
+                channel.BasicPublish(
+                    exchange: string.Empty,
+                    routingKey: routingKey,
+                    basicProperties: messageContext.EventArgs.BasicProperties,
+                    body: messageContext.EventArgs.Body
+                );
+            }
 
             if (settings.RetrySettings.LogOnRetry)
             {

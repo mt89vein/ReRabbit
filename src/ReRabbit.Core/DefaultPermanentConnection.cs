@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ReRabbit.Core
 {
@@ -46,11 +48,6 @@ namespace ReRabbit.Core
         private bool _disposed;
 
         /// <summary>
-        /// Объект синхронизации.
-        /// </summary>
-        private readonly object _syncRoot = new object();
-
-        /// <summary>
         /// Настройки подключения.
         /// </summary>
         private readonly MqConnectionSettings _settings;
@@ -59,6 +56,11 @@ namespace ReRabbit.Core
         /// Политика повторного подключения к RabbitMq.
         /// </summary>
         private readonly RetryPolicy _connectionRetryPolicy;
+
+        /// <summary>
+        /// Семафор.
+        /// </summary>
+        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
 
         #endregion Поля
 
@@ -116,13 +118,18 @@ namespace ReRabbit.Core
                     .WaitAndRetry(
                         retryCount: _settings.ConnectionRetryCount,
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                        onRetry: (ex, _, count, ctx) => _logger.LogWarning(
-                            ex,
-                            "Попытка установить соединение с RabbitMq. Попытка подключения {Count} из {ConnectionRetryCount}",
-                            count,
-                            _settings.ConnectionRetryCount
-                        )
-                    );
+                        onRetry: (ex, _, count, ctx) =>
+                        {
+                            if (count == _settings.ConnectionRetryCount)
+                            {
+                                _logger.LogWarning(
+                                    ex,
+                                    "Попытка установить соединение с RabbitMq. Попытка подключения {Count} из {ConnectionRetryCount}",
+                                    count,
+                                    _settings.ConnectionRetryCount
+                                );
+                            }
+                        });
         }
 
         #endregion Конструктор
@@ -135,9 +142,9 @@ namespace ReRabbit.Core
         /// <exception cref="InvalidOperationException">
         /// Если подключение не установлено.
         /// </exception>
-        public IModel CreateModel()
+        public async ValueTask<IModel> CreateModelAsync()
         {
-            if (!TryConnect())
+            if (!await TryConnectAsync())
             {
                 throw new InvalidOperationException("Нет активного подключения к RabbitMQ для создания канала");
             }
@@ -173,7 +180,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Попытаться установить соединение.
         /// </summary>
-        public bool TryConnect()
+        public async ValueTask<bool> TryConnectAsync()
         {
             if (IsConnected)
             {
@@ -187,31 +194,36 @@ namespace ReRabbit.Core
 
             _logger.LogInformation("Подключение к RabbitMq");
 
-            lock (_syncRoot)
+            await _semaphoreSlim.WaitAsync();
+            try
             {
-                _connectionRetryPolicy.Execute(() =>
+                _connection =_connectionRetryPolicy.Execute(() =>
                 {
                     if (_connection != null)
                     {
                         TryDisconnect();
                     }
 
-                    return _connection = _connectionFactory.CreateConnection(_settings.HostNames.ToList());
+                    return _connectionFactory.CreateConnection(_settings.HostNames.ToList());
                 });
-
-                if (IsConnected)
-                {
-                    _connection.ConnectionShutdown += OnConnectionShutdown;
-                    _connection.ConnectionBlocked += OnConnectionBlocked;
-                    _logger.LogInformation("Подключение к RabbitMq установлено.");
-
-                    _disposed = false;
-
-                    return true;
-                }
-
-                return false;
             }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
+
+            if (IsConnected)
+            {
+                _connection.ConnectionShutdown += OnConnectionShutdown;
+                _connection.ConnectionBlocked += OnConnectionBlocked;
+                _logger.LogInformation("Подключение к RabbitMq установлено.");
+
+                _disposed = false;
+
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>

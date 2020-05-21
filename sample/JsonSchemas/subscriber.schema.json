@@ -36,7 +36,7 @@
       "UseModelTypeAsSuffix": {
         "$id": "#/properties/UseModelTypeAsSuffix",
         "type": "boolean",
-        "title": "If set to true, the name of the event type will be added as suffix to queue name.",
+        "title": "If set to true, the name of the message type will be added as suffix to queue name.",
         "default": false,
         "examples": [
           false

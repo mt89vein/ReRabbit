@@ -1,10 +1,10 @@
-using System;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
+using System;
 
 namespace SampleWebApplication.RetryDelayComputers
 {
-    public class CustomRoundRobinRetryDelayComputer : IRetryDelayComputer
+    public sealed class CustomRoundRobinRetryDelayComputer : IRetryDelayComputer
     {
         private readonly TimeSpan[] _spans =
         {
