@@ -121,7 +121,7 @@ namespace ReRabbit.Publishers
                 .WaitAndRetryAsync(
                     routeInfo.RetryCount,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (ex, _, count, __) =>
+                    (ex, _, count, ctx) =>
                     {
                         if (count == routeInfo.RetryCount)
                         {

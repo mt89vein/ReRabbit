@@ -180,7 +180,7 @@ namespace ReRabbit.Core
                 .WaitAndRetryAsync(
                     retryCount,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (ex, _, count, __) =>
+                    (ex, _, count, ctx) =>
                     {
                         if (count == retryCount)
                         {
@@ -828,6 +828,8 @@ namespace ReRabbit.Core
             set => _channel.ContinuationTimeout = value;
         }
 
+#pragma warning disable CS0067
+
         /// <summary>
         /// Signalled when a Basic.Ack command arrives from the broker.
         /// </summary>
@@ -869,6 +871,8 @@ namespace ReRabbit.Core
         /// handler is added to this event, the event handler will be fired immediately.
         /// </remarks>
         public event EventHandler<ShutdownEventArgs> ModelShutdown;
+
+#pragma warning restore CS0067
 
         #endregion IModel proxy
     }

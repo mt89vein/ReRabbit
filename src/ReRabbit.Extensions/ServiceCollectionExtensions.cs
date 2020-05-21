@@ -34,15 +34,15 @@ namespace ReRabbit.Extensions
             services.AddHostedService<RabbitMqStarter>();
 
             var subscriberRegistrator =
-                services.AddNamed<ISubscriber>(ServiceLifetime.Singleton)
+                services.AddNamed<string, ISubscriber>(ServiceLifetime.Singleton)
                         .Add<DefaultSubscriber>();
 
             var acknowledgementRegistrator =
-                services.AddNamed<IAcknowledgementBehaviour>(ServiceLifetime.Singleton)
+                services.AddNamed<string, IAcknowledgementBehaviour>(ServiceLifetime.Singleton)
                         .Add<DefaultAcknowledgementBehaviour>();
 
             var retryDelayComputerRegistrator =
-                services.AddNamed<IRetryDelayComputer>(ServiceLifetime.Singleton)
+                services.AddNamed<string, IRetryDelayComputer>(ServiceLifetime.Singleton)
                     .Add<ConstantRetryDelayComputer>(RetryPolicyType.Constant)
                     .Add<ExponentialRetryDelayComputer>(RetryPolicyType.Exponential)
                     .Add<LinearRetryDelayComputer>(RetryPolicyType.Linear);

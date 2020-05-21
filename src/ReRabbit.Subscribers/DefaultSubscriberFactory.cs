@@ -14,7 +14,7 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Резолвер реализаций подписчика.
         /// </summary>
-        private readonly INamedResolver<ISubscriber> _resolver;
+        private readonly INamedResolver<string, ISubscriber> _resolver;
 
         #endregion Поля
 
@@ -24,7 +24,7 @@ namespace ReRabbit.Subscribers
         /// Создает экземпляр класса <see cref="DefaultSubscriberFactory"/>.
         /// </summary>
         /// <param name="resolver">Резолвер реализаций подписчика.</param>
-        public DefaultSubscriberFactory(INamedResolver<ISubscriber> resolver)
+        public DefaultSubscriberFactory(INamedResolver<string, ISubscriber> resolver)
         {
             _resolver = resolver;
         }

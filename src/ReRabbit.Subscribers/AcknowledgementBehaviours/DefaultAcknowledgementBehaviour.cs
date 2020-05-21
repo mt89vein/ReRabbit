@@ -24,7 +24,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Получатель вычислителей задержек между повторными обработками.
         /// </summary>
-        private readonly INamedResolver<IRetryDelayComputer> _retryDelayComputerResolver;
+        private readonly INamedResolver<string, IRetryDelayComputer> _retryDelayComputerResolver;
 
         /// <summary>
         /// Конвенция именования.
@@ -55,7 +55,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="topologyProvider">Провайдер топологий.</param>
         /// <param name="logger">Логгер.</param>
         public DefaultAcknowledgementBehaviour(
-            INamedResolver<IRetryDelayComputer> retryDelayComputerResolver,
+            INamedResolver<string, IRetryDelayComputer> retryDelayComputerResolver,
             INamingConvention namingConvention,
             ITopologyProvider topologyProvider,
             ILogger<DefaultAcknowledgementBehaviour> logger

@@ -14,7 +14,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Резолвер реализаций поведений.
         /// </summary>
-        private readonly INamedResolver<IAcknowledgementBehaviour> _resolver;
+        private readonly INamedResolver<string, IAcknowledgementBehaviour> _resolver;
 
         #endregion Поля
 
@@ -25,7 +25,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// </summary>
         /// <param name="resolver">Резолвер реализаций поведений.</param>
         public DefaultAcknowledgementBehaviourFactory(
-            INamedResolver<IAcknowledgementBehaviour> resolver
+            INamedResolver<string, IAcknowledgementBehaviour> resolver
         )
         {
             _resolver = resolver;

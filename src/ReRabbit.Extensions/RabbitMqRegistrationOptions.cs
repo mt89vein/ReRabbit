@@ -24,17 +24,17 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Регистратор реализаций подписчиков.
         /// </summary>
-        public INamedRegistratorBuilder<ISubscriber> SubscriberRegistrator { get; }
+        public INamedRegistratorBuilder<string, ISubscriber> SubscriberRegistrator { get; }
 
         /// <summary>
         /// Регистратор реализаций поведений оповещений брокера о результате обработки сообщения из шины.
         /// </summary>
-        public INamedRegistratorBuilder<IAcknowledgementBehaviour> AcknowledgementBehaviourRegistrator { get; }
+        public INamedRegistratorBuilder<string, IAcknowledgementBehaviour> AcknowledgementBehaviourRegistrator { get; }
 
         /// <summary>
         /// Регистратор реализаций вычислителей задержек между повторными обработками.
         /// </summary>
-        public INamedRegistratorBuilder<IRetryDelayComputer> RetryDelayComputerRegistrator { get; }
+        public INamedRegistratorBuilder<string, IRetryDelayComputer> RetryDelayComputerRegistrator { get; }
 
         #endregion Свойства
 
@@ -58,9 +58,9 @@ namespace ReRabbit.Extensions
         /// </param>
         public RabbitMqRegistrationOptions(
             IMiddlewareRegistry subscriberPluginsRegistry,
-            INamedRegistratorBuilder<ISubscriber> subscriberRegistrator,
-            INamedRegistratorBuilder<IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
-            INamedRegistratorBuilder<IRetryDelayComputer> retryDelayComputerRegistrator
+            INamedRegistratorBuilder<string, ISubscriber> subscriberRegistrator,
+            INamedRegistratorBuilder<string, IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
+            INamedRegistratorBuilder<string, IRetryDelayComputer> retryDelayComputerRegistrator
 
         )
         {
