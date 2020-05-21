@@ -39,5 +39,12 @@ namespace ReRabbit.Abstractions.Settings
         /// </para>
         /// </summary>
         public ushort MessagesPerChannel { get; set; } = 0;
+
+        /// <summary>
+        /// Разрешает только одному потребителю читать очередь.
+        /// Если потребитель уходит, подключается другой.
+        /// <see cref="https://www.rabbitmq.com/consumers.html#single-active-consumer"/>.
+        /// </summary>
+        public bool UseSingleActiveConsumer { get; set; }
     }
 }

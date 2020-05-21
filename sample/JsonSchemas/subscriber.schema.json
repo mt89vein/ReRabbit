@@ -172,7 +172,17 @@
             "examples": [
               1
             ]
-          }
+          },
+          "UseSingleActiveConsumer": {
+            "$id": "#/properties/ScalingSettings/properties/UseSingleActiveConsumer",
+            "type": "boolean",
+            "title": "Use single active consumer at a time. If consumer disconnects broker automatically fail over to another consumer.",
+            "default": false,
+            "examples": [
+              true,
+              false
+            ]
+          } 
         }
       },
       "RetrySettings": {

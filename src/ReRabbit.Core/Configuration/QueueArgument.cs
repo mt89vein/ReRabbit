@@ -30,8 +30,15 @@ namespace ReRabbit.Core.Configuration
         public const string MESSAGE_TTL = Headers.XMessageTTL;
 
         /// <summary>
-        /// Мод очереди. 
+        /// Мод очереди.
         /// </summary>
-        public const string QUEUE_MODE = "x-queue-mode";
+        public const string QUEUE_MODE = Headers.XQueueMode;
+
+        /// <summary>
+        /// Разрешает только одному потребителю читать очередь.
+        /// Если потребитель уходит, подключается другой.
+        /// <see cref="https://www.rabbitmq.com/consumers.html#single-active-consumer"/>.
+        /// </summary>
+        public const string SINGLE_ACTIVE_CONSUMER = Headers.XSingleActiveConsumer;
     }
 }

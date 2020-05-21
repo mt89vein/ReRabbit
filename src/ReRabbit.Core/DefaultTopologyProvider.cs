@@ -54,6 +54,11 @@ namespace ReRabbit.Core
                 settings.Arguments[QueueArgument.DEAD_LETTER_ROUTING_KEY] = queueName;
             }
 
+            if (settings.ScalingSettings.UseSingleActiveConsumer)
+            {
+                settings.Arguments[QueueArgument.SINGLE_ACTIVE_CONSUMER] = true;
+            }
+
             channel.QueueDeclare(
                 queueName,
                 settings.Durable,
