@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Core
@@ -26,6 +27,11 @@ namespace ReRabbit.Core
         private readonly IModel _channel;
 
         /// <summary>
+        /// Таймаут на завершение паблиша (успешно/неуспешно).
+        /// </summary>
+        private readonly TimeSpan _confirmTimeout;
+
+        /// <summary>
         /// Логгер результатов публикаций.
         /// </summary>
         private readonly ILogger _logger;
@@ -37,9 +43,10 @@ namespace ReRabbit.Core
 
         #endregion Поля
 
-        public PublishConfirmableChannel(IModel channel, ILogger logger = null)
+        public PublishConfirmableChannel(IModel channel, TimeSpan? confirmTimeout = null, ILogger logger = null)
         {
             _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+            _confirmTimeout = confirmTimeout ?? TimeSpan.FromSeconds(5);
 
             if (_channel.IsClosed)
             {
@@ -144,10 +151,10 @@ namespace ReRabbit.Core
             {
                 foreach (var key in _publishTasks.Keys)
                 {
-                    if (_publishTasks.TryRemove(key, out var pending))
+                    if (_publishTasks.TryRemove(key, out var publishTaskInfo))
                     {
                         _logger?.LogWarning("not confirmed! with {PublishTag}", key);
-                        pending.PublishNotConfirmed(reason);
+                        publishTaskInfo.PublishNotConfirmed(reason);
                     }
                 }
             }
@@ -172,11 +179,11 @@ namespace ReRabbit.Core
             bool mandatory,
             IBasicProperties basicProperties,
             ReadOnlyMemory<byte> body,
-            int retryCount = 5
+            int retryCount = 5,
+            CancellationToken cancellationToken = default
         )
         {
-            return Policy
-                .Handle<TimeoutException>()
+            return Policy.Handle<OperationCanceledException>()
                 .WaitAndRetryAsync(
                     retryCount,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -184,7 +191,7 @@ namespace ReRabbit.Core
                     {
                         if (count == retryCount)
                         {
-                            _logger.LogError(
+                            _logger?.LogError(
                                 ex,
                                 "Попытка опубликовать сообщение {Exchange} {RoutingKey} с RabbitMq {Count} из {RetryCount}",
                                 exchange,
@@ -194,11 +201,23 @@ namespace ReRabbit.Core
                             );
                         }
                     })
-                .ExecuteAsync(() =>
+                .ExecuteAsync(async ct =>
                 {
                     var publishInfo = Publish(exchange, routingKey, mandatory, basicProperties, body);
-                    return publishInfo.Task.TimeoutAfterAsync(TimeSpan.FromSeconds(5));
-                });
+
+                    try
+                    {
+                        await publishInfo.Task.CancelAfterAsync(_confirmTimeout, ct);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        publishInfo.PublishNotConfirmed("Publish task cancelled.");
+                        _publishTasks.TryRemove(publishInfo.PublishTag, out _);
+
+                        throw;
+                    }
+
+                }, cancellationToken);
         }
 
         private PublishTaskInfo Publish(
@@ -875,5 +894,10 @@ namespace ReRabbit.Core
 #pragma warning restore CS0067
 
         #endregion IModel proxy
+
+        internal bool HasTaskWith(ulong taskId)
+        {
+            return _publishTasks.ContainsKey(taskId);
+        }
     }
 }

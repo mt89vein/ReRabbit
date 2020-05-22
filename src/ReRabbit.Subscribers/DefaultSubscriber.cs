@@ -170,6 +170,7 @@ namespace ReRabbit.Subscribers
 
             channel = new PublishConfirmableChannel(
                 channel,
+                TimeSpan.FromSeconds(5),
                 _logger
             );
 

@@ -6,38 +6,30 @@ namespace ReRabbit.Core.Extensions
 {
     public static class TaskExtensions
     {
-        public static async Task<TResult> TimeoutAfterAsync<TResult>(this Task<TResult> task, TimeSpan timeout)
-        {
-            using var timeoutCancellationTokenSource = new CancellationTokenSource();
-            var completedTask = await Task.WhenAny(task, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
-            if (completedTask == task)
-            {
-                timeoutCancellationTokenSource.Cancel();
-                return await task;
-            }
-
-            throw new TimeoutException("The operation has timed out.");
-        }
-
         /// <summary>
         /// Установить таймаут таске.
         /// </summary>
         /// <param name="task">Задача</param>
         /// <param name="timeout">Время на таймаут.</param>
-        public static async Task TimeoutAfterAsync(this Task task, TimeSpan timeout)
+        /// <param name="cancellationToken">Токен отмены задачи.к</param>
+        public static async Task CancelAfterAsync(this Task task, TimeSpan timeout, CancellationToken cancellationToken = default)
         {
-            using var timeoutCancellationTokenSource = new CancellationTokenSource();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var timeoutCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
             var completedTask = await Task.WhenAny(task, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
+
+            timeoutCancellationTokenSource.Cancel();
 
             if (completedTask == task)
             {
-                timeoutCancellationTokenSource.Cancel();
                 await task;
 
                 return;
             }
 
-            throw new TimeoutException("The operation has timed out.");
+            timeoutCancellationTokenSource.Token.ThrowIfCancellationRequested();
         }
     }
 }

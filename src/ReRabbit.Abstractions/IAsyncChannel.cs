@@ -1,5 +1,6 @@
 using RabbitMQ.Client;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
@@ -12,7 +13,8 @@ namespace ReRabbit.Abstractions
             bool mandatory,
             IBasicProperties basicProperties,
             ReadOnlyMemory<byte> body,
-            int retryCount = 5
+            int retryCount = 5,
+            CancellationToken cancellationToken = default
         );
     }
 }

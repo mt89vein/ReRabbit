@@ -221,14 +221,14 @@ namespace ReRabbit.Publishers
             if (exclusiveChannel == null)
             {
                 exclusiveChannel = new ExclusiveChannel(
-                    new PublishConfirmableChannel(await connection.CreateModelAsync(), _logger),
+                    new PublishConfirmableChannel(await connection.CreateModelAsync(), TimeSpan.FromSeconds(5), _logger),
                     new SemaphoreSlim(1, 1)
                 );
             }
             else
             {
                 exclusiveChannel.ReplaceChannel(
-                    new PublishConfirmableChannel(await connection.CreateModelAsync(), _logger)
+                    new PublishConfirmableChannel(await connection.CreateModelAsync(), TimeSpan.FromSeconds(5), _logger)
                 );
             }
 
