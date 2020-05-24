@@ -97,11 +97,6 @@ namespace ReRabbit.Abstractions.Settings
         public ScalingSettings ScalingSettings { get; set; } = new ScalingSettings();
 
         /// <summary>
-        /// Middlewares.
-        /// </summary>
-        public List<string> Middlewares { get; set; } = new List<string>();
-
-        /// <summary>
         /// Настройки подключения, используемые данной очередью.
         /// </summary>
         public MqConnectionSettings ConnectionSettings { get; }

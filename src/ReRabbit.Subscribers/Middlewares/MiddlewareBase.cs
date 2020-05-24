@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Базовая реализация плагина подписчика.
-    /// Любой другой плагин должен наследоваться от него.
+    /// Базовая реализация мидлварки подписчика.
+    /// Любая другая мидлварка должна наследоваться от него.
     /// </summary>
     public abstract class MiddlewareBase : IMiddleware
     {

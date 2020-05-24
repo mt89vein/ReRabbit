@@ -1,8 +1,12 @@
+using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
+    // TODO: регистрация мидлварок в DI
+
     /// <summary>
     /// Реестр middlewares.
     /// </summary>
@@ -12,43 +16,73 @@ namespace ReRabbit.Subscribers.Middlewares
     {
         #region Поля
 
-        // TODO: register middlewares by message type
-        // коротко - сделать апи для регистрации по конкретному типу события
-        // и к каждому из них явно указывать какие мидлварки должы их обрабатывать
-        // сделать глобальные хендлеры
-        // от подключения через конфиги отказаться
+        /// <summary>
+        /// Словарь реестров мидлварок сообщений.
+        /// </summary>
+        private readonly Dictionary<Type, IMessageMiddlewareRegistry> _middlewareRegistries =
+            new Dictionary<Type, IMessageMiddlewareRegistry>();
 
         /// <summary>
-        /// Двусвязный список middlewares.
+        /// Список глобальных мидлварок.
         /// </summary>
-        private readonly LinkedList<(Type, bool)> _middlewares = new LinkedList<(Type, bool)>();
+        private readonly HashSet<Type> _globalMiddlewares = new HashSet<Type>();
 
         #endregion Поля
 
         #region Методы (public)
 
         /// <summary>
-        /// Зарегистрировать middleware.
+        /// Зарегистрировать глобальный middleware.
         /// </summary>
         /// <typeparam name="TMiddleware">Тип middleware.</typeparam>
-        /// <returns>
-        /// Реестр middleware.
-        /// </returns>
-        public IMiddlewareRegistry Add<TMiddleware>(bool global = false)
-            where TMiddleware : class, IMiddleware
+        /// <returns>Реестр middlewares.</returns>
+        public IMiddlewareRegistry AddGlobal<TMiddleware>()
         {
-            _middlewares.AddLast((typeof(TMiddleware), global));
+            _globalMiddlewares.Add(typeof(TMiddleware));
 
             return this;
         }
 
         /// <summary>
+        /// Зарегистрировать middleware.
+        /// </summary>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <param name="withCurrentGlobals">
+        /// Добавить с учетом уже зарегистрированных глобальных мидлварок.
+        /// </param>
+        /// <returns>
+        /// Реестр middleware.
+        /// </returns>
+        public IMessageMiddlewareRegistry AddFor<TMessage>(bool withCurrentGlobals = true)
+            where TMessage : class, IMessage
+        {
+            var messageType = typeof(TMessage);
+            if (!_middlewareRegistries.TryGetValue(messageType, out var messageMiddleware))
+            {
+                messageMiddleware = new MessageMiddlewareRegistry(this, messageType, withCurrentGlobals
+                    ? _globalMiddlewares
+                    : Enumerable.Empty<Type>()
+                );
+
+                _middlewareRegistries[messageType] = messageMiddleware;
+            }
+
+            return messageMiddleware;
+        }
+
+        /// <summary>
         /// Получить список типов middleware.
         /// </summary>
+        /// <param name="messageType">Тип сообщения.</param>
         /// <returns>Список типов middleware.</returns>
-        LinkedList<(Type MiddlewareType, bool IsGlobal)> IMiddlewareRegistryAccessor.Get()
+        public IEnumerable<Type> Get(Type messageType)
         {
-            return _middlewares;
+            if (_middlewareRegistries.TryGetValue(messageType, out var messageMiddlewareRegistry))
+            {
+                return ((IMessageMiddlewareRegistryAccessor) messageMiddlewareRegistry).Get();
+            }
+
+            return Enumerable.Empty<Type>();
         }
 
         #endregion Методы (public)

@@ -3,9 +3,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Exceptions;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -259,17 +257,17 @@ namespace ReRabbit.Core
                 queueSettings.ConsumerName = subscriberConfigurationSection.Key;
             }
 
-            var bindings = Enumerable.Empty<ExchangeBinding>();
-            var arrayBindings = Array.Empty<ExchangeBinding>();
-            var listBindings = new List<ExchangeBinding>();
+            //var bindings = Enumerable.Empty<ExchangeBinding>();
+            //var arrayBindings = Array.Empty<ExchangeBinding>();
+            //var listBindings = new List<ExchangeBinding>();
 
-            // TODO: bindings 
-            subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
-            subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
-            subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
+            //// TODO: bindings 
+            //subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
+            //subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
+            //subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
 
-            // судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
-            Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
+            //// судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
+            //Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
 
             return queueSettings;
         }

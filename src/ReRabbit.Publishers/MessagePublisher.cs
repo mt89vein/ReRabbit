@@ -56,7 +56,6 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Пул каналов.
         /// </summary>
-        /// TODO: вместо словаря, можно попробовать заюзать ObjectPool
         private readonly ConcurrentDictionary<string, ExclusiveChannel> _channelPool;
 
         #endregion Поля

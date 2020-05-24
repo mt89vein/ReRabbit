@@ -4,6 +4,7 @@ using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Extensions;
+using ReRabbit.Subscribers.Middlewares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -161,7 +162,22 @@ namespace ReRabbit.Subscribers
                     );
                 }
 
-                return handler.HandleAsync(ctx);
+                var middlewareExecutor = scope.ServiceProvider.GetRequiredService<IMiddlewareExecutor>();
+
+                return middlewareExecutor.ExecuteAsync(
+                    ctx => handler.HandleAsync(
+                        new MessageContext<TMessage>(
+                            ctx.Message as TMessage,
+                            ctx.EventData,
+                            ctx.EventArgs
+                        )
+                    ),
+                    new MessageContext<IMessage>(
+                        ctx.Message,
+                        ctx.EventData,
+                        ctx.EventArgs
+                    )
+                );
             }, subscriberConfiguration.ConfigurationSectionName);
         }
 

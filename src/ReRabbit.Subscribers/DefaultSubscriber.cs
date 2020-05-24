@@ -9,7 +9,6 @@ using ReRabbit.Core;
 using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
-using ReRabbit.Subscribers.Middlewares;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -55,11 +54,6 @@ namespace ReRabbit.Subscribers
         /// </summary>
         private readonly IPermanentConnectionManager _permanentConnectionManager;
 
-        /// <summary>
-        /// Интерфейс вызывателя реализаций middleware.
-        /// </summary>
-        private readonly IMiddlewareExecutor _middlewareExecutor;
-
         #endregion Поля
 
         #region Конструктор
@@ -75,15 +69,13 @@ namespace ReRabbit.Subscribers
         /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки.
         /// </param>
         /// <param name="permanentConnectionManager">Менеджер постоянных соединений.</param>
-        /// <param name="middlewareExecutor">Интерфейс вызывателя реализаций middleware.</param>
         public DefaultSubscriber(
             ILogger<DefaultSubscriber> logger,
             ISerializer serializer,
             ITopologyProvider topologyProvider,
             INamingConvention namingConvention,
             IAcknowledgementBehaviourFactory acknowledgementBehaviourFactory,
-            IPermanentConnectionManager permanentConnectionManager,
-            IMiddlewareExecutor middlewareExecutor
+            IPermanentConnectionManager permanentConnectionManager
         )
         {
             _logger = logger;
@@ -92,7 +84,6 @@ namespace ReRabbit.Subscribers
             _namingConvention = namingConvention;
             _acknowledgementBehaviourFactory = acknowledgementBehaviourFactory;
             _permanentConnectionManager = permanentConnectionManager;
-            _middlewareExecutor = middlewareExecutor;
         }
 
         #endregion Конструктор
@@ -292,21 +283,7 @@ namespace ReRabbit.Subscribers
                         ea
                     );
 
-                    var acknowledgement = await _middlewareExecutor.ExecuteAsync(
-                        ctx => eventHandler(
-                            new MessageContext<TMessage>(
-                                ctx.Message as TMessage,
-                                ctx.EventData,
-                                ctx.EventArgs
-                            )
-                        ),
-                        new MessageContext<IMessage>(
-                            messageContext.Message,
-                            messageContext.EventData,
-                            messageContext.EventArgs
-                        ),
-                        settings.Middlewares
-                    );
+                    var acknowledgement = await eventHandler(messageContext);
 
                     return (acknowledgement, messageContext);
                 }

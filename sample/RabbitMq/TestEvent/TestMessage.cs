@@ -38,7 +38,7 @@ namespace SampleWebApplication.RabbitMq.TestEvent
     {
         public int Value { get; set; }
 
-        public int Name { get; set; }
+        public string Name { get; set; }
 
         public class MetricHandler : IMessageHandler<Metrics>
         {

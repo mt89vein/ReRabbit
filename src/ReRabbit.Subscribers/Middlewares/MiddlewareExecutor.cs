@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
@@ -17,7 +16,7 @@ namespace ReRabbit.Subscribers.Middlewares
         #region Поля
 
         /// <summary>
-        /// Интерфейс, предоставляющий доступ к реестру плагинов.
+        /// Интерфейс, предоставляющий доступ к реестру мидлварок.
         /// </summary>
         private readonly IMiddlewareRegistryAccessor _registry;
 
@@ -46,21 +45,17 @@ namespace ReRabbit.Subscribers.Middlewares
         #region Методы (public)
 
         /// <summary>
-        /// Вызвать цепочку плагинов.
+        /// Вызвать цепочку middleware.
         /// </summary>
         /// <param name="next">Финальный, основной обработчик.</param>
         /// <param name="ctx">Контекст.</param>
-        /// <param name="middlewareNames">Имена плагинов для вызова.</param>
         /// <returns>Результат обработки.</returns>
         public async Task<Acknowledgement> ExecuteAsync(
             AcknowledgableMessageHandler<IMessage> next,
-            MessageContext<IMessage> ctx,
-            IEnumerable<string> middlewareNames
+            MessageContext<IMessage> ctx
         )
         {
-            var middlewareInfos = _registry.Get()
-                .Where(x => middlewareNames.Contains(x.MiddlewareType.Name) || x.IsGlobal)
-                .ToList();
+            var middlewareInfos = _registry.Get(ctx.Message.GetType()).ToList();
 
             if (!middlewareInfos.Any())
             {
@@ -68,11 +63,10 @@ namespace ReRabbit.Subscribers.Middlewares
             }
 
             var middlewareChain = new LinkedList<IMiddleware>();
-            using var scope = _serviceProvider.CreateScope();
 
-            foreach (var (middlewareType, _) in middlewareInfos)
+            foreach (var middlewareType in middlewareInfos)
             {
-                if (scope.ServiceProvider.GetService(middlewareType) is IMiddleware middleware)
+                if (_serviceProvider.GetService(middlewareType) is IMiddleware middleware)
                 {
                     middlewareChain.AddLast(middleware);
                 }

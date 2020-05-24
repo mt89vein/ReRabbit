@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ReRabbit.Abstractions;
 using SampleWebApplication.RabbitMq.TestEvent;
+using System;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.Controllers
@@ -26,12 +27,26 @@ namespace SampleWebApplication.Controllers
                     Message = message
                 });
             }
-            else
+            else if (message == "delay")
+            {
+                await _publisher.PublishAsync(new TestMessage
+                {
+                    Message = "delayed",
+                }, TimeSpan.FromSeconds(15));
+            }
+            else if (message == "metrics")
             {
                 await _publisher.PublishAsync(new Metrics
                 {
-                    Name = 1,
-                    Value = 2
+                    Name = "met",
+                    Value = 1
+                });
+            }
+            else
+            {
+                await _publisher.PublishAsync(new TestMessage
+                {
+                    Message = "1"
                 });
             }
 

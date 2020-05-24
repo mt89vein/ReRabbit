@@ -108,7 +108,7 @@ namespace ReRabbit.Extensions
                 sp.GetRequiredService<DefaultAcknowledgementBehaviourFactory>()
             );
 
-            services.AddSingleton<IMiddlewareExecutor, MiddlewareExecutor>();
+            services.AddScoped<IMiddlewareExecutor, MiddlewareExecutor>();
 
             services.AddSingleton<UniqueMessagesSubscriberMiddleware>();
             services.AddOptions<UniqueMessagesMiddlewareSettings>()

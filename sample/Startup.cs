@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Extensions;
+using SampleWebApplication.Middlewares;
+using SampleWebApplication.RabbitMq.TestEvent;
 using SampleWebApplication.RetryDelayComputers;
 
 namespace SampleWebApplication
@@ -21,7 +23,6 @@ namespace SampleWebApplication
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddLogging();
             services.AddSingleton<TestMiddleware>();
             services.AddSingleton<TestMiddleware2>();
             services.AddSingleton<GlobalTestMiddleware>();
@@ -34,12 +35,15 @@ namespace SampleWebApplication
             services.AddRabbitMq(
                 x =>
                 {
-                    x.SubscriberPlugins
-                        //.Add<UniqueMessagesSubscriberPlugin>(global:true)
-                        .Add<GlobalTestMiddleware>(global: true)
-                        .Add<TestMiddleware>()
-                        .Add<TestMiddleware2>();
-
+                    x.SubscriberMiddlewares
+                        //.AddGlobal<UniqueMessagesSubscriberPlugin>()
+                        .AddFor<TestMessage>()
+                            .Add<TestMiddleware>()
+                            .Add<TestMiddleware2>()
+                        .Registry
+                        .AddGlobal<GlobalTestMiddleware>() // adds only for Metrics.
+                        .AddFor<Metrics>()
+                            .Add<TestMiddleware2>();
                     x.RetryDelayComputerRegistrator.Add<CustomRoundRobinRetryDelayComputer>("CustomRoundRobin");
                 });
 

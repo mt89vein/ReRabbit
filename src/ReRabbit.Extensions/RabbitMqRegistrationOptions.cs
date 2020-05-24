@@ -17,9 +17,9 @@ namespace ReRabbit.Extensions
         public RabbitMqFactories Factories { get; }
 
         /// <summary>
-        /// Реестр плагинов подписчиков.
+        /// Реестр мидлварок подписчиков.
         /// </summary>
-        public IMiddlewareRegistry SubscriberPlugins { get; }
+        public IMiddlewareRegistry SubscriberMiddlewares { get; }
 
         /// <summary>
         /// Регистратор реализаций подписчиков.
@@ -46,7 +46,7 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Создает экземпляр класса <see cref="RabbitMqRegistrationOptions"/>.
         /// </summary>
-        /// <param name="subscriberPluginsRegistry">Реестр плагинов подписчиков.</param>
+        /// <param name="subscriberMiddlewaresRegistry">Реестр мидлварок подписчиков.</param>
         /// <param name="subscriberRegistrator">
         /// Регистратор реализаций подписчиков.
         /// </param>
@@ -57,14 +57,14 @@ namespace ReRabbit.Extensions
         /// Регистратор реализаций вычислителей задержек между повторными обработками.
         /// </param>
         public RabbitMqRegistrationOptions(
-            IMiddlewareRegistry subscriberPluginsRegistry,
+            IMiddlewareRegistry subscriberMiddlewaresRegistry,
             INamedRegistratorBuilder<string, ISubscriber> subscriberRegistrator,
             INamedRegistratorBuilder<string, IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
             INamedRegistratorBuilder<string, IRetryDelayComputer> retryDelayComputerRegistrator
 
         )
         {
-            SubscriberPlugins = subscriberPluginsRegistry;
+            SubscriberMiddlewares = subscriberMiddlewaresRegistry;
             AcknowledgementBehaviourRegistrator = acknowledgementBehaviourRegistrator;
             RetryDelayComputerRegistrator = retryDelayComputerRegistrator;
             SubscriberRegistrator = subscriberRegistrator;
