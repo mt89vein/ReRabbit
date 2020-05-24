@@ -9,9 +9,9 @@ namespace ReRabbit.Abstractions
     public interface IRouteProvider
     {
         /// <summary>
-        /// Получить информацию о роутах для события.
+        /// Получить информацию о роутах для сообщения.
         /// </summary>
-        /// <param name="message">Событие.</param>
+        /// <param name="message">Сообщение.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роутах.</returns>
         RouteInfo GetFor(IMessage message, TimeSpan? delay = null);

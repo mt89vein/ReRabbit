@@ -5,6 +5,7 @@ using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -79,8 +80,9 @@ namespace ReRabbit.Core
                         type: binding.ExchangeType
                     );
 
-                    if (binding.ExchangeType == "fanout")
+                    if (string.Equals(binding.ExchangeType , ExchangeType.Fanout, StringComparison.OrdinalIgnoreCase))
                     {
+                        binding.RoutingKeys.Clear();
                         binding.RoutingKeys.Add(string.Empty);
                     }
 
@@ -94,7 +96,7 @@ namespace ReRabbit.Core
                         );
                     }
 
-                    if (binding.ExchangeType.Equals("headers", StringComparison.OrdinalIgnoreCase) && binding.Arguments.Keys.Any())
+                    if (string.Equals(binding.ExchangeType , ExchangeType.Headers, StringComparison.OrdinalIgnoreCase) && binding.Arguments.Keys.Any())
                     {
                         channel.QueueBind(
                             queueName,
@@ -135,6 +137,53 @@ namespace ReRabbit.Core
                     [QueueArgument.EXPIRES] = Convert.ToInt32(retryDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds),
                     [QueueArgument.MESSAGE_TTL] = Convert.ToInt32(retryDelay.TotalMilliseconds)
                 }
+            );
+
+            return delayedQueueName;
+        }
+
+        /// <summary>
+        /// Объявить очередь с отложенным паблишем.
+        /// </summary>
+        /// <param name="channel">Канал.</param>
+        /// <param name="messageName">Наименование сообщения.</param>
+        /// <param name="exchange">Тип обменника.</param>
+        /// <param name="routingKey">Роут.</param>
+        /// <param name="arguments">Аргументы.</param>
+        /// <param name="retryDelay">Период на которую откладывается паблиш.</param>
+        /// <returns>Название очереди с отложенным паблишем.</returns>
+        public string DeclareDelayedPublishQueue(
+            IModel channel,
+            string messageName,
+            string exchange,
+            string routingKey,
+            IDictionary<string, object> arguments,
+            TimeSpan retryDelay
+        )
+        {
+            if (retryDelay == TimeSpan.Zero)
+            {
+                return null;
+            }
+
+            var delayedQueueName = messageName + "-" + retryDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) +
+                                   "s-delayed-publish";
+
+            arguments ??= new Dictionary<string, object>();
+
+            // автоматически будет переслан в тот обменник и RoutingKey, который был изначально указан
+            arguments.Add(QueueArgument.DEAD_LETTER_EXCHANGE, exchange);
+            arguments.Add(QueueArgument.DEAD_LETTER_ROUTING_KEY, routingKey);
+            arguments.Add(QueueArgument.EXPIRES, Convert.ToInt32(retryDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds));
+            arguments.Add(QueueArgument.MESSAGE_TTL, Convert.ToInt32(retryDelay.TotalMilliseconds));
+
+
+            channel.QueueDeclare(
+                queue: delayedQueueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: arguments
             );
 
             return delayedQueueName;

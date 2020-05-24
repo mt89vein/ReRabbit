@@ -91,7 +91,8 @@ namespace ReRabbit.Core
             _connectionFactory = connectionFactory;
             _logger = logger;
             _connectionRetryPolicy =
-                Policy.Handle<SocketException>()
+                Policy
+                    .Handle<SocketException>()
                     .Or<BrokerUnreachableException>(exception =>
                     {
                         if (exception?.InnerException is AuthenticationFailureException authenticationFailureException)
@@ -197,6 +198,11 @@ namespace ReRabbit.Core
             await _semaphoreSlim.WaitAsync();
             try
             {
+                if (IsConnected)
+                {
+                    return true;
+                }
+
                 _connection =_connectionRetryPolicy.Execute(() =>
                 {
                     if (_connection != null)

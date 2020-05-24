@@ -193,7 +193,7 @@ namespace ReRabbit.UnitTests
 
             #region Act
 
-            var task = confirmableChannel.BasicPublishAsync(
+            var publishTask = confirmableChannel.BasicPublishAsync(
                 string.Empty,
                 string.Empty,
                 true,
@@ -218,7 +218,7 @@ namespace ReRabbit.UnitTests
 
             #region Assert
 
-            return task.ContinueWith(t =>
+            return publishTask.ContinueWith(t =>
             {
                 Assert.IsTrue(t.IsFaulted, "Task should be faulted");
                 Assert.AreEqual("The message was returned by RabbitMQ: 500-Something went wrong!", t.Exception.InnerException?.Message, "Error message does not equal!");

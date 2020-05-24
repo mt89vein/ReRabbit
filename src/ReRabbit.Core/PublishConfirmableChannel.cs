@@ -183,7 +183,8 @@ namespace ReRabbit.Core
             CancellationToken cancellationToken = default
         )
         {
-            return Policy.Handle<OperationCanceledException>()
+            return Policy
+                .Handle<OperationCanceledException>()
                 .WaitAndRetryAsync(
                     retryCount,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),

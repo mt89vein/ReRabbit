@@ -11,12 +11,17 @@ namespace ReRabbit.Abstractions.Settings
         #region Свойства
 
         /// <summary>
-        /// Наименование события.
+        /// Наименование сообщения.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; }
 
         /// <summary>
-        /// Версия события.
+        /// Тип сообщения.
+        /// </summary>
+        public Type MessageType { get; set; }
+
+        /// <summary>
+        /// Версия сообщения.
         /// </summary>
         public string Version { get; set; } = "v1";
 
@@ -36,22 +41,22 @@ namespace ReRabbit.Abstractions.Settings
         public IDictionary<string, object> Arguments { get; set; }
 
         /// <summary>
-        /// Обменник, в который необходимо событие опубликовать.
+        /// Обменник, в который необходимо сообщение опубликовать.
         /// </summary>
         public ExchangeInfo Exchange { get; set; }
 
         /// <summary>
-        /// Количество пыток отправки события.
+        /// Количество пыток отправки сообщения.
         /// </summary>
         public int RetryCount { get; set; } = 5;
 
         /// <summary>
-        /// Таймаут на подтверждения.
+        /// Таймаут на подтверждения доставки в брокер.
         /// </summary>
         public TimeSpan ConfirmationTimeout { get; set; } = TimeSpan.FromSeconds(10);
         
         /// <summary>
-        /// Настройки подключения, используемые данной очередью.
+        /// Конкретное подключение по опр. хосту/порту и виртуальному хосту.
         /// </summary>
         public MqConnectionSettings ConnectionSettings { get; }
 
@@ -63,11 +68,11 @@ namespace ReRabbit.Abstractions.Settings
         /// Создает экземпляр класса <see cref="MessageSettings"/>.
         /// </summary>
         /// <param name="connectionSettings">Настройки подключения.</param>
-        /// <param name="eventName">Наименование события.</param>
-        public MessageSettings(MqConnectionSettings connectionSettings, string eventName)
+        /// <param name="messageName">Наименование сообщения.</param>
+        public MessageSettings(MqConnectionSettings connectionSettings, string messageName)
         {
             ConnectionSettings = connectionSettings;
-            Name = eventName;
+            Name = messageName;
         }
 
         #endregion Конструктор

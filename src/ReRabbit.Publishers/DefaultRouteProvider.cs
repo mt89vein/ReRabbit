@@ -45,15 +45,16 @@ namespace ReRabbit.Publishers
         // TODO: IEnumerable<RouteInfo> ??
 
         /// <summary>
-        /// Получить информацию о роутах для события.
+        /// Получить информацию о роутах для сообщения.
         /// </summary>
-        /// <param name="message">Событие.</param>
+        /// <param name="message">Сообщение.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роуте.</returns>
         public RouteInfo GetFor(IMessage message, TimeSpan? delay = null)
         {
+            var messageType = message.GetType();
             var messageSettings = _messagesSettingsCache.GetOrAdd(
-                message.GetType().Name,
+                messageType.Name,
                 eventName => _configurationManager.GetMessageSettings(eventName)
             );
 
@@ -61,7 +62,7 @@ namespace ReRabbit.Publishers
                 ? messageSettings.Route
                 : Smart.Format(messageSettings.Route, message);
 
-            return new RouteInfo(messageSettings, route, delay);
+            return new RouteInfo(messageSettings, messageType, route, delay);
         }
 
         #endregion Методы (public)

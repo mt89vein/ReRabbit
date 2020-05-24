@@ -32,6 +32,8 @@ namespace ReRabbit.Core
         /// </summary>
         public Func<Type, QueueSetting, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
 
+        // TODO: delayed publish queue naming convention
+
         /// <summary>
         /// Конвенция именования тэга обработчика.
         /// </summary>

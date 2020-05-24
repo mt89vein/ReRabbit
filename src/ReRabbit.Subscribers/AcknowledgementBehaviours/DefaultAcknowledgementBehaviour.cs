@@ -78,12 +78,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        public Task HandleAsync<TEventType>(
+        public Task HandleAsync<TMessage>(
             Acknowledgement acknowledgement,
             IModel channel,
-            MessageContext<TEventType> messageContext,
+            MessageContext<TMessage> messageContext,
             QueueSetting settings
-        ) where TEventType : class, IMessage
+        ) where TMessage : class, IMessage
         {
             return acknowledgement switch
             {
@@ -110,12 +110,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private async Task HandleRetryAsync<TEventType>(
+        private async Task HandleRetryAsync<TMessage>(
             Retry retry,
             IModel channel,
-            MessageContext<TEventType> messageContext,
+            MessageContext<TMessage> messageContext,
             QueueSetting settings
-        ) where TEventType : class, IMessage
+        ) where TMessage : class, IMessage
         {
             try
             { }
@@ -139,12 +139,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private static Task HandleAck<TEvent>(
+        private static Task HandleAck<TMessage>(
             Ack ack,
             IModel channel,
-            MessageContext<TEvent> messageContext,
+            MessageContext<TMessage> messageContext,
             QueueSetting settings
-        ) where TEvent: class, IMessage
+        ) where TMessage: class, IMessage
         {
             if (!settings.AutoAck)
             {
@@ -161,12 +161,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private async Task HandleNackAsync<TEventType>(
+        private async Task HandleNackAsync<TMessage>(
             Nack nack,
             IModel channel,
-            MessageContext<TEventType> messageContext,
+            MessageContext<TMessage> messageContext,
             QueueSetting settings
-        ) where TEventType : class, IMessage
+        ) where TMessage : class, IMessage
         {
             try
             { }
@@ -193,12 +193,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private async Task HandleRejectAsync<TEventType>(
+        private async Task HandleRejectAsync<TMessage>(
             Reject reject,
             IModel channel,
-            MessageContext<TEventType> messageContext,
+            MessageContext<TMessage> messageContext,
             QueueSetting settings
-        ) where TEventType : class, IMessage
+        ) where TMessage : class, IMessage
         {
             try
             { }
@@ -256,12 +256,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="settings">Настройки очереди.</param>
         /// <param name="retryDelay">Время, через которое необходимо повторить обработку.</param>
         /// <returns>True, если удалось успешно переотправить.</returns>
-        private async Task<bool> TryRetryAsync<TEventType>(
+        private async Task<bool> TryRetryAsync<TMessage>(
             IModel channel,
-            MessageContext<TEventType> messageContext,
+            MessageContext<TMessage> messageContext,
             QueueSetting settings,
             TimeSpan? retryDelay = null
-        ) where TEventType : class, IMessage
+        ) where TMessage : class, IMessage
         {
             // если явно не указали время ретрая, то смотрим настройки и т.д.
             if (retryDelay == null)
@@ -288,7 +288,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             var routingKey = string.Empty;
             if (settings.RetrySettings.RetryDelayInSeconds == 0 && retryDelay == null)
             {
-                routingKey = _namingConvention.QueueNamingConvention(typeof(TEventType), settings);
+                routingKey = _namingConvention.QueueNamingConvention(typeof(TMessage), settings);
             }
             else
             {
@@ -312,7 +312,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 routingKey = _topologyProvider.DeclareDelayedQueue(
                     channel,
                     settings,
-                    typeof(TEventType),
+                    typeof(TMessage),
                     actualRetryDelay
                 );
 

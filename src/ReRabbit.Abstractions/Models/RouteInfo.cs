@@ -12,9 +12,14 @@ namespace ReRabbit.Abstractions.Models
         #region Свойства
 
         /// <summary>
-        /// Наименование события.
+        /// Наименование сообщения.
         /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// Тип сообщения.
+        /// </summary>
+        public Type Type { get; }
 
         /// <summary>
         /// Наименование обменника.
@@ -52,9 +57,9 @@ namespace ReRabbit.Abstractions.Models
         public int RetryCount { get; }
 
         /// <summary>
-        /// Версия события.
+        /// Версия сообщения.
         /// </summary>
-        public string EventVersion { get; }
+        public string MessageVersion { get; }
 
         /// <summary>
         /// Настройки подключения.
@@ -86,20 +91,22 @@ namespace ReRabbit.Abstractions.Models
             bool autoDelete,
             string route,
             int retryCount,
-            string eventName,
-            string eventVersion,
+            string messageName,
+            Type messageType,
+            string messageVersion,
             MqConnectionSettings connectionSettings,
             TimeSpan? delay,
             TimeSpan confirmationTimeout
         )
         {
-            Name = eventName;
+            Type = messageType;
+            Name = messageName;
             Exchange = exchange;
             Durable = durable;
             AutoDelete = autoDelete;
             Route = route;
             RetryCount = retryCount;
-            EventVersion = eventVersion;
+            MessageVersion = messageVersion;
             ConnectionSettings = connectionSettings;
             ExchangeType = exchangeType;
             Arguments = arguments;
@@ -110,9 +117,10 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает экземпляр класса <see cref="RouteInfo"/>.
         /// </summary>
-        public RouteInfo(MessageSettings messageSettings, string route, TimeSpan? delay = null)
+        public RouteInfo(MessageSettings messageSettings, Type messageType, string route, TimeSpan? delay = null)
         {
             Name = messageSettings.Name;
+            Type = messageSettings.MessageType ?? messageType;
             Exchange = messageSettings.Exchange.Name;
             ExchangeType = messageSettings.Exchange.Type;
             Arguments = messageSettings.Arguments;
@@ -120,7 +128,7 @@ namespace ReRabbit.Abstractions.Models
             AutoDelete = messageSettings.Exchange.AutoDelete;
             Route = route?.ToLower() ?? string.Empty;
             RetryCount = messageSettings.RetryCount;
-            EventVersion = messageSettings.Version;
+            MessageVersion = messageSettings.Version;
             ConnectionSettings = messageSettings.ConnectionSettings;
             Delay = delay;
             ConfirmationTimeout = messageSettings.ConfirmationTimeout;
@@ -135,7 +143,7 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         public override string ToString()
         {
-            return ExchangeType + "://" + Exchange + "/" + Route + "/" + EventVersion;
+            return ExchangeType + "://" + Exchange + "/" + Route + "/" + MessageVersion;
         }
 
         #endregion Методы (public)

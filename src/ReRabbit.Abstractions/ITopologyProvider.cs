@@ -1,6 +1,7 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions.Settings;
 using System;
+using System.Collections.Generic;
 
 namespace ReRabbit.Abstractions
 {
@@ -46,6 +47,30 @@ namespace ReRabbit.Abstractions
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
         /// <param name="retryDelay">Период на которую откладывается обработка.</param>
-        string DeclareDelayedQueue(IModel channel, QueueSetting settings, Type messageType, TimeSpan retryDelay);
+        string DeclareDelayedQueue(
+            IModel channel,
+            QueueSetting settings,
+            Type messageType,
+            TimeSpan retryDelay
+        );
+
+        /// <summary>
+        /// Объявить очередь с отложенным паблишем.
+        /// </summary>
+        /// <param name="channel">Канал.</param>
+        /// <param name="messageName">Наименование сообщения.</param>
+        /// <param name="exchange">Тип обменника.</param>
+        /// <param name="routingKey">Роут.</param>
+        /// <param name="arguments">Аргументы.</param>
+        /// <param name="retryDelay">Период на которую откладывается паблиш.</param>
+        /// <returns>Название очереди с отложенным паблишем.</returns>
+        string DeclareDelayedPublishQueue(
+            IModel channel,
+            string messageName,
+            string exchange,
+            string routingKey,
+            IDictionary<string, object> arguments,
+            TimeSpan retryDelay
+        );
     }
 }

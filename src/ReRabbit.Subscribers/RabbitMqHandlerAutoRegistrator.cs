@@ -45,7 +45,7 @@ namespace ReRabbit.Subscribers
 
         #endregion Конструктор
 
-        #region Методы (private)
+        #region Методы (public)
 
         /// <summary>
         /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>.
@@ -78,6 +78,10 @@ namespace ReRabbit.Subscribers
                 await SubscribeToMessageAsync(g.EventType, g.Handlers).ConfigureAwait(false);
             }
         }
+
+        #endregion Методы (public)
+
+        #region Методы (private)
 
         /// <summary>
         /// Зарегистрировать на сообщение указанных обработчиков.

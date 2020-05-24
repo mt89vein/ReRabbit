@@ -25,7 +25,7 @@ namespace ReRabbit.Abstractions.Settings
         public bool LogOnRetry { get; set; }
 
         /// <summary>
-        /// Логировать факт ошибки обработки с уровнем <see cref="Microsoft.Extensions.Logging.LogLevel.Critical"/>, если не удалось обработать событие за N попыток.
+        /// Логировать факт ошибки обработки с уровнем <see cref="Microsoft.Extensions.Logging.LogLevel.Error"/>, если не удалось обработать событие за N попыток.
         /// <para>
         /// По-умолчанию: true.
         /// </para>

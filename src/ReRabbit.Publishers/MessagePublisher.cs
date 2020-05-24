@@ -56,6 +56,7 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Пул каналов.
         /// </summary>
+        /// TODO: вместо словаря, можно попробовать заюзать ObjectPool
         private readonly ConcurrentDictionary<string, ExclusiveChannel> _channelPool;
 
         #endregion Поля
@@ -96,14 +97,13 @@ namespace ReRabbit.Publishers
         public Task PublishAsync<TMessage>(TMessage message, TimeSpan? delay = null)
             where TMessage : class, IMessage
         {
-            var eventName = message.GetType().Name;
             var routeInfo = _routeProvider.GetFor(message, delay);
             var connection = _connectionManager.GetConnection(routeInfo.ConnectionSettings, ConnectionPurposeType.Publisher);
 
             var mqMessage = new MqMessage(
                 message,
-                eventName,
-                routeInfo.EventVersion,
+                routeInfo.Name,
+                routeInfo.MessageVersion,
                 _serviceInfoAccessor.ServiceInfo.ApplicationVersion,
                 _serviceInfoAccessor.ServiceInfo.HostName
             );
@@ -124,7 +124,7 @@ namespace ReRabbit.Publishers
                         {
                             _logger.LogError(
                                 ex,
-                                "Попытка опубликовать сообщение {RouteInfo} с RabbitMq {Count} из {RetryCount}",
+                                "Попытка опубликовать сообщение {RouteInfo} в RabbitMq {Count} из {RetryCount}",
                                 routeInfo.ToString(),
                                 count,
                                 routeInfo.RetryCount
@@ -135,20 +135,20 @@ namespace ReRabbit.Publishers
             return policy.ExecuteAsync(async () =>
             {
                 await connection.TryConnectAsync();
-                var (channel, semaphoreSlim) = await GetChannelAsync(eventName, connection);
+                var (channel, semaphoreSlim) = await GetChannelAsync(routeInfo.Name, connection);
 
                 await semaphoreSlim.WaitAsync();
                 try
                 {
-                    EnsureTopology(channel, routeInfo);
+                    var delayedRoute = EnsureTopology(channel, routeInfo);
 
                     var properties = GetPublishProperties(channel, contentType, routeInfo, message);
 
                     if (channel is IAsyncChannel asyncChannel)
                     {
                         await asyncChannel.BasicPublishAsync(
-                            routeInfo.Exchange,
-                            routeInfo.Route,
+                            delayedRoute != null ? string.Empty : routeInfo.Exchange,
+                            delayedRoute ?? routeInfo.Route,
                             true,
                             properties,
                             body,
@@ -158,8 +158,8 @@ namespace ReRabbit.Publishers
                     else
                     {
                         channel.BasicPublish(
-                            routeInfo.Exchange,
-                            routeInfo.Name,
+                            delayedRoute != null ? string.Empty : routeInfo.Exchange,
+                            delayedRoute ?? routeInfo.Route,
                             true,
                             properties,
                             body
@@ -178,7 +178,7 @@ namespace ReRabbit.Publishers
         #region Методы (private)
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void EnsureTopology(IModel channel, in RouteInfo routeInfo)
+        private string EnsureTopology(IModel channel, in RouteInfo routeInfo)
         {
             channel.ExchangeDeclare(
                 exchange: routeInfo.Exchange,
@@ -186,6 +186,20 @@ namespace ReRabbit.Publishers
                 autoDelete: routeInfo.AutoDelete,
                 type: routeInfo.ExchangeType
             );
+
+            if (routeInfo.Delay.HasValue)
+            {
+                return _topologyProvider.DeclareDelayedPublishQueue(
+                    channel,
+                    routeInfo.Name,
+                    routeInfo.Exchange,
+                    routeInfo.Route,
+                    routeInfo.Arguments,
+                    routeInfo.Delay.Value
+                );
+            }
+
+            return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -201,7 +215,7 @@ namespace ReRabbit.Publishers
             properties.Persistent = routeInfo.Durable;
             properties.ContentType = contentType;
             properties.MessageId = message.MessageId.ToString();
-            properties.CorrelationId = Guid.NewGuid().ToString();
+            properties.CorrelationId = Guid.NewGuid().ToString(); // TraceContext.Current.TraceId ?? Guid.NewGuid();
             properties.Timestamp = new AmqpTimestamp(((DateTimeOffset)message.MessageCreatedAt).ToUnixTimeSeconds());
             properties.Type = routeInfo.Name;
             properties.Headers = routeInfo.Arguments;
