@@ -18,11 +18,11 @@ namespace ReRabbit.Abstractions
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        Task HandleAsync<TEventType>(
+        Task HandleAsync<TMessage>(
             Acknowledgement acknowledgement,
             IModel channel,
-            MessageContext<TEventType> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TEventType : class, IMessage;
+        ) where TMessage : class, IMessage;
     }
 }

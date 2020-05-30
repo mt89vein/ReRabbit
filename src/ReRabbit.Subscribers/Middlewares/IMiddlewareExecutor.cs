@@ -1,6 +1,6 @@
-using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
+using System;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -17,7 +17,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат обработки.</returns>
         Task<Acknowledgement> ExecuteAsync(
-            AcknowledgableMessageHandler<IMessage> next,
+            Func<MessageContext<IMessage>, Task<Acknowledgement>> next,
             MessageContext<IMessage> ctx
         );
     }

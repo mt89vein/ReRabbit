@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions.Models;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -11,8 +12,10 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Зарегистрировать глобальный middleware.
         /// </summary>
         /// <typeparam name="TMiddleware">Тип middleware.</typeparam>
+        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр middlewares.</returns>
-        IMiddlewareRegistry AddGlobal<TMiddleware>();
+        IMiddlewareRegistry AddGlobal<TMiddleware>(ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton)
+            where TMiddleware : MiddlewareBase;
 
         /// <summary>
         /// Зарегистрировать middleware.

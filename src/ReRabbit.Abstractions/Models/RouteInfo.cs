@@ -120,7 +120,7 @@ namespace ReRabbit.Abstractions.Models
         public RouteInfo(MessageSettings messageSettings, Type messageType, string route, TimeSpan? delay = null)
         {
             Name = messageSettings.Name;
-            Type = messageSettings.MessageType ?? messageType;
+            Type = messageType;
             Exchange = messageSettings.Exchange.Name;
             ExchangeType = messageSettings.Exchange.Type;
             Arguments = messageSettings.Arguments;

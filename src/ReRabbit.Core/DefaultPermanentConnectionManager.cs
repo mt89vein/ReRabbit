@@ -64,7 +64,7 @@ namespace ReRabbit.Core
         {
             return _permanentConnections.GetOrAdd(
                 (connectionSettings, purposeType),
-                settings => PermanentConnectionFactory(settings.Item1)
+                settings => PermanentConnectionFactory(settings.Item1, settings.Item2)
             );
         }
 
@@ -87,8 +87,9 @@ namespace ReRabbit.Core
         /// Фабричный метод создания постоянного подключения к RabbitMq.
         /// </summary>
         /// <param name="settings">Настройки подключения.</param>
+        /// <param name="purposeType">Цель подключения.</param>
         /// <returns>Постоянное подключение к RabbitMq.</returns>
-        private IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings)
+        private IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings, ConnectionPurposeType purposeType)
         {
             var connectionFactory = new ConnectionFactory
             {
@@ -118,7 +119,7 @@ namespace ReRabbit.Core
                         settings.Ssl.CertificatePath,
                         settings.Ssl.IsEnabled
                     ),
-                ClientProvidedName = settings.ConnectionName
+                ClientProvidedName = purposeType.ToString() + "-" + settings.ConnectionName
             };
             connectionFactory.Uri = new Uri(connectionFactory.Endpoint.ToString());
 

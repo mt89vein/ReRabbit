@@ -7,6 +7,7 @@ using ReRabbit.Abstractions.Models;
 using ReRabbit.Core;
 using System;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -90,13 +91,16 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Опубликовать сообщение.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщение..</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <typeparam name="TRabbitMessage">Тип интеграционного сообщения.</typeparam>
         /// <param name="message">Данные сообщения.</param>
+        /// <param name="expires">Время жизни сообщения в шине.</param>
         /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
-        public Task PublishAsync<TMessage>(TMessage message, TimeSpan? delay = null)
+        public Task PublishAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
+            where TRabbitMessage : RabbitMessage<TMessage>
             where TMessage : class, IMessage
         {
-            var routeInfo = _routeProvider.GetFor(message, delay);
+            var routeInfo = _routeProvider.GetFor<TRabbitMessage>(message, delay);
             var connection = _connectionManager.GetConnection(routeInfo.ConnectionSettings, ConnectionPurposeType.Publisher);
 
             var mqMessage = new MqMessage(
@@ -141,7 +145,7 @@ namespace ReRabbit.Publishers
                 {
                     var delayedRoute = EnsureTopology(channel, routeInfo);
 
-                    var properties = GetPublishProperties(channel, contentType, routeInfo, message);
+                    var properties = GetPublishProperties(channel, contentType, routeInfo, message, expires);
 
                     if (channel is IAsyncChannel asyncChannel)
                     {
@@ -206,7 +210,8 @@ namespace ReRabbit.Publishers
             IModel channel,
             string contentType,
             in RouteInfo routeInfo,
-            IMessage message
+            IMessage message,
+            in TimeSpan? expires
         )
         {
             var properties = channel.CreateBasicProperties();
@@ -216,6 +221,12 @@ namespace ReRabbit.Publishers
             properties.MessageId = message.MessageId.ToString();
             properties.CorrelationId = Guid.NewGuid().ToString(); // TraceContext.Current.TraceId ?? Guid.NewGuid();
             properties.Timestamp = new AmqpTimestamp(((DateTimeOffset)message.MessageCreatedAt).ToUnixTimeSeconds());
+
+            if (expires.HasValue)
+            {
+                properties.Expiration = expires.Value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+            }
+ 
             properties.Type = routeInfo.Name;
             properties.Headers = routeInfo.Arguments;
 

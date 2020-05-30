@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sample.IntegrationMessages;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication
@@ -22,6 +23,7 @@ namespace SampleWebApplication
                     logging.ClearProviders();
                     logging.AddConsole();
                 })
+                .ConfigureIntegrationMessages()
                 .ConfigureWebHostDefaults(wb =>
                 {
                     wb.UseStartup<Startup>();

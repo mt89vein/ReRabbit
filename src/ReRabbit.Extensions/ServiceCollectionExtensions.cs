@@ -27,7 +27,7 @@ namespace ReRabbit.Extensions
             Action<RabbitMqRegistrationOptions> options = null
         )
         {
-            var middlewareRegistry = new MiddlewareRegistry();
+            var middlewareRegistry = new MiddlewareRegistry(services);
             services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistry);
 
             services.AddSingleton<RabbitMqHandlerAutoRegistrator>();
@@ -107,6 +107,11 @@ namespace ReRabbit.Extensions
                 options.Factories?.AcknowledgementBehaviourFactory?.Invoke(sp) ??
                 sp.GetRequiredService<DefaultAcknowledgementBehaviourFactory>()
             );
+
+            if (options.Factories.MessageMapper != null)
+            {
+                services.AddSingleton(options.Factories.MessageMapper);
+            }
 
             services.AddScoped<IMiddlewareExecutor, MiddlewareExecutor>();
 

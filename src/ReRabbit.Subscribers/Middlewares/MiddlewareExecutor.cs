@@ -51,7 +51,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат обработки.</returns>
         public async Task<Acknowledgement> ExecuteAsync(
-            AcknowledgableMessageHandler<IMessage> next,
+            Func<MessageContext<IMessage>, Task<Acknowledgement>> next,
             MessageContext<IMessage> ctx
         )
         {

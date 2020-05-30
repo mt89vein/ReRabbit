@@ -6,8 +6,8 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
-using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
+using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -81,16 +81,16 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         public Task HandleAsync<TMessage>(
             Acknowledgement acknowledgement,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
         ) where TMessage : class, IMessage
         {
             return acknowledgement switch
             {
-                Ack ack => HandleAck(ack, channel, messageContext, settings),
-                Reject reject => HandleRejectAsync(reject, channel, messageContext, settings),
-                Nack nack => HandleNackAsync(nack, channel, messageContext, settings),
-                Retry retry => HandleRetryAsync(retry, channel, messageContext, settings),
+                Ack _ => HandleAck(channel, messageContext, settings),
+                Reject reject => HandleRejectAsync<TMessage>(reject, channel, messageContext, settings),
+                Nack nack => HandleNackAsync<TMessage>(nack, channel, messageContext, settings),
+                Retry retry => HandleRetryAsync<TMessage>(retry, channel, messageContext, settings),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(acknowledgement),
                     typeof(Acknowledgement),
@@ -113,15 +113,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task HandleRetryAsync<TMessage>(
             Retry retry,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage : class, IMessage
+        )
         {
             try
             { }
             finally
             {
-                if (await TryRetryAsync(channel, messageContext, settings, retry.Span))
+                if (await TryRetryAsync<TMessage>(channel, messageContext, settings, retry.Span))
                 {
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
@@ -135,16 +135,14 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Оповещение брокера об успешной обработке.
         /// </summary>
-        /// <param name="ack">Дополнительные данные об успешной обработке.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private static Task HandleAck<TMessage>(
-            Ack ack,
+        private static Task HandleAck(
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage: class, IMessage
+        )
         {
             if (!settings.AutoAck)
             {
@@ -164,15 +162,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task HandleNackAsync<TMessage>(
             Nack nack,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage : class, IMessage
+        )
         {
             try
             { }
             finally
             {
-                if (await TryRetryAsync(channel, messageContext, settings))
+                if (await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -196,9 +194,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task HandleRejectAsync<TMessage>(
             Reject reject,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage : class, IMessage
+        )
         {
             try
             { }
@@ -234,7 +232,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
-                else if (await TryRetryAsync(channel, messageContext, settings))
+                else if (await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -258,10 +256,10 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <returns>True, если удалось успешно переотправить.</returns>
         private async Task<bool> TryRetryAsync<TMessage>(
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings,
             TimeSpan? retryDelay = null
-        ) where TMessage : class, IMessage
+        )
         {
             // если явно не указали время ретрая, то смотрим настройки и т.д.
             if (retryDelay == null)
@@ -321,6 +319,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             }
 
             messageContext.EventArgs.BasicProperties.IncrementRetryCount(1);
+            messageContext.EventArgs.BasicProperties.EnsureOriginalExchange(messageContext.EventArgs);
 
             if (channel is IAsyncChannel asyncChannel)
             {

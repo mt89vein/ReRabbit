@@ -55,6 +55,11 @@ namespace ReRabbit.Extensions
         public Func<IServiceProvider, ISerializer> Serializer { get; set; }
 
         /// <summary>
+        /// Маппер сообщений.
+        /// </summary>
+        public Func<IServiceProvider, IMessageMapper> MessageMapper { get; set; }
+
+        /// <summary>
         /// Провайдер информации о роутах события для издателя.
         /// </summary>
         public Func<IServiceProvider, IRouteProvider> RouteProvider { get; set; }

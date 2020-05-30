@@ -42,5 +42,13 @@ namespace ReRabbit.Abstractions
         /// <param name="payload">Строка для десериализации.</param>
         /// <returns>Десериализованный объект.</returns>
         TType Deserialize<TType>(string payload);
+
+        /// <summary>
+        /// Десериализовать строку в объект указанного типа.
+        /// </summary>
+        /// <param name="type">Тип объекта для десериализации.</param>
+        /// <param name="payload">Строка для десериализации.</param>
+        /// <returns>Десериализованный объект.</returns>
+        object Deserialize(Type type, string payload);
     }
 }

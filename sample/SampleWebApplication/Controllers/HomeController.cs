@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ReRabbit.Abstractions;
-using SampleWebApplication.RabbitMq.TestEvent;
+using Sample.IntegrationMessages;
 using System;
 using System.Threading.Tasks;
 
@@ -22,21 +22,21 @@ namespace SampleWebApplication.Controllers
         {
             if (message == "test")
             {
-                await _publisher.PublishAsync(new TestMessage
+                await _publisher.PublishAsync<MyIntegrationRabbitMessage, MyIntegrationMessageDto>(new MyIntegrationMessageDto
                 {
                     Message = message
                 });
             }
             else if (message == "delay")
             {
-                await _publisher.PublishAsync(new TestMessage
+                await _publisher.PublishAsync<MyIntegrationRabbitMessage, MyIntegrationMessageDto>(new MyIntegrationMessageDto
                 {
                     Message = "delayed",
                 }, TimeSpan.FromSeconds(15));
             }
             else if (message == "metrics")
             {
-                await _publisher.PublishAsync(new Metrics
+                await _publisher.PublishAsync<MetricsRabbitMessage, MetricsDto>(new MetricsDto
                 {
                     Name = "met",
                     Value = 1
@@ -44,7 +44,7 @@ namespace SampleWebApplication.Controllers
             }
             else
             {
-                await _publisher.PublishAsync(new TestMessage
+                await _publisher.PublishAsync<MyIntegrationRabbitMessage, MyIntegrationMessageDto>(new MyIntegrationMessageDto
                 {
                     Message = "1"
                 });
