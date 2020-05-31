@@ -12,10 +12,13 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Опубликовать сообщение.
         /// </summary>
-        /// <typeparam name="TMessage">Тип сообщение..</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <typeparam name="TRabbitMessage">Тип интеграционного сообщения.</typeparam>
         /// <param name="message">Данные сообщения.</param>
+        /// <param name="expires">Время жизни сообщения в шине.</param>
         /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
-        Task PublishAsync<TMessage>(TMessage message, TimeSpan? delay = null)
+        Task PublishAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
+            where TRabbitMessage: RabbitMessage<TMessage>
             where TMessage : class, IMessage;
     }
 }

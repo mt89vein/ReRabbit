@@ -22,6 +22,11 @@ namespace ReRabbit.Core
         private readonly IClientPropertyProvider _clientPropertyProvider;
 
         /// <summary>
+        /// Провайдер информации о системе.
+        /// </summary>
+        private readonly IServiceInfoAccessor _serviceInfoAccessor;
+
+        /// <summary>
         /// Логгер.
         /// </summary>
         private readonly ILogger<DefaultPermanentConnection> _logger;
@@ -39,14 +44,17 @@ namespace ReRabbit.Core
         /// Создает экземпляр класса <see cref="DefaultPermanentConnectionManager"/>.
         /// </summary>
         /// <param name="clientPropertyProvider">Провайдер свойств подключения.</param>
+        /// <param name="serviceInfoAccessor">Провайдер информации о системе.</param>
         /// <param name="logger">Логгер.</param>
         public DefaultPermanentConnectionManager(
             IClientPropertyProvider clientPropertyProvider,
+            IServiceInfoAccessor serviceInfoAccessor,
             ILogger<DefaultPermanentConnection> logger
         )
         {
             _clientPropertyProvider = clientPropertyProvider;
             _logger = logger;
+            _serviceInfoAccessor = serviceInfoAccessor;
             _permanentConnections = new ConcurrentDictionary<(MqConnectionSettings, ConnectionPurposeType), IPermanentConnection>();
         }
 
@@ -64,7 +72,7 @@ namespace ReRabbit.Core
         {
             return _permanentConnections.GetOrAdd(
                 (connectionSettings, purposeType),
-                settings => PermanentConnectionFactory(settings.Item1)
+                settings => PermanentConnectionFactory(settings.Item1, settings.Item2)
             );
         }
 
@@ -87,8 +95,9 @@ namespace ReRabbit.Core
         /// Фабричный метод создания постоянного подключения к RabbitMq.
         /// </summary>
         /// <param name="settings">Настройки подключения.</param>
+        /// <param name="purposeType">Цель подключения.</param>
         /// <returns>Постоянное подключение к RabbitMq.</returns>
-        private IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings)
+        private IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings, ConnectionPurposeType purposeType)
         {
             var connectionFactory = new ConnectionFactory
             {
@@ -118,7 +127,12 @@ namespace ReRabbit.Core
                         settings.Ssl.CertificatePath,
                         settings.Ssl.IsEnabled
                     ),
-                ClientProvidedName = settings.ConnectionName
+                ClientProvidedName =
+                    _serviceInfoAccessor.ServiceInfo.ServiceName + "-"
+                                                                 + _serviceInfoAccessor.ServiceInfo.EnvironmentName +
+                                                                 "-"
+                                                                 + purposeType.ToString() + "-"
+                                                                 + settings.ConnectionName
             };
             connectionFactory.Uri = new Uri(connectionFactory.Endpoint.ToString());
 

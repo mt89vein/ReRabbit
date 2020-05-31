@@ -75,7 +75,7 @@ namespace ReRabbit.Core
                 throw new InvalidConfigurationException($"Конфигурация подписчика по пути {sectionPath} не найдена");
             }
 
-            var connectionSettings = Settings.Connections[connectionName];
+            var connectionSettings = Settings.SubscriberConnections[connectionName];
             var virtualHostSettings = connectionSettings.VirtualHosts[virtualHost];
 
             return BuildQueueSettings(
@@ -99,7 +99,7 @@ namespace ReRabbit.Core
 
             IEnumerable<QueueSetting> GetQueueSettings()
             {
-                foreach (var connectionSettings in Settings.Connections.Values)
+                foreach (var connectionSettings in Settings.SubscriberConnections.Values)
                 {
                     foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
                     {
@@ -132,11 +132,11 @@ namespace ReRabbit.Core
             // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
             // TODO: понятное сообщение об ошибке
-            return GetEventsSettings().Single();
+            return GetMessageSettingsInternal().Single();
 
-            IEnumerable<MessageSettings> GetEventsSettings()
+            IEnumerable<MessageSettings> GetMessageSettingsInternal()
             {
-                foreach (var connectionSettings in Settings.Connections.Values)
+                foreach (var connectionSettings in Settings.PublisherConnections.Values)
                 {
                     foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
                     {
@@ -182,9 +182,16 @@ namespace ReRabbit.Core
 
             mqConfigurationSection.Bind(rabbitMqSettings);
 
-            rabbitMqSettings.Connections =
+            rabbitMqSettings.SubscriberConnections =
                 mqConfigurationSection
-                    .GetSection(ConfigurationSectionConstants.CONNECTIONS)
+                    .GetSection(ConfigurationSectionConstants.SUBSCRIBER_CONNECTIONS)
+                    .GetChildren()
+                    .Select(BuildConnectionSettings)
+                    .ToDictionary(x => x.Key, x => x.Value);
+
+            rabbitMqSettings.PublisherConnections =
+                mqConfigurationSection
+                    .GetSection(ConfigurationSectionConstants.PUBLISHER_CONNECTIONS)
                     .GetChildren()
                     .Select(BuildConnectionSettings)
                     .ToDictionary(x => x.Key, x => x.Value);

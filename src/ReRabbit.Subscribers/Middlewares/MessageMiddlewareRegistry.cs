@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
 
@@ -9,6 +11,11 @@ namespace ReRabbit.Subscribers.Middlewares
     internal class MessageMiddlewareRegistry : IMessageMiddlewareRegistry, IMessageMiddlewareRegistryAccessor
     {
         #region Поля
+
+        /// <summary>
+        /// Конфигуратор сервисов.
+        /// </summary>
+        private readonly IServiceCollection _services;
 
         /// <summary>
         /// Список мидлварок сообщения.
@@ -36,15 +43,18 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageMiddlewareRegistry"/>.
         /// </summary>
+        /// <param name="services">Конфигуратор сервисов.</param>
         /// <param name="registry">Реестр мидлварок.</param>
         /// <param name="messageType">Тип сообщения.</param>
         /// <param name="gloablMiddlewares">Глобальные мидлварки для добавления в цепочку.</param>
         public MessageMiddlewareRegistry(
+            IServiceCollection services,
             IMiddlewareRegistry registry,
             Type messageType,
             IEnumerable<Type> gloablMiddlewares
         )
         {
+            _services = services;
             MessageType = messageType;
             Registry = registry;
             _middlewares = new HashSet<Type>(gloablMiddlewares);
@@ -58,11 +68,18 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Добавить мидлварку в цепочку выполнения.
         /// </summary>
         /// <typeparam name="TMiddleware">Мидлварка.</typeparam>
+        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр мидлварок сообщения.</returns>
-        public IMessageMiddlewareRegistry Add<TMiddleware>()
-            where TMiddleware : class, IMiddleware
+        public IMessageMiddlewareRegistry Add<TMiddleware>(ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton)
+            where TMiddleware : MiddlewareBase
         {
             _middlewares.Add(typeof(TMiddleware));
+            _services.TryAdd(ServiceDescriptor.Describe(
+                    typeof(TMiddleware),
+                    typeof(TMiddleware),
+                    middlewareLifetime
+                )
+            );
 
             return this;
         }

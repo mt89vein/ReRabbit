@@ -72,39 +72,31 @@ namespace ReRabbit.Subscribers.Middlewares
                 return await Next(ctx);
             }
 
-            var loggingScope = new Dictionary<string, object>
+            _logger.LogTrace("Получено сообщение для обработки.");
+
+            if (!await TryProcessAsync(messageId))
             {
-                ["MessageId"] = messageId
-            };
+                _logger.LogTrace("Сообщение уже было обработано");
 
-            using (_logger.BeginScope(loggingScope))
+                return new Reject("Already processed", requeue: false);
+            }
+
+            try
             {
-                _logger.LogTrace("Получено сообщение для обработки.");
+                _logger.LogTrace("Производится обработка сообщения");
 
-                if (!await TryProcessAsync(messageId))
-                {
-                    _logger.LogTrace("Сообщение уже было обработано");
+                var result = await Next(ctx);
 
-                    return new Reject("Already processed", requeue: false);
-                }
+                _logger.LogTrace("Обработка завершена");
 
-                try
-                {
-                    _logger.LogTrace("Производится обработка сообщения");
+                return result;
+            }
+            catch
+            {
+                _logger.LogTrace("Произошла ошибка при обработке сообщения");
 
-                    var result = await Next(ctx);
-
-                    _logger.LogTrace("Обработка завершена");
-
-                    return result;
-                }
-                catch
-                {
-                    _logger.LogTrace("Произошла ошибка при обработке сообщения");
-
-                    await RemoveAsync(messageId);
-                    throw;
-                }
+                await RemoveAsync(messageId);
+                throw;
             }
         }
 

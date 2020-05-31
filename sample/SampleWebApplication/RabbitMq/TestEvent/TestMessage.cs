@@ -2,6 +2,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
+using Sample.IntegrationMessages;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.RabbitMq.TestEvent
@@ -17,14 +18,14 @@ namespace SampleWebApplication.RabbitMq.TestEvent
             /// </summary>
             /// <param name="ctx">Данные сообщения.</param>
             /// <returns>Результат выполнения обработчика.</returns>
-            [SubscriberConfiguration("Q1Subscriber")]
+            [SubscriberConfiguration("Q1Subscriber", typeof(MyIntegrationRabbitMessage))]
             [SubscriberConfiguration("Q2Subscriber")]
             public async Task<Acknowledgement> HandleAsync(MessageContext<TestMessage> ctx)
             {
                 await Task.CompletedTask;
 
                 //return Ack.Ok;
-                if (ctx.EventData.IsLastRetry)
+                if (ctx.MessageData.IsLastRetry)
                 {
                     return Ack.Ok;
                 }

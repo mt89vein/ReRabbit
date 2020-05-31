@@ -11,12 +11,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Core
 {
-    // TODO: типизированный логгинг (как это я сделал в Notifications.Application.LoggingExtensions
     // TODO: таймер на проверку факта подключения, на случай блока или падения подключения - чтобы переподключался.
 
     /// <summary>
@@ -95,26 +95,19 @@ namespace ReRabbit.Core
                     .Handle<SocketException>()
                     .Or<BrokerUnreachableException>(exception =>
                     {
-                        if (exception?.InnerException is AuthenticationFailureException authenticationFailureException)
+                        switch (exception?.InnerException)
                         {
-                            _logger.LogCritical(authenticationFailureException, "Доступ к RabbitMQ запрещен.");
+                            case AuthenticationFailureException authenticationFailureException:
+                                _logger.RabbitMqAccessForbidden(authenticationFailureException);
 
-                            return false;
+                                return false;
+                            case OperationInterruptedException operationInterruptedException:
+                                _logger.RabbitMqAccessForbidden(operationInterruptedException);
+
+                                return false;
+                            default:
+                                return true;
                         }
-
-                        if (exception?.InnerException is OperationInterruptedException operationInterruptedException)
-                        {
-                            _logger.LogCritical(
-                                operationInterruptedException,
-                                "Доступ к RabbitMQ запрещен. {ReplyCode}-{ReplyText}",
-                                operationInterruptedException.ShutdownReason.ReplyCode,
-                                operationInterruptedException.ShutdownReason.ReplyText
-                            );
-
-                            return false;
-                        }
-
-                        return true;
                     })
                     .WaitAndRetry(
                         retryCount: _settings.ConnectionRetryCount,
@@ -123,12 +116,7 @@ namespace ReRabbit.Core
                         {
                             if (count == _settings.ConnectionRetryCount)
                             {
-                                _logger.LogWarning(
-                                    ex,
-                                    "Попытка установить соединение с RabbitMq. Попытка подключения {Count} из {ConnectionRetryCount}",
-                                    count,
-                                    _settings.ConnectionRetryCount
-                                );
+                                _logger.RabbitMqConnectFailed(_settings.ConnectionRetryCount);
                             }
                         });
         }
@@ -171,10 +159,7 @@ namespace ReRabbit.Core
             }
             catch (IOException ex)
             {
-                _logger.LogCritical(
-                    ex,
-                    "Не удалось разорвать соединение с RabbitMQ"
-                );
+                _logger.RabbitMqDisconnectFailed(ex);
             }
         }
 
@@ -192,8 +177,6 @@ namespace ReRabbit.Core
             {
                 ["ConnectionString"] = _connectionFactory.Uri.ToString()
             });
-
-            _logger.LogInformation("Подключение к RabbitMq");
 
             await _semaphoreSlim.WaitAsync();
             try
@@ -222,7 +205,8 @@ namespace ReRabbit.Core
             {
                 _connection.ConnectionShutdown += OnConnectionShutdown;
                 _connection.ConnectionBlocked += OnConnectionBlocked;
-                _logger.LogInformation("Подключение к RabbitMq установлено.");
+
+                _logger.RabbitMqConnectionEstablished();
 
                 _disposed = false;
 
@@ -257,16 +241,16 @@ namespace ReRabbit.Core
 
         #region Методы (private)
 
-        private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
+        private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs ea)
         {
             if (_disposed)
             {
                 return;
             }
 
-            _logger.LogCritical("Соединение с RabbitMQ заблокировано. Причина: {Reason}", e.Reason);
+            _logger.RabbitMqConnectionBlocked(ea);
 
-            // действий никаких не требуется. после завершения блокировки, автоматически все должно быть норм.
+            // действий никаких не требуется. после завершения блокировки, автоматически все вернется в норму.
         }
 
         private void OnConnectionShutdown(object sender, ShutdownEventArgs reason)
@@ -278,11 +262,120 @@ namespace ReRabbit.Core
 
             if (reason.Initiator == ShutdownInitiator.Peer)
             {
-                _logger.LogInformation("Соединение было закрыто из брокера. {Message}", reason.ReplyText);
+                _logger.RabbitMqConnectionClosed(reason);
                 TryDisconnect();
             }
         }
 
         #endregion Методы (private)
+    }
+
+    /// <summary>
+    /// Методы расширения для <see cref="ILogger"/>.
+    /// </summary>
+    internal static class PermanentConnectionLoggingExtensions
+    {
+        #region Константы
+
+        private const int RABBITMQ_ACCESS_FORBIDDEN = 1;
+        private const int RABBITMQ_CONNECT_FAILED = 2;
+        private const int RABBITMQ_DISCONNECT_FAILED = 3;
+        private const int RABBITMQ_CONNECTION_BLOCKED = 4;
+        private const int RABBITMQ_CONNECTION_ESTABLISHED = 5;
+        private const int RABBITMQ_CONNECTION_CLOSED = 6;
+
+        #endregion Константы
+
+        #region LogActions
+
+        private static readonly Action<ILogger, Exception>
+            _rabbitMqAccessForbiddenLogAction =
+                LoggerMessage.Define(
+                    LogLevel.Critical,
+                    new EventId(RABBITMQ_ACCESS_FORBIDDEN, nameof(RABBITMQ_ACCESS_FORBIDDEN)),
+                    "Доступ к RabbitMQ запрещен."
+                );
+
+        private static readonly Action<ILogger, int, Exception>
+            _rabbitMqConnectFailedLogAction =
+                LoggerMessage.Define<int>(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_CONNECT_FAILED, nameof(RABBITMQ_CONNECT_FAILED)),
+                    "Не удалось установить соединение с RabbitMq за {ConnectionRetryCount} попыток."
+                );
+
+        private static readonly Action<ILogger, Exception>
+            _rabbitMqDisconnectFailedLogAction =
+                LoggerMessage.Define(
+                    LogLevel.Error,
+                    new EventId(RABBITMQ_DISCONNECT_FAILED, nameof(RABBITMQ_DISCONNECT_FAILED)),
+                    "Не удалось разорвать соединение с RabbitMq."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqConnectionBlockedLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Critical,
+                    new EventId(RABBITMQ_CONNECTION_BLOCKED, nameof(RABBITMQ_CONNECTION_BLOCKED)),
+                    "Соединение с RabbitMQ заблокировано. Причина: {Reason}"
+                );
+
+        private static readonly Action<ILogger, Exception>
+            _rabbitMqConnectionEstablishedLogAction =
+                LoggerMessage.Define(
+                    LogLevel.Information,
+                    new EventId(RABBITMQ_CONNECTION_ESTABLISHED, nameof(RABBITMQ_CONNECTION_ESTABLISHED)),
+                    "Подключение к RabbitMq установлено."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqConnectionClosedLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Information,
+                    new EventId(RABBITMQ_CONNECTION_CLOSED, nameof(RABBITMQ_CONNECTION_CLOSED)),
+                    "Соединение было закрыто из брокера. {Message}"
+                );
+
+        #endregion LogActions
+
+        #region Методы (public)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqAccessForbidden(this ILogger logger, Exception ex)
+        {
+            _rabbitMqAccessForbiddenLogAction(logger, ex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqConnectFailed(this ILogger logger, int retryCount)
+        {
+            _rabbitMqConnectFailedLogAction(logger, retryCount, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqDisconnectFailed(this ILogger logger, Exception ex)
+        {
+            _rabbitMqDisconnectFailedLogAction(logger, ex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqConnectionBlocked(this ILogger logger, ConnectionBlockedEventArgs ea)
+        {
+            _rabbitMqConnectionBlockedLogAction(logger, ea.Reason, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqConnectionEstablished(this ILogger logger)
+        {
+            _rabbitMqConnectionEstablishedLogAction(logger, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqConnectionClosed(this ILogger logger, ShutdownEventArgs ea)
+        {
+            _rabbitMqConnectionClosedLogAction(logger, ea.ReplyText, null);
+        }
+
+        #endregion Методы (public)
     }
 }

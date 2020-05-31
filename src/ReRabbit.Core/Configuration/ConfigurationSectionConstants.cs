@@ -11,9 +11,14 @@ namespace ReRabbit.Core.Configuration
         public const string ROOT = "RabbitMq";
 
         /// <summary>
-        /// Наименование секции с настройками подключения.
+        /// Наименование секции с настройками подключения подписчиков.
         /// </summary>
-        public const string CONNECTIONS = "Connections";
+        public const string SUBSCRIBER_CONNECTIONS = "SubscriberConnections";
+
+        /// <summary>
+        /// Наименование секции с настройками подключения издателей.
+        /// </summary>
+        public const string PUBLISHER_CONNECTIONS = "PublisherConnections";
 
         /// <summary>
         /// Наименование секции с настройками виртуальных хостов.

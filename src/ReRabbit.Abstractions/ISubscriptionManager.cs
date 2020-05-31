@@ -13,104 +13,104 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        Task BindAsync<TEvent>(QueueSetting queueSetting)
-            where TEvent : class, IMessage;
+        Task BindAsync<TMessage>(QueueSetting queueSetting)
+            where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        Task BindAsync<TEvent>(string configurationSectionName)
-            where TEvent : class, IMessage;
+        Task BindAsync<TMessage>(string configurationSectionName)
+            where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        Task BindAsync<TEvent>(
+        Task BindAsync<TMessage>(
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        Task RegisterAsync<TEvent>(
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+        Task RegisterAsync<TMessage>(
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        Task RegisterAsync<TEvent>(
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+        Task RegisterAsync<TMessage>(
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             string configurationSectionName
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        Task RegisterAsync<TEvent>(
-            AcknowledgableMessageHandler<TEvent> eventHandler,
+        Task RegisterAsync<TMessage>(
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             QueueSetting queueSetting
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик сообщений.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        Task RegisterAsync<TEvent>(
-            MessageHandler<TEvent> eventHandler,
+        Task RegisterAsync<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             string configurationSectionName
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик сообщений.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
-        Task RegisterAsync<TEvent>(
-            MessageHandler<TEvent> eventHandler,
+        Task RegisterAsync<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
 
         /// <summary>
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
+        /// <param name="eventHandler">Обработчик сообщений.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
-        Task RegisterAsync<TEvent>(
-            MessageHandler<TEvent> eventHandler,
+        Task RegisterAsync<TMessage>(
+            MessageHandler<TMessage> eventHandler,
             QueueSetting queueSetting
-        ) where TEvent : class, IMessage;
+        ) where TMessage : class, IMessage;
     }
 }

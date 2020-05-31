@@ -14,9 +14,12 @@
         "Connections"
       ],
       "properties": {
-        "Connections": {
+        "SubscriberConnections": {
           "$ref": "./connection.schema.json"
-        }
+        },
+        "PublisherConnections": {
+          "$ref": "./connection.schema.json"
+        } 
       }
     }
   }

@@ -18,7 +18,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Данные события.
         /// </summary>
-        public MqEventData EventData { get; }
+        public MqMessageData MessageData { get; }
 
         /// <summary>
         /// Данные доставки из шины.
@@ -32,10 +32,43 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageContext{TMessage}"/>.
         /// </summary>
-        public MessageContext(TMessage message, in MqEventData eventData, BasicDeliverEventArgs eventArgs)
+        public MessageContext(TMessage message, in MqMessageData messageData, BasicDeliverEventArgs eventArgs)
         {
             Message = message;
-            EventData = eventData;
+            MessageData = messageData;
+            EventArgs = eventArgs;
+        }
+
+        #endregion Конструктор
+    }
+
+    /// <summary>
+    /// Контекст сообщения для обработки.
+    /// </summary>
+    public readonly struct MessageContext
+    {
+        #region Свойства
+
+        /// <summary>
+        /// Данные события.
+        /// </summary>
+        public MqMessageData MessageData { get; }
+
+        /// <summary>
+        /// Данные доставки из шины.
+        /// </summary>
+        public BasicDeliverEventArgs EventArgs { get; }
+
+        #endregion Свойства
+
+        #region Конструктор
+
+        /// <summary>
+        /// Создает новый экземпляр класса <see cref="MessageContext"/>.
+        /// </summary>
+        public MessageContext(in MqMessageData messageData, BasicDeliverEventArgs eventArgs)
+        {
+            MessageData = messageData;
             EventArgs = eventArgs;
         }
 

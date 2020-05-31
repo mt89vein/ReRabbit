@@ -79,7 +79,7 @@
         ]
       },
       "UseDeadLetter": {
-        "$id": "#/properties/Q1Subscriber/properties/UseDeadLetter",
+        "$id": "#/properties/UseDeadLetter",
         "type": "boolean",
         "title": "If set to true, a queue will be created to store messages that cannot be processed due to a handler error",
         "default": false,
@@ -302,7 +302,7 @@
           }
         ],
         "items": {
-          "$id": "#/properties/Q1Subscriber/properties/Bindings/items",
+          "$id": "#/properties/Bindings/items",
           "type": "object",
           "title": "The Items Schema",
           "oneOf": [

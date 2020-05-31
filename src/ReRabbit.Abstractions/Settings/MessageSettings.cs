@@ -16,11 +16,6 @@ namespace ReRabbit.Abstractions.Settings
         public string Name { get; }
 
         /// <summary>
-        /// Тип сообщения.
-        /// </summary>
-        public Type MessageType { get; set; }
-
-        /// <summary>
         /// Версия сообщения.
         /// </summary>
         public string Version { get; set; } = "v1";

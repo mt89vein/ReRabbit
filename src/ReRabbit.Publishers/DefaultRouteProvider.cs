@@ -42,20 +42,19 @@ namespace ReRabbit.Publishers
 
         #region Методы (public)
 
-        // TODO: IEnumerable<RouteInfo> ??
-
         /// <summary>
         /// Получить информацию о роутах для сообщения.
         /// </summary>
         /// <param name="message">Сообщение.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роуте.</returns>
-        public RouteInfo GetFor(IMessage message, TimeSpan? delay = null)
+        public RouteInfo GetFor<TRabbitMessage>(IMessage message, TimeSpan? delay = null)
+            where TRabbitMessage : class, IRabbitMessage
         {
             var messageType = message.GetType();
             var messageSettings = _messagesSettingsCache.GetOrAdd(
-                messageType.Name,
-                eventName => _configurationManager.GetMessageSettings(eventName)
+                typeof(TRabbitMessage).Name,
+                messageName => _configurationManager.GetMessageSettings(messageName)
             );
 
             var route = messageSettings.RouteType == RouteType.Constant

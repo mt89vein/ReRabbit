@@ -1,12 +1,15 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Extensions;
+using SampleWebApplication.Mappers;
 using SampleWebApplication.Middlewares;
 using SampleWebApplication.RabbitMq.TestEvent;
 using SampleWebApplication.RetryDelayComputers;
+using System;
 
 namespace SampleWebApplication
 {
@@ -23,9 +26,9 @@ namespace SampleWebApplication
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<TestMiddleware>();
-            services.AddSingleton<TestMiddleware2>();
-            services.AddSingleton<GlobalTestMiddleware>();
+            services.AddControllers();
+
+            services.AddSingleton<DefaultMessageMapper>();
             services.AddDistributedRedisCache(options =>
             {
                 options.Configuration = _configuration.GetConnectionString("RedisConnection");
@@ -36,7 +39,7 @@ namespace SampleWebApplication
                 x =>
                 {
                     x.SubscriberMiddlewares
-                        //.AddGlobal<UniqueMessagesSubscriberPlugin>()
+                        //.AddGlobal<UniqueMessagesSubscriberMiddleware>()
                         .AddFor<TestMessage>()
                             .Add<TestMiddleware>()
                             .Add<TestMiddleware2>()
@@ -45,9 +48,10 @@ namespace SampleWebApplication
                         .AddFor<Metrics>()
                             .Add<TestMiddleware2>();
                     x.RetryDelayComputerRegistrator.Add<CustomRoundRobinRetryDelayComputer>("CustomRoundRobin");
+                    x.Factories.MessageMapper = sp => sp.GetRequiredService<DefaultMessageMapper>();
                 });
 
-            services.AddControllers();
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

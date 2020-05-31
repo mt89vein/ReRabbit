@@ -106,12 +106,12 @@ namespace ReRabbit.Subscribers
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="messageHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
         public Task RegisterAsync<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             string configurationSectionName,
             string connectionName,
             string virtualHost
@@ -119,7 +119,7 @@ namespace ReRabbit.Subscribers
             where TMessage : class, IMessage
         {
             return RegisterAsync(
-                eventHandler,
+                messageHandler,
                 _configurationManager.GetQueueSettings(
                     configurationSectionName,
                     connectionName,
@@ -132,16 +132,16 @@ namespace ReRabbit.Subscribers
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="messageHandler">Обработчик событий.</param>
         /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
         public Task RegisterAsync<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             string configurationSectionName
         )
             where TMessage : class, IMessage
         {
             return RegisterAsync(
-                eventHandler,
+                messageHandler,
                 _configurationManager.GetQueueSettings(configurationSectionName)
             );
         }
@@ -150,10 +150,10 @@ namespace ReRabbit.Subscribers
         /// Выполнить регистрацию подписчика на сообщения.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
-        /// <param name="eventHandler">Обработчик событий.</param>
+        /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="queueSetting">Настройки подписчика.</param>
         public async Task RegisterAsync<TMessage>(
-            AcknowledgableMessageHandler<TMessage> eventHandler,
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             QueueSetting queueSetting
         )
             where TMessage : class, IMessage
@@ -161,7 +161,7 @@ namespace ReRabbit.Subscribers
             var subscriber = _subscriberFactory.GetSubscriber<TMessage>();
             for (var i = 0; i < queueSetting.ScalingSettings.ChannelsCount; i++)
             {
-                var channel = await subscriber.SubscribeAsync(eventHandler, queueSetting);
+                var channel = await subscriber.SubscribeAsync(messageHandler, queueSetting);
 
                 _channels.Add(channel);
             }

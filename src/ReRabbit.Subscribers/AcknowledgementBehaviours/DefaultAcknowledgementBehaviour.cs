@@ -6,10 +6,11 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core.Configuration;
-using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
+using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
@@ -81,16 +82,16 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         public Task HandleAsync<TMessage>(
             Acknowledgement acknowledgement,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
         ) where TMessage : class, IMessage
         {
             return acknowledgement switch
             {
-                Ack ack => HandleAck(ack, channel, messageContext, settings),
-                Reject reject => HandleRejectAsync(reject, channel, messageContext, settings),
-                Nack nack => HandleNackAsync(nack, channel, messageContext, settings),
-                Retry retry => HandleRetryAsync(retry, channel, messageContext, settings),
+                Ack _ => HandleAck(channel, messageContext, settings),
+                Reject reject => HandleRejectAsync<TMessage>(reject, channel, messageContext, settings),
+                Nack nack => HandleNackAsync<TMessage>(nack, channel, messageContext, settings),
+                Retry retry => HandleRetryAsync<TMessage>(retry, channel, messageContext, settings),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(acknowledgement),
                     typeof(Acknowledgement),
@@ -113,15 +114,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task HandleRetryAsync<TMessage>(
             Retry retry,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage : class, IMessage
+        )
         {
             try
             { }
             finally
             {
-                if (await TryRetryAsync(channel, messageContext, settings, retry.Span))
+                if (await TryRetryAsync<TMessage>(channel, messageContext, settings, retry.Span))
                 {
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
@@ -135,16 +136,14 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <summary>
         /// Оповещение брокера об успешной обработке.
         /// </summary>
-        /// <param name="ack">Дополнительные данные об успешной обработке.</param>
         /// <param name="channel">Канал.</param>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
-        private static Task HandleAck<TMessage>(
-            Ack ack,
+        private static Task HandleAck(
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage: class, IMessage
+        )
         {
             if (!settings.AutoAck)
             {
@@ -164,15 +163,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task HandleNackAsync<TMessage>(
             Nack nack,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage : class, IMessage
+        )
         {
             try
             { }
             finally
             {
-                if (await TryRetryAsync(channel, messageContext, settings))
+                if (await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -196,9 +195,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task HandleRejectAsync<TMessage>(
             Reject reject,
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings
-        ) where TMessage : class, IMessage
+        )
         {
             try
             { }
@@ -206,7 +205,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             {
                 if (reject is EmptyBodyReject || reject is FormatReject)
                 {
-                    _logger.LogWarning("Сообщение перемещено в общую ошибочную очередь. {Reason}", reject.Reason);
+                    _logger.RabbitMessageMovedToCommonErrorQueue(reject.Reason);
 
                     if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
                     {
@@ -234,7 +233,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
-                else if (await TryRetryAsync(channel, messageContext, settings))
+                else if (await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -258,10 +257,10 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <returns>True, если удалось успешно переотправить.</returns>
         private async Task<bool> TryRetryAsync<TMessage>(
             IModel channel,
-            MessageContext<TMessage> messageContext,
+            MessageContext messageContext,
             QueueSetting settings,
             TimeSpan? retryDelay = null
-        ) where TMessage : class, IMessage
+        )
         {
             // если явно не указали время ретрая, то смотрим настройки и т.д.
             if (retryDelay == null)
@@ -275,10 +274,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 {
                     if (settings.RetrySettings.LogOnFailLastRetry)
                     {
-                        _logger.LogError(
-                            "Сообщение не было обработано за {RetryCount} попыток.",
-                            settings.RetrySettings.RetryCount
-                        );
+                        _logger.RabbitMessageHandleFailed(settings.RetrySettings.RetryCount);
                     }
 
                     return false;
@@ -321,6 +317,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             }
 
             messageContext.EventArgs.BasicProperties.IncrementRetryCount(1);
+            messageContext.EventArgs.BasicProperties.EnsureOriginalExchange(messageContext.EventArgs);
 
             if (channel is IAsyncChannel asyncChannel)
             {
@@ -344,15 +341,76 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
             if (settings.RetrySettings.LogOnRetry)
             {
-                _logger.LogInformation(
-                    "Сообщение отправлено на повтор. Время задержки: {Delay:000} ms.",
-                    messageContext.EventArgs.BasicProperties.Expiration ?? "0"
-                );
+                _logger.RabbitMessageRetried(messageContext.EventArgs.BasicProperties.Expiration ?? "0");
             }
 
             return true;
         }
 
         #endregion Методы (private)
+    }
+
+    /// <summary>
+    /// Методы расширения для <see cref="ILogger"/>.
+    /// </summary>
+    internal static class AcknowledgementBehaviourLoggingExtensions
+    {
+        #region Константы
+
+        private const int RABBITMQ_MESSAGE_RETRIED = 1;
+        private const int RABBITMQ_MESSAGE_HANDLE_FAILED = 2;
+        private const int RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE = 3;
+
+        #endregion Константы
+
+        #region LogActions
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqMessageRetriedLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Information,
+                    new EventId(RABBITMQ_MESSAGE_RETRIED, nameof(RABBITMQ_MESSAGE_RETRIED)),
+                    "Сообщение отправлено на повтор. Время задержки: {Delay:000} ms."
+                );
+
+        private static readonly Action<ILogger, int, Exception>
+            _rabbitMqMessageHandleFailedLogAction =
+                LoggerMessage.Define<int>(
+                    LogLevel.Error,
+                    new EventId(RABBITMQ_MESSAGE_HANDLE_FAILED, nameof(RABBITMQ_MESSAGE_HANDLE_FAILED)),
+                    "Сообщение не было обработано за {RetryCount} попыток."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqMessageMovedToCommonErrorQueueLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE, nameof(RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE)),
+                    "Сообщение перемещено в общую ошибочную очередь. {Reason}."
+                );
+
+        #endregion LogActions
+
+        #region Методы (public)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageRetried(this ILogger logger, string expiration)
+        {
+            _rabbitMqMessageRetriedLogAction(logger, expiration, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageHandleFailed(this ILogger logger, int retryCount)
+        {
+            _rabbitMqMessageHandleFailedLogAction(logger, retryCount, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageMovedToCommonErrorQueue(this ILogger logger, string reason)
+        {
+            _rabbitMqMessageMovedToCommonErrorQueueLogAction(logger, reason, null);
+        }
+
+        #endregion Методы (public)
     }
 }

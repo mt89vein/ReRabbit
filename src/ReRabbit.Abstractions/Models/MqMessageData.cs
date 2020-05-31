@@ -3,9 +3,9 @@ using System;
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
-    /// Данные о сообщении (событии) полученным обработчиком.
+    /// Данные о сообщении (событии) полученный обработчиком.
     /// </summary>
-    public readonly struct MqEventData
+    public readonly struct MqMessageData
     {
         #region Свойства
 
@@ -39,9 +39,9 @@ namespace ReRabbit.Abstractions.Models
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр структуры <see cref="MqEventData"/>.
+        /// Создает экземпляр структуры <see cref="MqMessageData"/>.
         /// </summary>
-        public MqEventData(
+        public MqMessageData(
             MqMessage mqMessage,
             bool isRedelivered,
             Guid? traceId,

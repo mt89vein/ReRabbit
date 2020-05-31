@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Extensions
 {
-    public class RabbitMqConsumersStarter : BackgroundService
+    public class RabbitMqSubscribersStarter : BackgroundService
     {
         #region Поля
 
@@ -21,9 +21,9 @@ namespace ReRabbit.Extensions
         #region Конструктор
 
         /// <summary>
-        /// Создает новый экземпляр класса <see cref="RabbitMqConsumersStarter"/>.
+        /// Создает новый экземпляр класса <see cref="RabbitMqSubscribersStarter"/>.
         /// </summary>
-        public RabbitMqConsumersStarter(RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator)
+        public RabbitMqSubscribersStarter(RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator)
         {
             _rabbitMqHandlerAutoRegistrator = rabbitMqHandlerAutoRegistrator;
         }

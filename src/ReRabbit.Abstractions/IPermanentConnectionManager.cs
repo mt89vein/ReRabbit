@@ -5,8 +5,9 @@ namespace ReRabbit.Abstractions
 {
     public enum ConnectionPurposeType : byte
     {
-        Publisher = 0,
-        Consumer = 1
+        Unknown = 0,
+        Publisher = 1,
+        Subscriber = 2
     }
 
     /// <summary>

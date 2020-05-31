@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
@@ -17,6 +19,11 @@ namespace ReRabbit.Subscribers.Middlewares
         #region Поля
 
         /// <summary>
+        /// Конфигуратор сервисов.
+        /// </summary>
+        private readonly IServiceCollection _services;
+
+        /// <summary>
         /// Словарь реестров мидлварок сообщений.
         /// </summary>
         private readonly Dictionary<Type, IMessageMiddlewareRegistry> _middlewareRegistries =
@@ -29,16 +36,36 @@ namespace ReRabbit.Subscribers.Middlewares
 
         #endregion Поля
 
+        #region Конструктор
+
+        /// <summary>
+        /// Создает новый экземпляр класса <see cref="MiddlewareRegistry"/>.
+        /// </summary>
+        public MiddlewareRegistry(IServiceCollection services)
+        {
+            _services = services;
+        }
+
+        #endregion Конструктор
+
         #region Методы (public)
 
         /// <summary>
         /// Зарегистрировать глобальный middleware.
         /// </summary>
         /// <typeparam name="TMiddleware">Тип middleware.</typeparam>
+        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр middlewares.</returns>
-        public IMiddlewareRegistry AddGlobal<TMiddleware>()
+        public IMiddlewareRegistry AddGlobal<TMiddleware>(ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton)
+            where TMiddleware : MiddlewareBase
         {
             _globalMiddlewares.Add(typeof(TMiddleware));
+            _services.TryAdd(ServiceDescriptor.Describe(
+                    typeof(TMiddleware),
+                    typeof(TMiddleware),
+                    middlewareLifetime
+                )
+            );
 
             return this;
         }
@@ -59,7 +86,7 @@ namespace ReRabbit.Subscribers.Middlewares
             var messageType = typeof(TMessage);
             if (!_middlewareRegistries.TryGetValue(messageType, out var messageMiddleware))
             {
-                messageMiddleware = new MessageMiddlewareRegistry(this, messageType, withCurrentGlobals
+                messageMiddleware = new MessageMiddlewareRegistry(_services, this, messageType, withCurrentGlobals
                     ? _globalMiddlewares
                     : Enumerable.Empty<Type>()
                 );

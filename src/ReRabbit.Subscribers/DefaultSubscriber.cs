@@ -6,11 +6,11 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core;
-using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -93,14 +93,14 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Подписаться на сообщения.
         /// </summary>
-        /// <param name="eventHandler">Обработчик сообщений.</param>
+        /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором работает подписчик.</returns>
-        /// <typeparam name="TEvent">Тип сообщения.</typeparam>
-        public async Task<IModel> SubscribeAsync<TEvent>(AcknowledgableMessageHandler<TEvent> eventHandler, QueueSetting settings)
-            where TEvent : class, IMessage
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        public async Task<IModel> SubscribeAsync<TMessage>(AcknowledgableMessageHandler<TMessage> messageHandler, QueueSetting settings)
+            where TMessage : class, IMessage
         {
-            var channel = await BindAsync<TEvent>(settings);
+            var channel = await BindAsync<TMessage>(settings);
 
             channel.BasicQos(0, settings.ScalingSettings.MessagesPerConsumer, false);
 
@@ -110,7 +110,7 @@ namespace ReRabbit.Subscribers
                 channel.BasicQos(0, settings.ScalingSettings.MessagesPerChannel, true);
             }
 
-            var queueName = _namingConvention.QueueNamingConvention(typeof(TEvent), settings);
+            var queueName = _namingConvention.QueueNamingConvention(typeof(TMessage), settings);
 
             for (var i = 0; i < settings.ScalingSettings.ConsumersPerChannel; i++)
             {
@@ -118,7 +118,7 @@ namespace ReRabbit.Subscribers
                     queue: queueName,
                     autoAck: settings.AutoAck,
                     exclusive: settings.Exclusive,
-                    consumer: GetBasicConsumer(channel, eventHandler, settings, queueName),
+                    consumer: GetBasicConsumer(channel, messageHandler, settings, queueName),
                     consumerTag: _namingConvention.ConsumerTagNamingConvention(settings, channel.ChannelNumber, i)
                 );
             }
@@ -127,9 +127,9 @@ namespace ReRabbit.Subscribers
             {
                 channel?.Dispose();
 
-                _logger.LogWarning(ea.Exception, "Потребитель сообщений из очереди инициализирован повторно.");
+                _logger.RabbitHandlerRestarted(ea.Exception);
 
-                channel = AsyncHelper.RunSync(() => SubscribeAsync(eventHandler, settings));
+                channel = AsyncHelper.RunSync(() => SubscribeAsync(messageHandler, settings));
             };
 
             channel.ModelShutdown += (sender, ea) =>
@@ -138,9 +138,9 @@ namespace ReRabbit.Subscribers
                 {
                     channel?.Dispose();
 
-                    _logger.LogWarning("Соединение сброшено {Reason}. Потребитель сообщений из очереди инициализирован повторно.", ea.ReplyText);
+                    _logger.RabbitHandlerRestartedAfterReconnect(ea);
 
-                    channel = AsyncHelper.RunSync(() => SubscribeAsync(eventHandler, settings));
+                    channel = AsyncHelper.RunSync(() => SubscribeAsync(messageHandler, settings));
                 }
             };
 
@@ -156,7 +156,7 @@ namespace ReRabbit.Subscribers
             where TEvent : class, IMessage
         {
             var channel = await _permanentConnectionManager
-                .GetConnection(settings.ConnectionSettings, ConnectionPurposeType.Consumer)
+                .GetConnection(settings.ConnectionSettings, ConnectionPurposeType.Subscriber)
                 .CreateModelAsync();
 
             channel = new PublishConfirmableChannel(
@@ -193,19 +193,20 @@ namespace ReRabbit.Subscribers
         /// Обработать сообщение из шины.
         /// </summary>
         /// <param name="ea">Информация о сообщении.</param>
-        /// <param name="eventHandler">Обработчик.</param>
+        /// <param name="messageHandler">Обработчик.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="queueName">Название очереди.</param>
         /// <returns>Результат обработки.</returns>
-        private async Task<(Acknowledgement, MessageContext<TMessage>)> HandleMessageAsync<TMessage>(
+        private async Task<(Acknowledgement, MessageContext)> HandleMessageAsync<TMessage>(
             BasicDeliverEventArgs ea,
-            AcknowledgableMessageHandler<TMessage> eventHandler,
-            /* IConverter<TMessage> converter */
+            AcknowledgableMessageHandler<TMessage> messageHandler,
             QueueSetting settings,
             string queueName
         )
             where TMessage : class, IMessage
         {
+            ea.EnsureOriginalExchange();
+
             var traceId = default(Guid);
 
             var loggingScope = new Dictionary<string, object>
@@ -213,15 +214,18 @@ namespace ReRabbit.Subscribers
                 ["Exchange"] = ea.Exchange,
                 ["RoutingKey"] = ea.RoutingKey,
                 ["QueueName"] = queueName,
-                ["EventName"] = typeof(TMessage).Name,
+                ["MessageName"] = typeof(TMessage).Name,
                 ["Arguments"] = ea.BasicProperties.Headers,
                 ["MessageId"] = ea.BasicProperties.MessageId,
                 ["TraceId"] = ea.BasicProperties.CorrelationId
             };
 
-            if (ea.BasicProperties.Headers["publishTag"] is byte[] bytes && ulong.TryParse(Encoding.UTF8.GetString(bytes), out var tag))
+            if (_logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogInformation("Handled with tag {PublishTag}", tag);
+                if (ea.BasicProperties.Headers["publishTag"] is byte[] bytes && ulong.TryParse(Encoding.UTF8.GetString(bytes), out var tag))
+                {
+                    _logger.LogTrace("Handled with tag {PublishTag}", tag);
+                }
             }
 
             if (settings.TracingSettings.IsEnabled)
@@ -231,7 +235,7 @@ namespace ReRabbit.Subscribers
 
             var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(settings.RetrySettings, loggingScope);
 
-            MessageContext<TMessage> messageContext = default;
+            MessageContext messageContext = default;
             using (_logger.BeginScope(loggingScope))
             {
                 try
@@ -239,7 +243,7 @@ namespace ReRabbit.Subscribers
                     var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
                     var payload = mqMessage?.Payload.ToString();
 
-                    var mqEventData = new MqEventData(
+                    var mqEventData = new MqMessageData(
                         mqMessage,
                         ea.Redelivered || retryNumber != 0,
                         traceId,
@@ -249,41 +253,15 @@ namespace ReRabbit.Subscribers
 
                     if (string.IsNullOrEmpty(payload))
                     {
-                        return (EmptyBodyReject.EmptyBody, new MessageContext<TMessage>(null, mqEventData,  ea));
+                        return (EmptyBodyReject.EmptyBody, new MessageContext(mqEventData,  ea));
                     }
 
-                    // тут конвертация из одного формата в другой, перед тем как передать клиенту.
-                    // var message = converter.Convert(payload);
-
-                    var message = _serializer.Deserialize<TMessage>(payload);
-
-                    if (ea.BasicProperties.IsTimestampPresent())
-                    {
-                        message.MessageCreatedAt =
-                            DateTimeOffset.FromUnixTimeSeconds(ea.BasicProperties.Timestamp.UnixTime)
-                                          .DateTime;
-                    }
-                    else if (message.MessageCreatedAt == default)
-                    {
-                        message.MessageCreatedAt = DateTime.UtcNow;
-                    }
-
-                    if (ea.BasicProperties.IsMessageIdPresent() && Guid.TryParse(ea.BasicProperties.MessageId, out var gMessageId))
-                    {
-                        message.MessageId = gMessageId;
-                    }
-                    else if (message.MessageId == default)
-                    {
-                        message.MessageId = Guid.NewGuid();
-                    }
-
-                    messageContext = new MessageContext<TMessage>(
-                        message,
+                    messageContext = new MessageContext(
                         mqEventData,
                         ea
                     );
 
-                    var acknowledgement = await eventHandler(messageContext);
+                    var acknowledgement = await messageHandler(messageContext);
 
                     return (acknowledgement, messageContext);
                 }
@@ -315,7 +293,6 @@ namespace ReRabbit.Subscribers
             where TMessage : class, IMessage
         {
             var acknowledgementBehaviour = _acknowledgementBehaviourFactory.GetBehaviour<TMessage>(settings);
-            // TODO: var converter = _converterFactory.GetConverter<TMessage>();
 
             if (settings.ConnectionSettings.UseAsyncConsumer)
             {
@@ -324,7 +301,7 @@ namespace ReRabbit.Subscribers
                 {
                     var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, queueName);
 
-                    await acknowledgementBehaviour.HandleAsync(acknowledgement, channel, messageContext, settings);
+                    await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
                 };
 
                 return consumer;
@@ -339,7 +316,7 @@ namespace ReRabbit.Subscribers
                     {
                         var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, queueName);
 
-                        await acknowledgementBehaviour.HandleAsync(acknowledgement, channel, messageContext, settings);
+                        await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
                     });
 
                 return consumer;
@@ -347,5 +324,57 @@ namespace ReRabbit.Subscribers
         }
 
         #endregion Методы (private)
+    }
+
+    /// <summary>
+    /// Методы расширения для <see cref="ILogger"/>.
+    /// </summary>
+    internal static class SubscriberLoggingExtensions
+    {
+        #region Константы
+
+        private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED = 1;
+        private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT = 2;
+
+        #endregion Константы
+
+        #region LogActions
+
+        private static readonly Action<ILogger, Exception>
+            _rabbitMqHandlerRestartedLogAction =
+                LoggerMessage.Define(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_HANDLER_RESTARTED, nameof(RABBITMQ_MESSAGE_HANDLER_RESTARTED)),
+                    "Потребитель сообщений из очереди инициализирован повторно."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqHandlerRestartedAfterReconnectLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Warning,
+                    new EventId(
+                        RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT,
+                        nameof(RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT)
+                    ),
+                    "Соединение сброшено {Reason}. Потребитель сообщений из очереди инициализирован повторно."
+                );
+
+        #endregion LogActions
+
+        #region Методы (public)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitHandlerRestarted(this ILogger logger, Exception ex)
+        {
+            _rabbitMqHandlerRestartedLogAction(logger, ex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitHandlerRestartedAfterReconnect(this ILogger logger, ShutdownEventArgs ea)
+        {
+            _rabbitMqHandlerRestartedAfterReconnectLogAction(logger, ea.ReplyText, null);
+        }
+
+        #endregion Методы (public)
     }
 }

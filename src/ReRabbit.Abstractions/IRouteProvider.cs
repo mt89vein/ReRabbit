@@ -14,6 +14,7 @@ namespace ReRabbit.Abstractions
         /// <param name="message">Сообщение.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роутах.</returns>
-        RouteInfo GetFor(IMessage message, TimeSpan? delay = null);
+        RouteInfo GetFor<TRabbitMessage>(IMessage message, TimeSpan? delay = null)
+            where TRabbitMessage : class, IRabbitMessage;
     }
 }

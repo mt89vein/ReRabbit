@@ -96,7 +96,7 @@ namespace ReRabbit.Core.Configuration
         {
             return string.Join(":",
                 ConfigurationSectionConstants.ROOT,
-                ConfigurationSectionConstants.CONNECTIONS,
+                ConfigurationSectionConstants.SUBSCRIBER_CONNECTIONS,
                 connectionName,
                 ConfigurationSectionConstants.VIRTUAL_HOSTS,
                 virtualHostName,
@@ -120,7 +120,7 @@ namespace ReRabbit.Core.Configuration
         {
             return string.Join(":",
                 ConfigurationSectionConstants.ROOT,
-                ConfigurationSectionConstants.CONNECTIONS,
+                ConfigurationSectionConstants.PUBLISHER_CONNECTIONS,
                 connectionName,
                 ConfigurationSectionConstants.VIRTUAL_HOSTS,
                 virtualHostName,

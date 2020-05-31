@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -21,8 +22,9 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Добавить мидлварку в цепочку выполнения.
         /// </summary>
         /// <typeparam name="TMiddleware">Мидлварка.</typeparam>
+        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр мидлварок сообщения.</returns>
-        IMessageMiddlewareRegistry Add<TMiddleware>()
-            where TMiddleware : class, IMiddleware;
+        IMessageMiddlewareRegistry Add<TMiddleware>(ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton)
+            where TMiddleware : MiddlewareBase;
     }
 }

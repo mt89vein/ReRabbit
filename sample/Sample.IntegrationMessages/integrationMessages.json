@@ -1,0 +1,32 @@
+{
+  "RabbitMq": {
+    "PublisherConnections": {
+      "DefaultConnection": {
+        "VirtualHosts": {
+          "/": {
+            "Messages": {
+              "MyIntegrationRabbitMessage": {
+                "Version": "v1",
+                "Exchange": {
+                  "Name": "test-exchange",
+                  "Type": "direct",
+                  "Durable": true
+                },
+                "RouteType": "Constant",
+                "Route": "rk1"
+              },
+              "MetricsRabbitMessage": {
+                "Version": "v1",
+                "Exchange": {
+                  "Name": "metrics",
+                  "Type": "fanout",
+                  "Durable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

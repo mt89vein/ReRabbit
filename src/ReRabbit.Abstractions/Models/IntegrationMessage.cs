@@ -4,7 +4,7 @@ using System;
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
-    /// Интеграционное сообщения.
+    /// Интеграционное сообщение.
     /// </summary>
     public abstract class IntegrationMessage : IMessage
     {

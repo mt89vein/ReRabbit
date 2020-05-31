@@ -1,11 +1,11 @@
-using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using ReRabbit.Abstractions.Settings;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using ReRabbit.Abstractions.Settings;
 
-namespace ReRabbit.Core.Extensions
+namespace ReRabbit.Subscribers.Extensions
 {
     /// <summary>
     /// Методы расширения для работы с трейсингом.

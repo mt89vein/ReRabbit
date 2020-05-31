@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
+using ReRabbit.Abstractions.Settings;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Extensions;
 using ReRabbit.Subscribers.Middlewares;
@@ -26,6 +28,21 @@ namespace ReRabbit.Subscribers
         private readonly ISubscriptionManager _subscriptionManager;
 
         /// <summary>
+        /// Интерфейс менеджера конфигураций.
+        /// </summary>
+        private readonly IConfigurationManager _configurationManager;
+
+        /// <summary>
+        /// Сериализатор.
+        /// </summary>
+        private readonly ISerializer _serializer;
+
+        /// <summary>
+        /// Маппер из одного типа сообщения в другой.
+        /// </summary>
+        private readonly IMessageMapper _mapper;
+
+        /// <summary>
         /// Провайдер служб.
         /// </summary>
         private readonly IServiceProvider _serviceProvider;
@@ -41,6 +58,9 @@ namespace ReRabbit.Subscribers
         public RabbitMqHandlerAutoRegistrator(IServiceProvider serviceProvider)
         {
             _subscriptionManager = serviceProvider.GetRequiredService<ISubscriptionManager>();
+            _configurationManager = serviceProvider.GetRequiredService<IConfigurationManager>();
+            _serializer = serviceProvider.GetRequiredService<ISerializer>();
+            _mapper = serviceProvider.GetRequiredService<IMessageMapper>();
             _serviceProvider = serviceProvider;
         }
 
@@ -117,21 +137,23 @@ namespace ReRabbit.Subscribers
 
             foreach (var group in handlerGroups)
             {
-                if (group.Count() > 1)
+                if (group.Select(g => g.Handler).Distinct().Count() > 1)
                 {
                     throw new NotSupportedException(
-                        "Несколько обработчиков одного и того же типа сообщения в рамках одного сообщения не поддерживается."
+                        "Множественные обработчики одного события в памяти не поддерживаются. " +
+                        "Для этого используйте возможности брокера RabbitMq. " +
+                        $"Конфигурация '{group.Key}' используются у следующих обработчиков " +
+                        $"({string.Join(", ", group.Select(g => g.Handler.FullName))})"
                     );
                 }
-
-                var handlerInfo = group.Single();
 
                 var task = (Task)register.Invoke(
                     this,
                     new object[]
                     {
-                        handlerInfo.Handler,
-                        handlerInfo.Attribute
+                        group.Single().Handler, // класс обработчик
+                        group.Key, // название секции
+                        group.SelectMany(g => g.Attribute.MessageTypes).Distinct() // список сообщений, на которые подписывается.
                     }
                 );
 
@@ -144,11 +166,23 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <param name="messageHandlerType">Тип обработчика сообщения..</param>
-        /// <param name="subscriberConfiguration">Конфигурация обработчиков.</param>
-        private Task Register<TMessage>(Type messageHandlerType, SubscriberConfigurationAttribute subscriberConfiguration)
+        /// <param name="configurationSectionName">Секция конфигурации с настройками обработчика.</param>
+        /// <param name="subscribedMessageTypes">Типы сообщений, на которые подписывается обработчик.</param>
+        private Task Register<TMessage>(
+            Type messageHandlerType,
+            string configurationSectionName,
+            IEnumerable<Type> subscribedMessageTypes
+        )
             where TMessage : class, IMessage
         {
             var serviceProvider = _serviceProvider;
+
+            var subscribedMessageInstances = subscribedMessageTypes
+                .Select(serviceProvider.GetRequiredService)
+                .OfType<RabbitMessage>()
+                .ToList();
+
+            var queueSettings = GetQueueSetting(configurationSectionName, subscribedMessageInstances);
 
             return _subscriptionManager.RegisterAsync<TMessage>(ctx =>
             {
@@ -162,23 +196,25 @@ namespace ReRabbit.Subscribers
                     );
                 }
 
+                var mqMessage = GetMqMessageFrom<TMessage>(subscribedMessageInstances, ctx);
+
                 var middlewareExecutor = scope.ServiceProvider.GetRequiredService<IMiddlewareExecutor>();
 
                 return middlewareExecutor.ExecuteAsync(
                     ctx => handler.HandleAsync(
                         new MessageContext<TMessage>(
                             ctx.Message as TMessage,
-                            ctx.EventData,
+                            ctx.MessageData,
                             ctx.EventArgs
                         )
                     ),
                     new MessageContext<IMessage>(
-                        ctx.Message,
-                        ctx.EventData,
+                        mqMessage,
+                        ctx.MessageData,
                         ctx.EventArgs
                     )
                 );
-            }, subscriberConfiguration.ConfigurationSectionName);
+            }, queueSettings);
         }
 
         /// <summary>
@@ -195,6 +231,83 @@ namespace ReRabbit.Subscribers
                                               m.GetParameters()[0].ParameterType.GenericTypeArguments[0] == messageType)
                           ?.GetCustomAttributes(false)
                           .OfType<SubscriberConfigurationAttribute>();
+        }
+
+        /// <summary>
+        /// Получить настройки очереди с учетом подписок на сообщения.
+        /// </summary>
+        /// <param name="configurationSectionName">Секция конфигурации с настройками обработчика.</param>
+        /// <param name="rabbitMessages">Сообщения на которые оформляется подписка.</param>
+        /// <returns>Настройки потребителя.</returns>
+        private QueueSetting GetQueueSetting(string configurationSectionName, IEnumerable<RabbitMessage> rabbitMessages)
+        {
+            var queueSettings = _configurationManager.GetQueueSettings(configurationSectionName);
+
+            foreach (var rabbitMessage in rabbitMessages)
+            {
+                queueSettings.Bindings.Add(new ExchangeBinding
+                {
+                    Arguments = rabbitMessage.MessageSettings.Arguments,
+                    FromExchange = rabbitMessage.MessageSettings.Exchange.Name,
+                    RoutingKeys = new List<string> { rabbitMessage.MessageSettings.Route },
+                    ExchangeType = rabbitMessage.MessageSettings.Exchange.Type
+                });
+            }
+
+            return queueSettings;
+        }
+
+        private TMessage GetMqMessageFrom<TMessage>(IEnumerable<RabbitMessage> subscribedMessageInstances, MessageContext ctx)
+            where TMessage : class, IMessage
+        {
+            var rabbitMessage = subscribedMessageInstances.FirstOrDefault(
+                s => s.Is(
+                    ctx.EventArgs.Exchange,
+                    ctx.EventArgs.RoutingKey,
+                    ctx.EventArgs.BasicProperties.Headers
+                )
+            );
+
+            object mqMessage;
+            if (rabbitMessage != null)
+            {
+                var dtoType = rabbitMessage.GetDtoType();
+                mqMessage = _serializer.Deserialize(dtoType, ctx.MessageData.MqMessage.Payload.ToString());
+
+                if (dtoType != typeof(TMessage))
+                {
+                    mqMessage = _mapper.Map<TMessage>(mqMessage, ctx);
+                }
+            }
+            else
+            {
+                mqMessage = ctx.MessageData.MqMessage.Payload is JObject jObject
+                    ? jObject.ToObject<TMessage>()
+                    : _serializer.Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString());
+            }
+
+            var message = (TMessage)mqMessage;
+            if (ctx.EventArgs.BasicProperties.IsTimestampPresent())
+            {
+                message.MessageCreatedAt =
+                    DateTimeOffset.FromUnixTimeSeconds(ctx.EventArgs.BasicProperties.Timestamp.UnixTime)
+                        .DateTime;
+            }
+            else if (message.MessageCreatedAt == default)
+            {
+                message.MessageCreatedAt = DateTime.UtcNow;
+            }
+
+            if (ctx.EventArgs.BasicProperties.IsMessageIdPresent() && Guid.TryParse(ctx.EventArgs.BasicProperties.MessageId, out var gMessageId))
+            {
+                message.MessageId = gMessageId;
+            }
+            else if (message.MessageId == default)
+            {
+                message.MessageId = Guid.NewGuid();
+            }
+
+            return message;
         }
 
         #endregion Методы (private)
