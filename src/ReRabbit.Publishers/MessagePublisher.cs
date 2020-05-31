@@ -114,7 +114,7 @@ namespace ReRabbit.Publishers
             var body = _serializer.Serialize(mqMessage);
             var contentType = _serializer.ContentType;
 
-            var policy = Policy
+            var retryPolicy = Policy
                 .Handle<BrokerUnreachableException>()
                 .Or<SocketException>()
                 .Or<TimeoutException>()
@@ -135,7 +135,7 @@ namespace ReRabbit.Publishers
                         }
                     });
 
-            return policy.ExecuteAsync(async () =>
+            return retryPolicy.ExecuteAsync(async () =>
             {
                 await connection.TryConnectAsync();
                 var (channel, semaphoreSlim) = await GetChannelAsync(routeInfo.Name, connection);

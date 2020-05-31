@@ -6,11 +6,11 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Core;
-using ReRabbit.Core.Extensions;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -127,7 +127,7 @@ namespace ReRabbit.Subscribers
             {
                 channel?.Dispose();
 
-                _logger.LogWarning(ea.Exception, "Потребитель сообщений из очереди инициализирован повторно.");
+                _logger.RabbitHandlerRestarted(ea.Exception);
 
                 channel = AsyncHelper.RunSync(() => SubscribeAsync(messageHandler, settings));
             };
@@ -138,7 +138,7 @@ namespace ReRabbit.Subscribers
                 {
                     channel?.Dispose();
 
-                    _logger.LogWarning("Соединение сброшено {Reason}. Потребитель сообщений из очереди инициализирован повторно.", ea.ReplyText);
+                    _logger.RabbitHandlerRestartedAfterReconnect(ea);
 
                     channel = AsyncHelper.RunSync(() => SubscribeAsync(messageHandler, settings));
                 }
@@ -220,10 +220,12 @@ namespace ReRabbit.Subscribers
                 ["TraceId"] = ea.BasicProperties.CorrelationId
             };
 
-            // для дебага
-            if (ea.BasicProperties.Headers["publishTag"] is byte[] bytes && ulong.TryParse(Encoding.UTF8.GetString(bytes), out var tag))
+            if (_logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogInformation("Handled with tag {PublishTag}", tag);
+                if (ea.BasicProperties.Headers["publishTag"] is byte[] bytes && ulong.TryParse(Encoding.UTF8.GetString(bytes), out var tag))
+                {
+                    _logger.LogTrace("Handled with tag {PublishTag}", tag);
+                }
             }
 
             if (settings.TracingSettings.IsEnabled)
@@ -322,5 +324,57 @@ namespace ReRabbit.Subscribers
         }
 
         #endregion Методы (private)
+    }
+
+    /// <summary>
+    /// Методы расширения для <see cref="ILogger"/>.
+    /// </summary>
+    internal static class SubscriberLoggingExtensions
+    {
+        #region Константы
+
+        private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED = 1;
+        private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT = 2;
+
+        #endregion Константы
+
+        #region LogActions
+
+        private static readonly Action<ILogger, Exception>
+            _rabbitMqHandlerRestartedLogAction =
+                LoggerMessage.Define(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_HANDLER_RESTARTED, nameof(RABBITMQ_MESSAGE_HANDLER_RESTARTED)),
+                    "Потребитель сообщений из очереди инициализирован повторно."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqHandlerRestartedAfterReconnectLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Warning,
+                    new EventId(
+                        RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT,
+                        nameof(RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT)
+                    ),
+                    "Соединение сброшено {Reason}. Потребитель сообщений из очереди инициализирован повторно."
+                );
+
+        #endregion LogActions
+
+        #region Методы (public)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitHandlerRestarted(this ILogger logger, Exception ex)
+        {
+            _rabbitMqHandlerRestartedLogAction(logger, ex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitHandlerRestartedAfterReconnect(this ILogger logger, ShutdownEventArgs ea)
+        {
+            _rabbitMqHandlerRestartedAfterReconnectLogAction(logger, ea.ReplyText, null);
+        }
+
+        #endregion Методы (public)
     }
 }

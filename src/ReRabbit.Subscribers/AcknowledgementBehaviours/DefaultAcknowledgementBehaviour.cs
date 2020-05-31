@@ -10,6 +10,7 @@ using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
@@ -204,7 +205,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             {
                 if (reject is EmptyBodyReject || reject is FormatReject)
                 {
-                    _logger.LogWarning("Сообщение перемещено в общую ошибочную очередь. {Reason}", reject.Reason);
+                    _logger.RabbitMessageMovedToCommonErrorQueue(reject.Reason);
 
                     if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
                     {
@@ -273,10 +274,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 {
                     if (settings.RetrySettings.LogOnFailLastRetry)
                     {
-                        _logger.LogError(
-                            "Сообщение не было обработано за {RetryCount} попыток.",
-                            settings.RetrySettings.RetryCount
-                        );
+                        _logger.RabbitMessageHandleFailed(settings.RetrySettings.RetryCount);
                     }
 
                     return false;
@@ -343,15 +341,76 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
             if (settings.RetrySettings.LogOnRetry)
             {
-                _logger.LogInformation(
-                    "Сообщение отправлено на повтор. Время задержки: {Delay:000} ms.",
-                    messageContext.EventArgs.BasicProperties.Expiration ?? "0"
-                );
+                _logger.RabbitMessageRetried(messageContext.EventArgs.BasicProperties.Expiration ?? "0");
             }
 
             return true;
         }
 
         #endregion Методы (private)
+    }
+
+    /// <summary>
+    /// Методы расширения для <see cref="ILogger"/>.
+    /// </summary>
+    internal static class AcknowledgementBehaviourLoggingExtensions
+    {
+        #region Константы
+
+        private const int RABBITMQ_MESSAGE_RETRIED = 1;
+        private const int RABBITMQ_MESSAGE_HANDLE_FAILED = 2;
+        private const int RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE = 3;
+
+        #endregion Константы
+
+        #region LogActions
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqMessageRetriedLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Information,
+                    new EventId(RABBITMQ_MESSAGE_RETRIED, nameof(RABBITMQ_MESSAGE_RETRIED)),
+                    "Сообщение отправлено на повтор. Время задержки: {Delay:000} ms."
+                );
+
+        private static readonly Action<ILogger, int, Exception>
+            _rabbitMqMessageHandleFailedLogAction =
+                LoggerMessage.Define<int>(
+                    LogLevel.Error,
+                    new EventId(RABBITMQ_MESSAGE_HANDLE_FAILED, nameof(RABBITMQ_MESSAGE_HANDLE_FAILED)),
+                    "Сообщение не было обработано за {RetryCount} попыток."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqMessageMovedToCommonErrorQueueLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE, nameof(RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE)),
+                    "Сообщение перемещено в общую ошибочную очередь. {Reason}."
+                );
+
+        #endregion LogActions
+
+        #region Методы (public)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageRetried(this ILogger logger, string expiration)
+        {
+            _rabbitMqMessageRetriedLogAction(logger, expiration, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageHandleFailed(this ILogger logger, int retryCount)
+        {
+            _rabbitMqMessageHandleFailedLogAction(logger, retryCount, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageMovedToCommonErrorQueue(this ILogger logger, string reason)
+        {
+            _rabbitMqMessageMovedToCommonErrorQueueLogAction(logger, reason, null);
+        }
+
+        #endregion Методы (public)
     }
 }
