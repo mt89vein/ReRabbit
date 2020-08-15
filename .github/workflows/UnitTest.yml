@@ -19,6 +19,6 @@ jobs:
     - name: Install dependencies
       run: dotnet restore ReRabbit/ReRabbit.sln
     - name: Build
-      run: dotnet build ReRabbit/ReRabbit.sln --c Release --no-restore
+      run: dotnet build ReRabbit/ReRabbit.sln --configuration Release --no-restore
     - name: Test
       run: dotnet test ReRabbit/ReRabbit.sln --no-restore --verbosity normal
