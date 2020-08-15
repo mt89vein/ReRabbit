@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
+    <ProjectReference Include="..\..\ReRabbit\src\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,7 +13,7 @@ services:
       - "15673:15672"
       - "5673:5672"
     volumes:
-      - ./rabbitmq/config/rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
+      - ./Infrastructure/rabbitmq/config/rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
 
   redis.cache:
     ports:

@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
-    <ProjectReference Include="..\..\src\ReRabbit.Core\ReRabbit.Core.csproj" />
-    <ProjectReference Include="..\..\src\ReRabbit.Extensions\ReRabbit.Extensions.csproj" />
+    <ProjectReference Include="..\..\ReRabbit\src\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
+    <ProjectReference Include="..\..\ReRabbit\src\ReRabbit.Core\ReRabbit.Core.csproj" />
+    <ProjectReference Include="..\..\ReRabbit\src\ReRabbit.Extensions\ReRabbit.Extensions.csproj" />
     <ProjectReference Include="..\Sample.IntegrationMessages\Sample.IntegrationMessages.csproj" />
   </ItemGroup>
 

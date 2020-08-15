@@ -6,12 +6,12 @@ services:
     image: samplewebapplication
     build:
       context: .
-      dockerfile: ./sample/SampleWebApplication/Dockerfile
+      dockerfile: ./Sample/SampleWebApplication/Dockerfile
 
   rabbitmq:
     image: re-rabbitmq
     build:
-      context: ./rabbitmq/
+      context: ./Infrastructure/rabbitmq/
 
   redis.cache:
     image: redis
