@@ -19,8 +19,7 @@
     "type": "object",
     "title": "Queue subscriber configuration",
     "required": [
-      "QueueName",
-      "Bindings"
+      "QueueName"
     ],
     "properties": {
       "QueueName": {

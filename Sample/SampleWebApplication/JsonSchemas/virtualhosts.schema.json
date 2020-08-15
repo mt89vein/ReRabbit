@@ -32,12 +32,9 @@
     "additionalProperties": {
         "type": "object",
         "title": "Virtual host name",
-        "required": [
-            "Queues"
-        ],
         "properties": {
             "UserName": {
-                "$id": "#/properties/RabbitMq/properties/Connections/properties/DefaultConnection/properties/VirtualHosts/properties///properties/UserName",
+                "$id": "#/properties/RabbitMq/properties/Connections/properties/DefaultConnection/properties/VirtualHosts/properties/UserName",
                 "type": "string",
                 "title": "Username for auth in RabbitMq",
                 "default": "guest",
@@ -47,7 +44,7 @@
                 "pattern": "^(.*)$"
             },
             "Password": {
-                "$id": "#/properties/RabbitMq/properties/Connections/properties/DefaultConnection/properties/VirtualHosts/properties///properties/Password",
+                "$id": "#/properties/RabbitMq/properties/Connections/properties/DefaultConnection/properties/VirtualHosts/properties/Password",
                 "type": "string",
                 "title": "Password for auth in RabbitMq",
                 "default": "guest",

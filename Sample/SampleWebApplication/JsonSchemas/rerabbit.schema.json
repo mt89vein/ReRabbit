@@ -10,16 +10,13 @@
       "$id": "#rabbitMq",
       "type": "object",
       "title": "ReRabbitmq configuration.",
-      "required": [
-        "Connections"
-      ],
       "properties": {
         "SubscriberConnections": {
           "$ref": "./connection.schema.json"
         },
         "PublisherConnections": {
           "$ref": "./connection.schema.json"
-        } 
+        }
       }
     }
   }
