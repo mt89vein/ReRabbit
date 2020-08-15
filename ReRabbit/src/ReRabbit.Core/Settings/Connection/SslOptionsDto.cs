@@ -1,9 +1,11 @@
-namespace ReRabbit.Abstractions.Settings
+using ReRabbit.Abstractions.Settings.Connection;
+
+namespace ReRabbit.Core.Settings.Connection
 {
     /// <summary>
     /// Настройки TLS.
     /// </summary>
-    public class SslOptions
+    internal sealed class SslOptionsDto
     {
         /// <summary>
         /// Включен ли TLS.
@@ -20,5 +22,10 @@ namespace ReRabbit.Abstractions.Settings
         /// Путь к сертификату.
         /// </summary>
         public string CertificatePath { get; set; }
+
+        public SslOptions Create()
+        {
+            return new SslOptions(IsEnabled, ServerName, CertificatePath);
+        }
     }
 }

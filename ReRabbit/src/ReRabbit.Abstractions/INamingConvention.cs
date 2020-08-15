@@ -1,4 +1,4 @@
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 
 namespace ReRabbit.Abstractions
@@ -11,26 +11,26 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Конвенция именования очереди с ошибками при обработке.
         /// </summary>
-        Func<Type, QueueSetting, string> DeadLetterQueueNamingConvention { get; set; }
+        Func<Type, SubscriberSettings, string> DeadLetterQueueNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования обменника, через который будет попадать сообщения с ошибками при обработке.
         /// </summary>
-        Func<Type, QueueSetting, string> DeadLetterExchangeNamingConvention { get; set; }
+        Func<Type, SubscriberSettings, string> DeadLetterExchangeNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования очереди.
         /// </summary>
-        Func<Type, QueueSetting, string> QueueNamingConvention { get; set; }
+        Func<Type, SubscriberSettings, string> QueueNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования очереди с отложенной обработкой.
         /// </summary>
-        Func<Type, QueueSetting, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
+        Func<Type, SubscriberSettings, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования тэга обработчика.
         /// </summary>
-        Func<QueueSetting, int, int, string> ConsumerTagNamingConvention { get; set; }
+        Func<SubscriberSettings, int, int, string> ConsumerTagNamingConvention { get; set; }
     }
 }

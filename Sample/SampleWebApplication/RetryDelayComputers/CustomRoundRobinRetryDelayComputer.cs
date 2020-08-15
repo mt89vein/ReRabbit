@@ -1,5 +1,5 @@
 using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 
 namespace SampleWebApplication.RetryDelayComputers

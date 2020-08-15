@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -37,17 +37,17 @@ namespace ReRabbit.Subscribers.Extensions
         /// Установить информацию о повторной обработке в текущий скоуп логгера.
         /// </summary>
         /// <param name="properties">Метаданные сообщения.</param>
-        /// <param name="settings">Настройки повтора подписчика.</param>
+        /// <param name="subscriberSettings">Настройки повтора подписчика.</param>
         /// <param name="loggingScope">Скоуп.</param>
         /// <returns>Номер повторной попытки, признак попытки последней обработки.</returns>
         internal static (int retryNumber, bool isLastRetry) EnsureRetryInfo(
             this IBasicProperties properties,
-            RetrySettings settings,
+            RetrySettings subscriberSettings,
             Dictionary<string, object> loggingScope
         )
         {
             var retryNumber = properties.GetRetryNumber();
-            var isLastRetry = properties.IsLastRetry(settings);
+            var isLastRetry = properties.IsLastRetry(subscriberSettings);
 
             loggingScope["RetryNumber"] = retryNumber;
 
@@ -77,19 +77,19 @@ namespace ReRabbit.Subscribers.Extensions
         /// Получить, является ли текущая попытка обработки последней.
         /// </summary>
         /// <param name="properties">Метаданные сообщения.</param>
-        /// <param name="settings">Настройки повтора подписчика.</param>
+        /// <param name="retrySettings">Настройки повтора подписчика.</param>
         /// <returns>Признак попытки последней обработки.</returns>
         internal static bool IsLastRetry(
             this IBasicProperties properties,
-            RetrySettings settings
+            RetrySettings retrySettings
         )
         {
-            if (settings.DoInfinityRetries)
+            if (retrySettings.DoInfinityRetries)
             {
                 return false;
             }
 
-            return properties.GetRetryNumber() >= settings.RetryCount;
+            return properties.GetRetryNumber() >= retrySettings.RetryCount;
         }
 
         /// <summary>

@@ -1,3 +1,4 @@
+using ReRabbit.Abstractions.Settings.Connection;
 using System;
 using System.Collections.Generic;
 
@@ -13,7 +14,7 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Хосты.
         /// </summary>
-        public IEnumerable<string> HostNames { get; }
+        public IReadOnlyList<string> HostNames { get; }
 
         /// <summary>
         /// Порт.
@@ -134,7 +135,7 @@ namespace ReRabbit.Abstractions.Settings
         /// Создает экземпляр класса <see cref="MqConnectionSettings"/>.
         /// </summary>
         public MqConnectionSettings(
-            IEnumerable<string> hostNames,
+            IReadOnlyList<string> hostNames,
             int port,
             string userName,
             string password,

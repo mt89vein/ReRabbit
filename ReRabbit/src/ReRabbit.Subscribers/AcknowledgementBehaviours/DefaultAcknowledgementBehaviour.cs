@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
@@ -83,7 +83,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             Acknowledgement acknowledgement,
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings
+            SubscriberSettings settings
         ) where TMessage : class, IMessage
         {
             return acknowledgement switch
@@ -115,7 +115,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             Retry retry,
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings
+            SubscriberSettings settings
         )
         {
             try
@@ -142,7 +142,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private static Task HandleAck(
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings
+            SubscriberSettings settings
         )
         {
             if (!settings.AutoAck)
@@ -164,7 +164,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             Nack nack,
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings
+            SubscriberSettings settings
         )
         {
             try
@@ -196,7 +196,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             Reject reject,
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings
+            SubscriberSettings settings
         )
         {
             try
@@ -258,7 +258,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private async Task<bool> TryRetryAsync<TMessage>(
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings,
+            SubscriberSettings settings,
             TimeSpan? retryDelay = null
         )
         {

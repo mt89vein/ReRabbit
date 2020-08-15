@@ -1,4 +1,4 @@
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 
 namespace ReRabbit.Abstractions
 {
@@ -10,8 +10,8 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Получить поведение.
         /// </summary>
-        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
         /// <returns>Поведение оповещения брокера сообщений.</returns>
-        IAcknowledgementBehaviour GetBehaviour<TEventType>(QueueSetting queueSetting);
+        IAcknowledgementBehaviour GetBehaviour<TEventType>(SubscriberSettings subscriberSettings);
     }
 }

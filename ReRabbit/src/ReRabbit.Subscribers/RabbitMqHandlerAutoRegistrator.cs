@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Extensions;
 using ReRabbit.Subscribers.Middlewares;
@@ -182,7 +182,7 @@ namespace ReRabbit.Subscribers
                 .OfType<RabbitMessage>()
                 .ToList();
 
-            var queueSettings = GetQueueSetting(configurationSectionName, subscribedMessageInstances);
+            var subscriberSettings = GetSubscriberSettings(configurationSectionName, subscribedMessageInstances);
 
             return _subscriptionManager.RegisterAsync<TMessage>(ctx =>
             {
@@ -214,7 +214,7 @@ namespace ReRabbit.Subscribers
                         ctx.EventArgs
                     )
                 );
-            }, queueSettings);
+            }, subscriberSettings);
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace ReRabbit.Subscribers
         /// <param name="handler">Обработчик сообщения.</param>
         /// <param name="messageType">Тип сообщения.</param>
         /// <returns>Атрибут с наименованием секции конфигурации, в котором находится конфигурация подписчика.</returns>
-        private IEnumerable<SubscriberConfigurationAttribute> GetConfigurationAttributesFrom(Type handler, Type messageType)
+        private static IEnumerable<SubscriberConfigurationAttribute> GetConfigurationAttributesFrom(Type handler, Type messageType)
         {
             return handler?.GetMethods()
                           .FirstOrDefault(m =>
@@ -239,22 +239,23 @@ namespace ReRabbit.Subscribers
         /// <param name="configurationSectionName">Секция конфигурации с настройками обработчика.</param>
         /// <param name="rabbitMessages">Сообщения на которые оформляется подписка.</param>
         /// <returns>Настройки потребителя.</returns>
-        private QueueSetting GetQueueSetting(string configurationSectionName, IEnumerable<RabbitMessage> rabbitMessages)
+        private SubscriberSettings GetSubscriberSettings(string configurationSectionName, IEnumerable<RabbitMessage> rabbitMessages)
         {
-            var queueSettings = _configurationManager.GetQueueSettings(configurationSectionName);
+            var subscriberSettings = _configurationManager.GetSubscriberSettings(configurationSectionName);
 
             foreach (var rabbitMessage in rabbitMessages)
             {
-                queueSettings.Bindings.Add(new ExchangeBinding
-                {
-                    Arguments = rabbitMessage.MessageSettings.Arguments,
-                    FromExchange = rabbitMessage.MessageSettings.Exchange.Name,
-                    RoutingKeys = new List<string> { rabbitMessage.MessageSettings.Route },
-                    ExchangeType = rabbitMessage.MessageSettings.Exchange.Type
-                });
+                // TODO: добавить метод AddBinding...
+                //subscriberSettings.Bindings.Add(new ExchangeBinding
+                //{
+                //    Arguments = rabbitMessage.MessageSettingsDto.Arguments,
+                //    FromExchange = rabbitMessage.MessageSettingsDto.Exchange.Name,
+                //    RoutingKeys = new List<string> { rabbitMessage.MessageSettingsDto.Route },
+                //    ExchangeType = rabbitMessage.MessageSettingsDto.Exchange.Type
+                //});
             }
 
-            return queueSettings;
+            return subscriberSettings;
         }
 
         private TMessage GetMqMessageFrom<TMessage>(IEnumerable<RabbitMessage> subscribedMessageInstances, MessageContext ctx)

@@ -1,7 +1,7 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Enums;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core.Configuration;
 using System;
 using System.Collections.Generic;
@@ -45,7 +45,7 @@ namespace ReRabbit.Core
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        public void DeclareQueue(IModel channel, QueueSetting settings, Type messageType)
+        public void DeclareQueue(IModel channel, SubscriberSettings settings, Type messageType)
         {
             var queueName = _namingConvention.QueueNamingConvention(messageType, settings);
 
@@ -82,8 +82,9 @@ namespace ReRabbit.Core
 
                     if (string.Equals(binding.ExchangeType , ExchangeType.Fanout, StringComparison.OrdinalIgnoreCase))
                     {
-                        binding.RoutingKeys.Clear();
-                        binding.RoutingKeys.Add(string.Empty);
+                        // TODO: вместо чистки валидировать.
+                        //binding.RoutingKeys.Clear();
+                        //binding.RoutingKeys.Add(string.Empty);
                     }
 
                     foreach (var routingKey in binding.RoutingKeys)
@@ -117,7 +118,7 @@ namespace ReRabbit.Core
         /// <param name="messageType">Тип сообщения.</param>
         /// <param name="retryDelay">Период на которую откладывается обработка.</param>
         /// <returns>Название очереди с отложенной обработкой.</returns>
-        public string DeclareDelayedQueue(IModel channel, QueueSetting settings, Type messageType, TimeSpan retryDelay)
+        public string DeclareDelayedQueue(IModel channel, SubscriberSettings settings, Type messageType, TimeSpan retryDelay)
         {
             var queueName = _namingConvention.QueueNamingConvention(messageType, settings);
             var delayedQueueName = _namingConvention.DelayedQueueNamingConvention(messageType, settings, retryDelay);
@@ -195,7 +196,7 @@ namespace ReRabbit.Core
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        public void UseDeadLetteredQueue(IModel channel, QueueSetting settings, Type messageType)
+        public void UseDeadLetteredQueue(IModel channel, SubscriberSettings settings, Type messageType)
         {
             var queueName = _namingConvention.QueueNamingConvention(messageType, settings);
             var deadLetterQueueName = _namingConvention.DeadLetterQueueNamingConvention(messageType, settings);
@@ -231,7 +232,7 @@ namespace ReRabbit.Core
         /// </summary>
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
-        public void UseCommonUnroutedMessagesQueue(IModel channel, QueueSetting settings)
+        public void UseCommonUnroutedMessagesQueue(IModel channel, SubscriberSettings settings)
         {
             // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди.
 
@@ -268,7 +269,7 @@ namespace ReRabbit.Core
         /// </summary>
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
-        public void UseCommonErrorMessagesQueue(IModel channel, QueueSetting settings)
+        public void UseCommonErrorMessagesQueue(IModel channel, SubscriberSettings settings)
         {
             // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди.
 

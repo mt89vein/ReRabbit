@@ -1,5 +1,5 @@
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Threading.Tasks;
 
@@ -14,8 +14,8 @@ namespace ReRabbit.Abstractions
         /// Выполнить привязку.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
-        /// <param name="queueSetting">Настройки подписчика.</param>
-        Task BindAsync<TMessage>(QueueSetting queueSetting)
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
+        Task BindAsync<TMessage>(SubscriberSettings subscriberSettings)
             where TMessage : class, IMessage;
 
         /// <summary>
@@ -70,10 +70,10 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик сообщений.</param>
-        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
         Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            QueueSetting queueSetting
+            SubscriberSettings subscriberSettings
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -107,10 +107,10 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик сообщений.</param>
-        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
         Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            QueueSetting queueSetting
+            SubscriberSettings subscriberSettings
         ) where TMessage : class, IMessage;
     }
 }

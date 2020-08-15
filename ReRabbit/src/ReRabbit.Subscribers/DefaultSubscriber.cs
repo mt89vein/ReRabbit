@@ -4,7 +4,7 @@ using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
@@ -97,7 +97,7 @@ namespace ReRabbit.Subscribers
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором работает подписчик.</returns>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
-        public async Task<IModel> SubscribeAsync<TMessage>(AcknowledgableMessageHandler<TMessage> messageHandler, QueueSetting settings)
+        public async Task<IModel> SubscribeAsync<TMessage>(AcknowledgableMessageHandler<TMessage> messageHandler, SubscriberSettings settings)
             where TMessage : class, IMessage
         {
             var channel = await BindAsync<TMessage>(settings);
@@ -152,7 +152,7 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
-        public async Task<IModel> BindAsync<TEvent>(QueueSetting settings)
+        public async Task<IModel> BindAsync<TEvent>(SubscriberSettings settings)
             where TEvent : class, IMessage
         {
             var channel = await _permanentConnectionManager
@@ -200,7 +200,7 @@ namespace ReRabbit.Subscribers
         private async Task<(Acknowledgement, MessageContext)> HandleMessageAsync<TMessage>(
             BasicDeliverEventArgs ea,
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            QueueSetting settings,
+            SubscriberSettings settings,
             string queueName
         )
             where TMessage : class, IMessage
@@ -287,7 +287,7 @@ namespace ReRabbit.Subscribers
         private IBasicConsumer GetBasicConsumer<TMessage>(
             IModel channel,
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            QueueSetting settings,
+            SubscriberSettings settings,
             string queueName
         )
             where TMessage : class, IMessage

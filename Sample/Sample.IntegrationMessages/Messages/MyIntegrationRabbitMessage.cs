@@ -13,6 +13,16 @@ namespace Sample.IntegrationMessages.Messages
         }
     }
 
+    public sealed class MyIntegrationRabbitMessageV2 : RabbitMessage<MyIntegrationMessageDto>
+    {
+        // TODO versioning dispatch
+
+        public MyIntegrationRabbitMessageV2(IConfigurationManager configurationManager)
+            : base(configurationManager)
+        {
+        }
+    }
+
     public class MyIntegrationMessageDto : IntegrationMessage
     {
         public string Message { get; set; }

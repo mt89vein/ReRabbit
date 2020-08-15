@@ -1,4 +1,5 @@
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Publisher;
+using ReRabbit.Abstractions.Settings.Subscriber;
 
 namespace ReRabbit.Abstractions
 {
@@ -14,7 +15,7 @@ namespace ReRabbit.Abstractions
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование вирутального хоста.</param>
         /// <returns>Настройки подписчика.</returns>
-        QueueSetting GetQueueSettings(
+        SubscriberSettings GetSubscriberSettings(
             string configurationSectionName,
             string connectionName,
             string virtualHost
@@ -25,7 +26,7 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
         /// <returns>Настройки подписчика.</returns>
-        QueueSetting GetQueueSettings(string configurationSectionName);
+        SubscriberSettings GetSubscriberSettings(string configurationSectionName);
 
         /// <summary>
         /// Получить конфигурацию события среди всех подключений и виртуальных хостов.

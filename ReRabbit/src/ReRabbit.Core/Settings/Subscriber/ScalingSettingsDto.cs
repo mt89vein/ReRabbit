@@ -1,50 +1,54 @@
-namespace ReRabbit.Abstractions.Settings
+using ReRabbit.Abstractions.Settings.Subscriber;
+
+namespace ReRabbit.Core.Settings.Subscriber
 {
     /// <summary>
     /// Настроки масштабирования подписчика.
     /// </summary>
-    public class ScalingSettings
+    internal sealed class ScalingSettingsDto
     {
         /// <summary>
         /// Количество каналов.
         /// </summary>
-        public int ChannelsCount { get; set; } = 1;
+        public int? ChannelsCount { get; set; }
 
         /// <summary>
         /// Количество подписчиков на 1 канал.
-        /// <para>
-        /// По-умолчанию: 1.
-        /// </para>
         /// </summary>
         /// <remarks>
         /// Используется для балансировки.
         /// Если 1 подписчик на 1 канал, создается изолированный канал для подписчиков.
         /// Если более 1, то на каждый канал будет создано не более чем указанное кол-во подписчиков,
-        /// и необходимо количество для них каналов.
+        /// и необходимое количество для них каналов.
         /// </remarks>
-        public int ConsumersPerChannel { get; set; } = 1;
+        public int? ConsumersPerChannel { get; set; }
 
         /// <summary>
         /// Максимальное количество сообщений в обработке у подписчика.
-        /// <para>
-        /// По-умолчанию: 1.
-        /// </para>
         /// </summary>
-        public ushort MessagesPerConsumer { get; set; } = 1;
+        public ushort? MessagesPerConsumer { get; set; }
 
         /// <summary>
         /// Максимальное количество сообщений в обработке на одном канале.
-        /// <para>
-        /// По-умолчанию: 0.
-        /// </para>
         /// </summary>
-        public ushort MessagesPerChannel { get; set; } = 0;
+        public ushort? MessagesPerChannel { get; set; }
 
         /// <summary>
         /// Разрешает только одному потребителю читать очередь.
         /// Если потребитель уходит, подключается другой.
         /// <see cref="https://www.rabbitmq.com/consumers.html#single-active-consumer"/>.
         /// </summary>
-        public bool UseSingleActiveConsumer { get; set; }
+        public bool? UseSingleActiveConsumer { get; set; }
+
+        public ScalingSettings Create()
+        {
+            return new ScalingSettings(
+                ChannelsCount,
+                ConsumersPerChannel,
+                MessagesPerConsumer,
+                MessagesPerChannel,
+                UseSingleActiveConsumer
+            );
+        }
     }
 }

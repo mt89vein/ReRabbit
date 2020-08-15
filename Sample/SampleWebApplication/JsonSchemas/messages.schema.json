@@ -18,7 +18,7 @@
     "title": "Message name",
     "properties": {
       "Version": {
-        "$id": "#/properties/Version",
+        "$id": "#/Version",
         "type": "string",
         "title": "Message format version",
         "default": "v1",
@@ -29,7 +29,7 @@
         "pattern": "^(.*)$"
       },
       "Exchange": {
-        "$id": "#/properties/Exchange",
+        "$id": "#/Exchange",
         "type": "object",
         "title": "Exchange settings.",
         "default": {
@@ -86,7 +86,7 @@
         }
       },
       "RouteType": {
-        "$id": "#/properties/RouteType",
+        "$id": "#/RouteType",
         "type": "string",
         "title": "Route type",
         "default": "Constant",
@@ -97,7 +97,7 @@
         "pattern": "^(.*)$"
       },
       "Route": {
-        "$id": "#/properties/Route",
+        "$id": "#/Route",
         "type": "string",
         "title": "Route for publish.",
         "default": "",

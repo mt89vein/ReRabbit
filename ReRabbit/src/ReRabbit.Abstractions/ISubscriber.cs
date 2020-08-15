@@ -1,7 +1,7 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
@@ -19,7 +19,7 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором работает подписчик.</returns>
         Task<IModel> SubscribeAsync<TMessage>(
-            AcknowledgableMessageHandler<TMessage> messageHandler, QueueSetting settings
+            AcknowledgableMessageHandler<TMessage> messageHandler, SubscriberSettings settings
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace ReRabbit.Abstractions
         /// <param name="settings">Настройки очереди.</param>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
-        Task<IModel> BindAsync<TMessage>(QueueSetting settings)
+        Task<IModel> BindAsync<TMessage>(SubscriberSettings settings)
             where TMessage : class, IMessage;
     }
 

@@ -1,6 +1,7 @@
 using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 {
@@ -39,9 +40,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// Получить поведение.
         /// </summary>
         /// <typeparam name="TEventType">Тип сообщения.</typeparam>
-        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
         /// <returns>Поведение оповещения брокера сообщений.</returns>
-        public IAcknowledgementBehaviour GetBehaviour<TEventType>(QueueSetting queueSetting)
+        public IAcknowledgementBehaviour GetBehaviour<TEventType>(SubscriberSettings subscriberSettings)
         {
             if (_resolver.TryGet(out var acknowledgementBehaviour, typeof(TEventType).Name))
             {

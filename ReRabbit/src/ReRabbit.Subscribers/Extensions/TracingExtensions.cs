@@ -1,9 +1,9 @@
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using ReRabbit.Abstractions.Settings;
 
 namespace ReRabbit.Subscribers.Extensions
 {
@@ -27,25 +27,25 @@ namespace ReRabbit.Subscribers.Extensions
         /// Получить или сгенерировать TraceId и установить контекст трейсинга.
         /// </summary>
         /// <param name="properties">Метаданные сообщения.</param>
-        /// <param name="settings">Настройки трейсинга.</param>
+        /// <param name="tracingSettings">Настройки трейсинга.</param>
         /// <param name="logger">Логгер.</param>
         /// <param name="loggingScope">Скоуп.</param>
         /// <returns>Идентификатор отслеживания.</returns>
         public static Guid EnsureTraceId(
             this IBasicProperties properties,
-            TracingSettings settings,
+            TracingSettings tracingSettings,
             ILogger logger,
             Dictionary<string, object> loggingScope
         )
         {
             var traceId = properties.GetTraceId();
 
-            if (traceId == Guid.Empty && settings.GenerateIfNotPresent)
+            if (traceId == Guid.Empty && tracingSettings.GenerateIfNotPresent)
             {
                 traceId = Guid.NewGuid();
                 properties.AddTraceId(traceId);
 
-                if (settings.LogWhenGenerated)
+                if (tracingSettings.LogWhenGenerated)
                 {
                     using (logger.BeginScope(loggingScope))
                     {

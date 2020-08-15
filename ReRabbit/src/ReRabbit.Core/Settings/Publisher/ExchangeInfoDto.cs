@@ -1,9 +1,11 @@
-namespace ReRabbit.Abstractions.Settings
+using ReRabbit.Abstractions.Settings.Publisher;
+
+namespace ReRabbit.Core.Settings.Publisher
 {
     /// <summary>
     /// Информация об обменнике.
     /// </summary>
-    public class ExchangeInfo
+    internal sealed class ExchangeInfoDto
     {
         /// <summary>
         /// Наименование обменника.
@@ -12,11 +14,8 @@ namespace ReRabbit.Abstractions.Settings
 
         /// <summary>
         /// Обменник переживет перезагрузку брокера.
-        /// <para>
-        /// По-умолчанию: true.
-        /// </para>
         /// </summary>
-        public bool Durable { get; set; } = true;
+        public bool Durable { get; set; }
 
         /// <summary>
         /// Автоматическое удаление обменника, если все биндинги были удалены.
@@ -25,10 +24,12 @@ namespace ReRabbit.Abstractions.Settings
 
         /// <summary>
         /// Тип обменника. [direct, fanout, headers, topic]
-        /// <para>
-        /// По-умолчанию: direct.
-        /// </para>
         /// </summary>
-        public string Type { get; set; } = RabbitMQ.Client.ExchangeType.Direct;
+        public string Type { get; set; }
+
+        public ExchangeInfo Create()
+        {
+            return new ExchangeInfo(Name, Durable, AutoDelete, Type);
+        }
     }
 }

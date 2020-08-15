@@ -175,7 +175,8 @@ namespace ReRabbit.Core
 
             using var _ = _logger.BeginScope(new Dictionary<string, string>
             {
-                ["ConnectionString"] = _connectionFactory.Uri.ToString()
+                ["ConnectionString"] = _connectionFactory.Uri.ToString(),
+                ["ConnectionName"] = _settings.ConnectionName
             });
 
             await _semaphoreSlim.WaitAsync();

@@ -1,7 +1,7 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
@@ -22,7 +22,7 @@ namespace ReRabbit.Abstractions
             Acknowledgement acknowledgement,
             IModel channel,
             MessageContext messageContext,
-            QueueSetting settings
+            SubscriberSettings settings
         ) where TMessage : class, IMessage;
     }
 }

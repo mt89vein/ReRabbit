@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Publisher;
 using System;
 using System.Collections.Generic;
 

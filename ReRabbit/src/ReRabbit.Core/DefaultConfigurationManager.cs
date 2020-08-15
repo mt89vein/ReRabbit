@@ -1,9 +1,16 @@
 using Microsoft.Extensions.Configuration;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Connection;
+using ReRabbit.Abstractions.Settings.Publisher;
+using ReRabbit.Abstractions.Settings.Root;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core.Configuration;
 using ReRabbit.Core.Exceptions;
-using System.Collections.Generic;
+using ReRabbit.Core.Settings.Connection;
+using ReRabbit.Core.Settings.Publisher;
+using ReRabbit.Core.Settings.Subscriber;
+using System;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -58,31 +65,31 @@ namespace ReRabbit.Core
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование вирутального хоста.</param>
         /// <returns>Настройки подписчика.</returns>
-        public QueueSetting GetQueueSettings(
+        public SubscriberSettings GetSubscriberSettings(
             string configurationSectionName,
             string connectionName,
             string virtualHost
         )
         {
-            if (!_configuration.TryGetQueueSection(
-                connectionName,
-                virtualHost,
-                configurationSectionName,
-                out var subscriberConfigurationSection,
-                out var sectionPath)
-            )
+            if (!Settings.SubscriberConnections.TryGetValue(connectionName, out var connectionSettings))
             {
-                throw new InvalidConfigurationException($"Конфигурация подписчика по пути {sectionPath} не найдена");
+                throw new InvalidConfigurationException(
+                    $"При поиске подписчика {configurationSectionName} не найдено подключение с именем {connectionName}.");
             }
 
-            var connectionSettings = Settings.SubscriberConnections[connectionName];
-            var virtualHostSettings = connectionSettings.VirtualHosts[virtualHost];
+            if (!connectionSettings.VirtualHosts.TryGetValue(virtualHost, out var virtualHostSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"При поиске подписчика {configurationSectionName} в настройках подключения {connectionName} не найден виртуальный хост с именем {virtualHost}.");
+            }
 
-            return BuildQueueSettings(
-                connectionSettings,
-                virtualHostSettings,
-                subscriberConfigurationSection
-            );
+            if (!virtualHostSettings.Subscribers.TryGetValue(configurationSectionName, out var subscriberSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"Конфигурация подписчика с именем {configurationSectionName} в настройках подключения {connectionName}:{virtualHost} не найдена.");
+            }
+
+            return subscriberSettings;
         }
 
         /// <summary>
@@ -90,36 +97,23 @@ namespace ReRabbit.Core
         /// </summary>
         /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
         /// <returns>Настройки подписчика.</returns>
-        public QueueSetting GetQueueSettings(string configurationSectionName)
+        public SubscriberSettings GetSubscriberSettings(string configurationSectionName)
         {
             // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
-            // TODO: понятное сообщение об ошибке
-            return GetQueueSettings().Single();
+            var subscriberSettings = Settings.SubscriberConnections
+                .SelectMany(p => p.Value.VirtualHosts.Values.SelectMany(v => v.Subscribers.Values))
+                .Where(x => x.SubscriberName == configurationSectionName)
+                .ToList();
 
-            IEnumerable<QueueSetting> GetQueueSettings()
+            return subscriberSettings.Count switch
             {
-                foreach (var connectionSettings in Settings.SubscriberConnections.Values)
-                {
-                    foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
-                    {
-                        if (_configuration.TryGetQueueSection(
-                            connectionSettings.ConnectionName,
-                            virtualHostSettings.Name,
-                            configurationSectionName,
-                            out var subscriberConfigurationSection,
-                            out _)
-                        )
-                        {
-                            yield return BuildQueueSettings(
-                                connectionSettings,
-                                virtualHostSettings,
-                                subscriberConfigurationSection
-                            );
-                        }
-                    }
-                }
-            }
+                0 => throw new InvalidOperationException(
+                    $"Не найдена конфигурация для подписчика с именем {configurationSectionName}."),
+                1 => subscriberSettings[0],
+                _ => throw new InvalidOperationException(
+                    $"Обнаружено {subscriberSettings.Count} конфигураций для подписчика с именем {configurationSectionName}. Укажите явно подключение/виртуальный хост.")
+            };
         }
 
         /// <summary>
@@ -131,32 +125,19 @@ namespace ReRabbit.Core
         {
             // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
-            // TODO: понятное сообщение об ошибке
-            return GetMessageSettingsInternal().Single();
+            var messageSettings = Settings.PublisherConnections
+                .SelectMany(p => p.Value.VirtualHosts.Values.SelectMany(v => v.Messages.Values))
+                .Where(x => x.Name == messageName)
+                .ToList();
 
-            IEnumerable<MessageSettings> GetMessageSettingsInternal()
+            return messageSettings.Count switch
             {
-                foreach (var connectionSettings in Settings.PublisherConnections.Values)
-                {
-                    foreach (var virtualHostSettings in connectionSettings.VirtualHosts.Values)
-                    {
-                        if (_configuration.TryGetMessageSection(
-                            connectionSettings.ConnectionName,
-                            virtualHostSettings.Name,
-                            messageName,
-                            out var messageConfigurationSection,
-                            out _)
-                        )
-                        {
-                            yield return BuildMessageSettings(
-                                connectionSettings,
-                                virtualHostSettings,
-                                messageConfigurationSection
-                            );
-                        }
-                    }
-                }
-            }
+                0 => throw new InvalidOperationException(
+                    $"Не найдена конфигурация для сообщения с именем {messageName}."),
+                1 => messageSettings[0],
+                _ => throw new InvalidOperationException(
+                    $"Обнаружено {messageSettings.Count} конфигураций для сообщения с именем {messageName}. Укажите явно подключение/виртуальный хост.")
+            };
         }
 
         #endregion Методы (public)
@@ -182,51 +163,61 @@ namespace ReRabbit.Core
 
             mqConfigurationSection.Bind(rabbitMqSettings);
 
-            rabbitMqSettings.SubscriberConnections =
-                mqConfigurationSection
-                    .GetSection(ConfigurationSectionConstants.SUBSCRIBER_CONNECTIONS)
-                    .GetChildren()
-                    .Select(BuildConnectionSettings)
-                    .ToDictionary(x => x.Key, x => x.Value);
+            foreach (var connectionSettings in mqConfigurationSection
+                .GetSection(ConfigurationSectionConstants.SUBSCRIBER_CONNECTIONS)
+                .GetChildren()
+                .Select(BuildConnectionSettings))
+            {
+                rabbitMqSettings.AddSubscriberConnection(connectionSettings);
+            }
 
-            rabbitMqSettings.PublisherConnections =
-                mqConfigurationSection
-                    .GetSection(ConfigurationSectionConstants.PUBLISHER_CONNECTIONS)
-                    .GetChildren()
-                    .Select(BuildConnectionSettings)
-                    .ToDictionary(x => x.Key, x => x.Value);
+            foreach (var connectionSettings in mqConfigurationSection
+                .GetSection(ConfigurationSectionConstants.PUBLISHER_CONNECTIONS)
+                .GetChildren()
+                .Select(BuildConnectionSettings))
+            {
+                rabbitMqSettings.AddPublisherConnection(connectionSettings);
+            }
 
             return rabbitMqSettings;
 
-            static KeyValuePair<string, VirtualHostSetting> BuildConnectionVirtualHosts(
+            static VirtualHostSettings BuildConnectionVirtualHosts(
+                ConnectionSettings connectionSettings,
                 IConfigurationSection virtualHostConfSection
             )
             {
-                var virtualHost = new VirtualHostSetting();
-                virtualHostConfSection.Bind(virtualHost);
+                var virtualHostDto = new VirtualHostSettingsDto();
+                virtualHostConfSection.Bind(virtualHostDto);
 
-                virtualHost.Name = virtualHostConfSection.Key;
+                virtualHostDto.Name = virtualHostConfSection.Key;
 
-                return new KeyValuePair<string, VirtualHostSetting>(
-                    virtualHostConfSection.Key,
-                    virtualHost
-                );
+                var virtualHost = virtualHostDto.Create(connectionSettings);
+
+                foreach (var subscriberSettings in virtualHostConfSection
+                    .GetSection(ConfigurationSectionConstants.QUEUES)
+                    .GetChildren()
+                    .Select(q => BuildSubscriberSettings(virtualHost, q)))
+                {
+                    virtualHost.AddSubscriber(subscriberSettings);
+                }
+
+                foreach (var messageSettings in virtualHostConfSection
+                    .GetSection(ConfigurationSectionConstants.MESSAGES)
+                    .GetChildren()
+                    .Select(q => BuildMessageSettings(virtualHost, q)))
+                {
+                    virtualHost.AddMessage(messageSettings);
+                }
+
+                return virtualHost;
             }
 
-            static KeyValuePair<string, ConnectionSettings> BuildConnectionSettings(
-                IConfigurationSection connectionConfSection
-            )
+            static ConnectionSettings BuildConnectionSettings(IConfigurationSection connectionConfSection)
             {
-                var connectionSettings = new ConnectionSettings();
-                connectionConfSection.Bind(connectionSettings);
+                var connectionSettingsDto = new ConnectionSettingsDto();
+                connectionConfSection.Bind(connectionSettingsDto);
 
-                // List не биндится корректно
-                connectionSettings.HostNames = connectionConfSection.GetSection(nameof(connectionSettings.HostNames)).Get<List<string>>() ??
-                                               connectionSettings.HostNames;
-
-                connectionSettings.ConnectionName = string.IsNullOrWhiteSpace(connectionSettings.ConnectionName)
-                    ? connectionConfSection.Key
-                    : connectionSettings.ConnectionName;
+                connectionSettingsDto.ConnectionName = connectionConfSection.Key;
 
                 var virtualHostsSection =
                     connectionConfSection.GetSection(virtualHostsConfigurationSectionPath);
@@ -237,108 +228,91 @@ namespace ReRabbit.Core
                         $"Конфигурация виртуального хоста {connectionConfSection.Path}:{virtualHostsConfigurationSectionPath} не задана.");
                 }
 
-                connectionSettings.VirtualHosts = virtualHostsSection
-                    .GetChildren()
-                    .Select(BuildConnectionVirtualHosts)
-                    .ToDictionary(y => y.Key, y => y.Value);
+                var connectionSettings = connectionSettingsDto.Create();
 
-                return new KeyValuePair<string, ConnectionSettings>(connectionConfSection.Key, connectionSettings);
+                foreach (var virtualHost in virtualHostsSection.GetChildren().Select(v => BuildConnectionVirtualHosts(connectionSettings, v)))
+                {
+                    connectionSettings.AddVirtualHost(virtualHost);
+                }
+
+                return connectionSettings;
             }
         }
 
         /// <summary>
         /// Сформировать настройки подписчика.
         /// </summary>
-        /// <param name="connectionSettings">Настройки подключения.</param>
         /// <param name="virtualHostSettings">Настройки виртуального хоста.</param>
         /// <param name="subscriberConfigurationSection">Наименование секции конфигурации подписчика.</param>
         /// <returns>Настройки подписчика.</returns>
-        private static QueueSetting BuildQueueSettings(
-            ConnectionSettings connectionSettings,
-            VirtualHostSetting virtualHostSettings,
+        private static SubscriberSettings BuildSubscriberSettings(
+            VirtualHostSettings virtualHostSettings,
             IConfigurationSection subscriberConfigurationSection
         )
         {
-            var mqConnectionSettings = CreateConnectionSettings(connectionSettings, virtualHostSettings);
-            var queueSettings = new QueueSetting(mqConnectionSettings);
+            var mqConnectionSettings = CreateConnectionSettings(virtualHostSettings);
+            var subscriberSettingsDto = new SubscriberSettingsDto(subscriberConfigurationSection.Key);
 
-            subscriberConfigurationSection.Bind(queueSettings);
-            if (string.IsNullOrWhiteSpace(queueSettings.ConsumerName))
+            subscriberConfigurationSection.Bind(subscriberSettingsDto);
+            if (string.IsNullOrWhiteSpace(subscriberSettingsDto.ConsumerName))
             {
-                queueSettings.ConsumerName = subscriberConfigurationSection.Key;
+                subscriberSettingsDto.ConsumerName = subscriberConfigurationSection.Key;
             }
 
-            //var bindings = Enumerable.Empty<ExchangeBinding>();
-            //var arrayBindings = Array.Empty<ExchangeBinding>();
-            //var listBindings = new List<ExchangeBinding>();
-
-            //// TODO: bindings 
-            //subscriberConfigurationSection.GetSection("Bindings").Bind(bindings);
-            //subscriberConfigurationSection.GetSection("Bindings").Bind(arrayBindings);
-            //subscriberConfigurationSection.GetSection("Bindings").Bind(listBindings);
-
-            //// судя по всему в кор 3.0 биндинг на IEnumerable и Array сломан. Но на лист работает.
-            //Debug.Assert(bindings.Count() == arrayBindings.Length && arrayBindings.Length != listBindings.Count);
-
-            return queueSettings;
+            return subscriberSettingsDto.Create(mqConnectionSettings);
         }
 
         /// <summary>
         /// Сформировать настройки сообщения.
         /// </summary>
-        /// <param name="connectionSettings">Настройки подключения.</param>
         /// <param name="virtualHostSettings">Настройки виртуального хоста.</param>
         /// <param name="messageConfigurationSection">Наименование секции конфигурации сообщения.</param>
         /// <returns>Настройки сообщения.</returns>
         private static MessageSettings BuildMessageSettings(
-            ConnectionSettings connectionSettings,
-            VirtualHostSetting virtualHostSettings,
+            VirtualHostSettings virtualHostSettings,
             IConfigurationSection messageConfigurationSection
         )
         {
-            var mqConnectionSettings = CreateConnectionSettings(connectionSettings, virtualHostSettings);
-            var messageSettings = new MessageSettings(mqConnectionSettings, messageConfigurationSection.Key);
-
+            var mqConnectionSettings = CreateConnectionSettings(virtualHostSettings);
+            var messageSettings = new MessageSettingsDto();
             messageConfigurationSection.Bind(messageSettings);
 
-            return messageSettings;
+            messageSettings.Name = messageConfigurationSection.Key;
+
+            return messageSettings.Create(mqConnectionSettings);
         }
 
         /// <summary>
         /// Сформировать настройки подключения.
         /// </summary>
-        /// <param name="connectionSettings">Настройки подключения.</param>
         /// <param name="virtualHostSettings">Настройки виртуального хоста.</param>
         /// <returns>Настройки подключения.</returns>
-        private static MqConnectionSettings CreateConnectionSettings(
-            ConnectionSettings connectionSettings,
-            VirtualHostSetting virtualHostSettings
-        )
+        private static MqConnectionSettings CreateConnectionSettings(VirtualHostSettings virtualHostSettings)
         {
             return new MqConnectionSettings(
-                connectionSettings.HostNames,
-                connectionSettings.Port,
+                virtualHostSettings.ConnectionSettings.HostNames,
+                virtualHostSettings.ConnectionSettings.Port,
                 virtualHostSettings.UserName,
                 virtualHostSettings.Password,
                 virtualHostSettings.Name,
-                connectionSettings.ConnectionRetryCount,
-                connectionSettings.ConnectionName,
-                connectionSettings.UseCommonErrorMessagesQueue,
-                connectionSettings.UseCommonUnroutedMessagesQueue,
-                connectionSettings.UseAsyncConsumer,
-                connectionSettings.UseBackgroundThreadsForIO,
-                connectionSettings.RequestedConnectionTimeout,
-                connectionSettings.SocketReadTimeout,
-                connectionSettings.SocketWriteTimeout,
-                connectionSettings.RequestedChannelMaxCount,
-                connectionSettings.RequestedFrameMaxBytes,
-                connectionSettings.RequestedHeartbeat,
-                connectionSettings.HandshakeContinuationTimeout,
-                connectionSettings.ContinuationTimeout,
-                connectionSettings.AuthomaticRecoveryEnabled,
-                connectionSettings.NetworkRecoveryInterval,
-                connectionSettings.TopologyRecoveryEnabled,
-                connectionSettings.SslOptions
+                virtualHostSettings.ConnectionSettings.ConnectionRetryCount,
+                virtualHostSettings.ConnectionSettings.ConnectionName,
+                virtualHostSettings.UseCommonErrorMessagesQueue,
+                virtualHostSettings.UseCommonUnroutedMessagesQueue,
+                virtualHostSettings.ConnectionSettings.UseAsyncConsumer,
+                virtualHostSettings.ConnectionSettings.UseBackgroundThreadsForIO,
+                virtualHostSettings.ConnectionSettings.RequestedConnectionTimeout,
+                virtualHostSettings.ConnectionSettings.SocketReadTimeout,
+                virtualHostSettings.ConnectionSettings.SocketWriteTimeout,
+                virtualHostSettings.ConnectionSettings.RequestedChannelMaxCount,
+                virtualHostSettings.ConnectionSettings.RequestedFrameMaxBytes,
+                virtualHostSettings.ConnectionSettings.RequestedHeartbeat,
+                virtualHostSettings.ConnectionSettings.HandshakeContinuationTimeout,
+                virtualHostSettings.ConnectionSettings.ContinuationTimeout,
+                virtualHostSettings.ConnectionSettings.AuthomaticRecoveryEnabled,
+                virtualHostSettings.ConnectionSettings.NetworkRecoveryInterval,
+                virtualHostSettings.ConnectionSettings.TopologyRecoveryEnabled,
+                virtualHostSettings.ConnectionSettings.SslOptions
             );
         }
 

@@ -1,6 +1,6 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Publisher;
 using SmartFormat;
 using System;
 using System.Collections.Concurrent;

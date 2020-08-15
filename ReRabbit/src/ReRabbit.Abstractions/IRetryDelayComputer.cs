@@ -1,4 +1,4 @@
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 
 namespace ReRabbit.Abstractions

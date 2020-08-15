@@ -1,5 +1,5 @@
 using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Globalization;
 
@@ -15,29 +15,29 @@ namespace ReRabbit.Core
         /// <summary>
         /// Конвенция именования очереди с ошибками при обработке.
         /// </summary>
-        public Func<Type, QueueSetting, string> DeadLetterQueueNamingConvention { get; set; }
+        public Func<Type, SubscriberSettings, string> DeadLetterQueueNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования обменника, через который будет попадать сообщения с ошибками при обработке.
         /// </summary>
-        public Func<Type, QueueSetting, string> DeadLetterExchangeNamingConvention { get; set; }
+        public Func<Type, SubscriberSettings, string> DeadLetterExchangeNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования очереди.
         /// </summary>
-        public Func<Type, QueueSetting, string> QueueNamingConvention { get; set; }
+        public Func<Type, SubscriberSettings, string> QueueNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования очереди с отложенной обработкой.
         /// </summary>
-        public Func<Type, QueueSetting, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
+        public Func<Type, SubscriberSettings, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
 
         // TODO: delayed publish queue naming convention
 
         /// <summary>
         /// Конвенция именования тэга обработчика.
         /// </summary>
-        public Func<QueueSetting, int, int, string> ConsumerTagNamingConvention { get; set; }
+        public Func<SubscriberSettings, int, int, string> ConsumerTagNamingConvention { get; set; }
 
         #endregion Свойства
 

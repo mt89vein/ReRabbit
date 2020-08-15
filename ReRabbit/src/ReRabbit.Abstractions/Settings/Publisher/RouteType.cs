@@ -1,4 +1,4 @@
-namespace ReRabbit.Abstractions.Settings
+namespace ReRabbit.Abstractions.Settings.Publisher
 {
     /// <summary>
     /// Тип роута.

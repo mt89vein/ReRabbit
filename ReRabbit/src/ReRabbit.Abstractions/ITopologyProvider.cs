@@ -1,5 +1,5 @@
 using RabbitMQ.Client;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Collections.Generic;
 
@@ -16,21 +16,21 @@ namespace ReRabbit.Abstractions
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        void UseDeadLetteredQueue(IModel channel, QueueSetting settings, Type messageType);
+        void UseDeadLetteredQueue(IModel channel, SubscriberSettings settings, Type messageType);
 
         /// <summary>
         /// Использовать общую очередь с ошибочным роутингом (те что не ушли ни в одну из других очередей из-за отсутствия биндинга).
         /// </summary>
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
-        void UseCommonUnroutedMessagesQueue(IModel channel, QueueSetting settings);
+        void UseCommonUnroutedMessagesQueue(IModel channel, SubscriberSettings settings);
 
         /// <summary>
         /// Использовать общую очередь с ошибочными сообщениями.
         /// </summary>
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
-        void UseCommonErrorMessagesQueue(IModel channel, QueueSetting settings);
+        void UseCommonErrorMessagesQueue(IModel channel, SubscriberSettings settings);
 
         /// <summary>
         /// Объявить очередь.
@@ -38,7 +38,7 @@ namespace ReRabbit.Abstractions
         /// <param name="channel">Канал.</param>
         /// <param name="settings">Настройки подписчика.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        void DeclareQueue(IModel channel, QueueSetting settings, Type messageType);
+        void DeclareQueue(IModel channel, SubscriberSettings settings, Type messageType);
 
         /// <summary>
         /// Объявить очередь с отложенной обработкой.
@@ -49,7 +49,7 @@ namespace ReRabbit.Abstractions
         /// <param name="retryDelay">Период на которую откладывается обработка.</param>
         string DeclareDelayedQueue(
             IModel channel,
-            QueueSetting settings,
+            SubscriberSettings settings,
             Type messageType,
             TimeSpan retryDelay
         );

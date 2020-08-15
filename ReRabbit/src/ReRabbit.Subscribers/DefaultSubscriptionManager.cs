@@ -2,7 +2,7 @@ using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings;
+using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -59,14 +59,14 @@ namespace ReRabbit.Subscribers
         /// Выполнить привязку.
         /// </summary>
         /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
-        /// <param name="queueSetting">Настройки подписчика.</param>
-        public async Task BindAsync<TEvent>(QueueSetting queueSetting)
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
+        public async Task BindAsync<TEvent>(SubscriberSettings subscriberSettings)
             where TEvent : class, IMessage
         {
             using var channel =
                 await _subscriberFactory
                     .GetSubscriber<TEvent>()
-                    .BindAsync<TEvent>(queueSetting);
+                    .BindAsync<TEvent>(subscriberSettings);
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace ReRabbit.Subscribers
         public Task BindAsync<TMessage>(string configurationSectionName)
             where TMessage : class, IMessage
         {
-            return BindAsync<TMessage>(_configurationManager.GetQueueSettings(configurationSectionName));
+            return BindAsync<TMessage>(_configurationManager.GetSubscriberSettings(configurationSectionName));
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace ReRabbit.Subscribers
         )
             where TMessage : class, IMessage
         {
-            return BindAsync<TMessage>(_configurationManager.GetQueueSettings(
+            return BindAsync<TMessage>(_configurationManager.GetSubscriberSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost
@@ -120,7 +120,7 @@ namespace ReRabbit.Subscribers
         {
             return RegisterAsync(
                 messageHandler,
-                _configurationManager.GetQueueSettings(
+                _configurationManager.GetSubscriberSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost
@@ -142,7 +142,7 @@ namespace ReRabbit.Subscribers
         {
             return RegisterAsync(
                 messageHandler,
-                _configurationManager.GetQueueSettings(configurationSectionName)
+                _configurationManager.GetSubscriberSettings(configurationSectionName)
             );
         }
 
@@ -151,17 +151,17 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик сообщений.</param>
-        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
         public async Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            QueueSetting queueSetting
+            SubscriberSettings subscriberSettings
         )
             where TMessage : class, IMessage
         {
             var subscriber = _subscriberFactory.GetSubscriber<TMessage>();
-            for (var i = 0; i < queueSetting.ScalingSettings.ChannelsCount; i++)
+            for (var i = 0; i < subscriberSettings.ScalingSettings.ChannelsCount; i++)
             {
-                var channel = await subscriber.SubscribeAsync(messageHandler, queueSetting);
+                var channel = await subscriber.SubscribeAsync(messageHandler, subscriberSettings);
 
                 _channels.Add(channel);
             }
@@ -172,10 +172,10 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
-        /// <param name="queueSetting">Настройки подписчика.</param>
+        /// <param name="subscriberSettings">Настройки подписчика.</param>
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            QueueSetting queueSetting
+            SubscriberSettings subscriberSettings
         )
             where TMessage : class, IMessage
         {
@@ -185,7 +185,7 @@ namespace ReRabbit.Subscribers
                     .ContinueWith<Acknowledgement>(_ => Ack.Ok);
             });
 
-            return RegisterAsync(handler, queueSetting);
+            return RegisterAsync(handler, subscriberSettings);
         }
 
         /// <summary>
@@ -202,7 +202,7 @@ namespace ReRabbit.Subscribers
         {
             return RegisterAsync(
                 eventHandler,
-                _configurationManager.GetQueueSettings(configurationSectionName)
+                _configurationManager.GetSubscriberSettings(configurationSectionName)
             );
         }
 
@@ -224,7 +224,7 @@ namespace ReRabbit.Subscribers
         {
             return RegisterAsync(
                 eventHandler,
-                _configurationManager.GetQueueSettings(
+                _configurationManager.GetSubscriberSettings(
                     configurationSectionName,
                     connectionName,
                     virtualHost

@@ -1,32 +1,30 @@
-namespace ReRabbit.Abstractions.Settings
+using ReRabbit.Abstractions.Settings.Subscriber;
+
+namespace ReRabbit.Core.Settings.Subscriber
 {
     /// <summary>
     /// Настройки поведения работы с глобальным идентификатором отслеживания.
     /// </summary>
-    public class TracingSettings
+    internal sealed class TracingSettingsDto
     {
         /// <summary>
         /// Отслеживание включено.
-        /// <para>
-        /// По-умолчанию: true.
-        /// </para>
         /// </summary>
-        public bool IsEnabled { get; set; } = true;
+        public bool? IsEnabled { get; set; }
 
         /// <summary>
         /// Генерировать TraceId, если не было передано.
-        /// <para>
-        /// По-умолчанию: true.
-        /// </para>
         /// </summary>
-        public bool GenerateIfNotPresent { get; set; } = true;
+        public bool? GenerateIfNotPresent { get; set; }
 
         /// <summary>
         /// Логировать сообщение о факте генерации сообщения.
-        /// <para>
-        /// По-умолчанию: true.
-        /// </para>
         /// </summary>
-        public bool LogWhenGenerated { get; set; } = true;
+        public bool? LogWhenGenerated { get; set; }
+
+        public TracingSettings Create()
+        {
+            return new TracingSettings(IsEnabled, GenerateIfNotPresent, LogWhenGenerated);
+        }
     }
 }
