@@ -13,7 +13,7 @@ namespace ReRabbit.Abstractions.Settings
         /// <summary>
         /// Имена хостов.
         /// </summary>
-        public IEnumerable<string> HostNames { get; set; } = new List<string>
+        public List<string> HostNames { get; set; } = new List<string>
         {
             "localhost"
         };

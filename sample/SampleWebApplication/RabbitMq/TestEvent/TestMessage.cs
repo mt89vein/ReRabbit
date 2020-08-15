@@ -2,7 +2,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
-using Sample.IntegrationMessages;
+using Sample.IntegrationMessages.Messages;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.RabbitMq.TestEvent

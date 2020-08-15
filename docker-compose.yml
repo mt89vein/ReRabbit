@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+
+  samplewebapplication:
+    image: samplewebapplication
+    build:
+      context: .
+      dockerfile: ./sample/SampleWebApplication/Dockerfile
+
+  rabbitmq:
+    image: re-rabbitmq
+    build:
+      context: ./rabbitmq/
+
+  redis.cache:
+    image: redis

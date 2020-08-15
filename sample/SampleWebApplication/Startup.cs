@@ -29,7 +29,7 @@ namespace SampleWebApplication
             services.AddControllers();
 
             services.AddSingleton<DefaultMessageMapper>();
-            services.AddDistributedRedisCache(options =>
+            services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = _configuration.GetConnectionString("RedisConnection");
                 options.InstanceName = _configuration.GetValue<string>("ServiceName");

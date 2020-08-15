@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ReRabbit.Abstractions;
-using Sample.IntegrationMessages;
+using Sample.IntegrationMessages.Messages;
 using System;
 using System.Threading.Tasks;
 

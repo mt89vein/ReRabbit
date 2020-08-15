@@ -220,6 +220,10 @@ namespace ReRabbit.Core
                 var connectionSettings = new ConnectionSettings();
                 connectionConfSection.Bind(connectionSettings);
 
+                // List не биндится корректно
+                connectionSettings.HostNames = connectionConfSection.GetSection(nameof(connectionSettings.HostNames)).Get<List<string>>() ??
+                                               connectionSettings.HostNames;
+
                 connectionSettings.ConnectionName = string.IsNullOrWhiteSpace(connectionSettings.ConnectionName)
                     ? connectionConfSection.Key
                     : connectionSettings.ConnectionName;

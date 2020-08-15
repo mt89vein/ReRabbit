@@ -23,7 +23,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9A4DB75B-7E9
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebApplication", "sample\SampleWebApplication\SampleWebApplication.csproj", "{33FE74B7-3B69-413C-9AA3-819BB31BEE69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.IntegrationMessages", "sample\Sample.IntegrationMessages\Sample.IntegrationMessages.csproj", "{5A3823C6-6B62-498B-A50D-3B706560EC3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.IntegrationMessages", "sample\Sample.IntegrationMessages\Sample.IntegrationMessages.csproj", "{5A3823C6-6B62-498B-A50D-3B706560EC3B}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{7692157D-F3FA-4B9B-B424-8BF13A152386}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{5A3823C6-6B62-498B-A50D-3B706560EC3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A3823C6-6B62-498B-A50D-3B706560EC3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A3823C6-6B62-498B-A50D-3B706560EC3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7692157D-F3FA-4B9B-B424-8BF13A152386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7692157D-F3FA-4B9B-B424-8BF13A152386}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7692157D-F3FA-4B9B-B424-8BF13A152386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7692157D-F3FA-4B9B-B424-8BF13A152386}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

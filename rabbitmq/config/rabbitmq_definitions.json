@@ -1,0 +1,76 @@
+{
+  "users": [
+    {
+      "name": "user",
+      "password_hash": "7DhU/kHYsITEE8PxCi+mdVxEW+MkCjEoELyP7B54xmnv9riC",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    },
+    {
+      "name": "TESTHOST"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "user",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "user",
+      "vhost": "TESTHOST",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "EM",
+      "pattern": "^[^#]+$",
+      "apply-to": "queues",
+      "definition": {
+        "dead-letter-exchange": "#common-error-messages"
+      },
+      "priority": 1
+    },
+    {
+      "vhost": "/",
+      "name": "UM",
+      "pattern": "^[^#]+$",
+      "apply-to": "exchanges",
+      "definition": {
+        "alternate-exchange": "#common-unrouted-messages"
+      },
+      "priority": 1
+    },
+    {
+      "vhost": "TESTHOST",
+      "name": "EM",
+      "pattern": "^[^#]+$",
+      "apply-to": "queues",
+      "definition": {
+        "dead-letter-exchange": "#common-error-messages"
+      },
+      "priority": 1
+    },
+    {
+      "vhost": "TESTHOST",
+      "name": "UM",
+      "pattern": "^[^#]+$",
+      "apply-to": "exchanges",
+      "definition": {
+        "alternate-exchange": "#common-unrouted-messages"
+      },
+      "priority": 1
+    }
+  ]
+}

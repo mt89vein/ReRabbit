@@ -1,0 +1,20 @@
+version: '3.4'
+
+services:
+
+  samplewebapplication:
+    env_file:
+      - .env
+    ports:
+      - "8080:80"
+
+  rabbitmq:
+    ports:
+      - "15673:15672"
+      - "5673:5672"
+    volumes:
+      - ./rabbitmq/config/rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json
+
+  redis.cache:
+    ports:
+      - "6380:6379"

@@ -1,8 +1,5 @@
 using Microsoft.Extensions.Configuration.Json;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -74,51 +71,10 @@ namespace Sample.IntegrationMessages
         public static IHostBuilder ConfigureIntegrationMessages(this IHostBuilder hostBuilder)
         {
             return hostBuilder
-                .AddSharedSettings("integrationMessages.json")
+                .AddSharedSettings("IntegrationMessages.json")
                 .ConfigureServices((ctx, services) => services.AddIntegrationMessages());
         }
 
         #endregion
-    }
-
-    public class MyIntegrationMessageDto : IntegrationMessage
-    {
-        public string Message { get; set; }
-    }
-
-    public class MyIntegrationRabbitMessage : RabbitMessage<MyIntegrationMessageDto>
-    {
-        // TODO versioning dispatch
-
-        public MyIntegrationRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
-    }
-
-    public class MetricsDto : IntegrationMessage
-    {
-        public string Name { get; set; }
-
-        public int Value { get; set; }
-    }
-
-    public class MetricsRabbitMessage : RabbitMessage<MetricsDto>
-    {
-        public MetricsRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
-    }
-
-    public static class ServiceCollectionExtensions
-    {
-        public static IServiceCollection AddIntegrationMessages(this IServiceCollection services)
-        {
-            services.AddSingleton<MyIntegrationRabbitMessage>();
-            services.AddSingleton<MetricsRabbitMessage>();
-
-            return services;
-        }
     }
 }

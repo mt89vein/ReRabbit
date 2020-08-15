@@ -4,6 +4,8 @@
       "DefaultConnection": {
         "VirtualHosts": {
           "/": {
+            "UserName": "user",
+            "Password": "user",
             "Messages": {
               "MyIntegrationRabbitMessage": {
                 "Version": "v1",
