@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Extensions;
+using SampleWebApplication.Extensions;
 using SampleWebApplication.Mappers;
 using SampleWebApplication.Mappings;
 using SampleWebApplication.Middlewares;
@@ -16,10 +17,12 @@ namespace SampleWebApplication
     public class Startup
     {
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             _configuration = configuration;
+            _env = environment;
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -27,15 +30,16 @@ namespace SampleWebApplication
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-
-            services.AddSingleton<DefaultMessageMapper>();
-            services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = _configuration.GetConnectionString("RedisConnection");
-                options.InstanceName = _configuration.GetValue<string>("ServiceName");
-            });
-
-            services.AddRabbitMq(
+            services
+                .AddSwagger(_env)
+                .AddAutoMapper(a => a.AddProfiles(AutoMapperConfiguration.GetProfiles()))
+                .AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = _configuration.GetConnectionString("RedisConnection");
+                    options.InstanceName = _configuration.GetValue<string>("ServiceName");
+                })
+                .AddSingleton<DefaultMessageMapper>()
+                .AddRabbitMq(
                 x =>
                 {
                     x.SubscriberMiddlewares
@@ -50,8 +54,6 @@ namespace SampleWebApplication
                     x.RetryDelayComputerRegistrator.Add<CustomRoundRobinRetryDelayComputer>("CustomRoundRobin");
                     x.Factories.MessageMapper = sp => sp.GetRequiredService<DefaultMessageMapper>();
                 });
-
-            services.AddAutoMapper(a => a.AddProfiles(AutoMapperConfiguration.GetProfiles()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -64,6 +66,7 @@ namespace SampleWebApplication
 
             app.UseRouting();
             app.UseEndpoints(b => b.MapDefaultControllerRoute());
+            app.UseSwagger(_configuration);
         }
     }
 }

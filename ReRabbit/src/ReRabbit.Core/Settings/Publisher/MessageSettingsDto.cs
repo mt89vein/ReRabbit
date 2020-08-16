@@ -46,13 +46,13 @@ namespace ReRabbit.Core.Settings.Publisher
         /// <summary>
         /// Количество пыток отправки сообщения.
         /// </summary>
-        public int RetryCount { get; set; }
+        public int? RetryCount { get; set; }
 
         // TODO: добавить в JsonSchema
         /// <summary>
         /// Таймаут на подтверждения доставки в брокер.
         /// </summary>
-        public TimeSpan ConfirmationTimeout { get; set; }
+        public TimeSpan? ConfirmationTimeout { get; set; }
 
         #endregion Свойства
 

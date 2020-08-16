@@ -105,7 +105,11 @@ namespace ReRabbit.Core
             {
                 if (_publishTasks.TryRemove(args.DeliveryTag, out var value))
                 {
-                    _logger?.LogInformation("ack with {PublishTag}", args.DeliveryTag);
+                    if (_logger?.IsEnabled(LogLevel.Trace) == true)
+                    {
+                        _logger?.LogInformation("ack with {PublishTag}", args.DeliveryTag);
+                    }
+
                     value.Ack();
                 }
             }
@@ -247,7 +251,10 @@ namespace ReRabbit.Core
 
                 BasicPublish(exchange, routingKey, mandatory, basicProperties, body);
 
-                _logger?.LogInformation("published with {PublishTag}", publishTag);
+                if (_logger?.IsEnabled(LogLevel.Trace) == true)
+                {
+                    _logger?.LogInformation("published with {PublishTag}", publishTag);
+                }
             }
             catch (Exception e)
             {

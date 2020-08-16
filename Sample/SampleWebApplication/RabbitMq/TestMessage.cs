@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Attributes;
@@ -25,6 +26,13 @@ namespace SampleWebApplication.RabbitMq
 
     public class TestMessageHandler : IMessageHandler<TestMessage>
     {
+        private readonly ILogger<TestMessageHandler> _logger;
+
+        public TestMessageHandler(ILogger<TestMessageHandler> logger)
+        {
+            _logger = logger;
+        }
+
         /// <summary>
         /// Обработать сообщение.
         /// </summary>
@@ -34,9 +42,13 @@ namespace SampleWebApplication.RabbitMq
         [SubscriberConfiguration("Q2Subscriber")]
         public async Task<Acknowledgement> HandleAsync(MessageContext<TestMessage> ctx)
         {
+            _logger.LogInformation(
+                "Принято тестовое сообщение {Message}",
+                ctx.Message.Message
+            );
+
             await Task.CompletedTask;
 
-            //return Ack.Ok;
             if (ctx.MessageData.IsLastRetry)
             {
                 return Ack.Ok;

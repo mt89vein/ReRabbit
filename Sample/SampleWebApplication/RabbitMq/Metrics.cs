@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Attributes;
@@ -27,6 +28,13 @@ namespace SampleWebApplication.RabbitMq
 
     public class MetricHandler : IMessageHandler<Metrics>
     {
+        private readonly ILogger<MetricHandler> _logger;
+
+        public MetricHandler(ILogger<MetricHandler> logger)
+        {
+            _logger = logger;
+        }
+
         /// <summary>
         /// Обработать сообщение.
         /// </summary>
@@ -35,6 +43,12 @@ namespace SampleWebApplication.RabbitMq
         [SubscriberConfiguration("Q3Subscriber", typeof(MetricsRabbitMessage))]
         public Task<Acknowledgement> HandleAsync(MessageContext<Metrics> ctx)
         {
+            _logger.LogInformation(
+                "Приняты значения метрики {Name}:{Value}",
+                ctx.Message.Name,
+                ctx.Message.Value
+            );
+
             return Task.FromResult<Acknowledgement>(Ack.Ok);
         }
     }
