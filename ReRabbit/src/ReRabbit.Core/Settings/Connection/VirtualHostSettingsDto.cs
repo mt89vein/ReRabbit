@@ -25,12 +25,12 @@ namespace ReRabbit.Core.Settings.Connection
         /// <summary>
         /// Использовать общую очередь с ошибочными сообщениями.
         /// </summary>
-        public bool UseCommonErrorMessagesQueue { get; set; }
+        public bool? UseCommonErrorMessagesQueue { get; set; }
 
         /// <summary>
         /// Использовать общую очередь с ошибочным роутингом (те что не ушли ни в одну из других очередей из-за отсутствия биндинга).
         /// </summary>
-        public bool UseCommonUnroutedMessagesQueue { get; set; }
+        public bool? UseCommonUnroutedMessagesQueue { get; set; }
 
         public VirtualHostSettings Create(ConnectionSettings connectionSettings)
         {
