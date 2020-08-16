@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Exceptions;
 using System;
 using System.Text;
 
@@ -21,10 +22,13 @@ namespace ReRabbit.Core.Serializations
         #region Методы (public)
 
         /// <summary>
-        /// Десериализовать в объект указанного типа.
+        /// Десериализовать строку в объект указанного типа.
         /// </summary>
         /// <param name="type">Тип объекта для десериализации.</param>
-        /// <param name="serialized">Сериализованная строка.</param>
+        /// <param name="serialized">Строка для десериализации.</param>
+        /// <exception cref="MessageSerializationException">
+        /// В случае, если не удалось десериализовать сообщение.
+        /// </exception>
         /// <returns>Десериализованный объект.</returns>
         public abstract object Deserialize(Type type, string serialized);
 
@@ -39,6 +43,9 @@ namespace ReRabbit.Core.Serializations
         /// Сериализовать объект в массив байт.
         /// </summary>
         /// <param name="obj">Объект для сериализации.</param>
+        /// <exception cref="MessageSerializationException">
+        /// В случае, если не удалось сереализовать сообщение.
+        /// </exception>
         /// <returns>Массив байт.</returns>
         public ReadOnlyMemory<byte> Serialize(object obj)
         {
@@ -51,6 +58,9 @@ namespace ReRabbit.Core.Serializations
         /// </summary>
         /// <param name="type">Тип объекта для десериализации.</param>
         /// <param name="bytes">Массив байт.</param>
+        /// <exception cref="MessageSerializationException">
+        /// В случае, если не удалось десериализовать сообщение.
+        /// </exception>
         /// <returns>Десериализованный объект.</returns>
         public object Deserialize(Type type, ReadOnlyMemory<byte> bytes)
         {
@@ -68,6 +78,9 @@ namespace ReRabbit.Core.Serializations
         /// </summary>
         /// <typeparam name="TType">Тип объекта для десериализации.</typeparam>
         /// <param name="bytes">Массив байт.</param>
+        /// <exception cref="MessageSerializationException">
+        /// В случае, если не удалось десериализовать сообщение.
+        /// </exception>
         /// <returns>Десериализованный объект.</returns>
         public TType Deserialize<TType>(ReadOnlyMemory<byte> bytes)
         {
@@ -80,6 +93,9 @@ namespace ReRabbit.Core.Serializations
         /// </summary>
         /// <typeparam name="TType">Тип объекта для десериализации.</typeparam>
         /// <param name="payload">Строка для десериализации.</param>
+        /// <exception cref="MessageSerializationException">
+        /// В случае, если не удалось десериализовать сообщение.
+        /// </exception>
         /// <returns>Десериализованный объект.</returns>
         public TType Deserialize<TType>(string payload)
         {

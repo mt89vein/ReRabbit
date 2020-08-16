@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions.Acknowledgements;
+using System;
 
 namespace ReRabbit.Subscribers.Acknowledgments
 {
@@ -10,24 +11,14 @@ namespace ReRabbit.Subscribers.Acknowledgments
         #region Конструктор
 
         /// <summary>
-        /// Закрытый конструктор,
-        /// для использования в клиентском коде кэшированного результата обработки <see cref="IncorrectFormat"/>.
+        /// Создает новый экземпляр класса <see cref="FormatReject"/>.
         /// </summary>
-        private FormatReject()
-            : base("Сообщение не поддерживаемого формата.", requeue: false)
+        public FormatReject(Exception exception)
+            : base("Ошибка формата: " + exception?.Message, exception, requeue: false)
         {
         }
 
         #endregion Конструктор
-
-        #region Закэшированные инстансы
-
-        /// <summary>
-        /// Сообщение неподдерживаемого формата. Обработке не подлежит.
-        /// </summary>
-        internal static FormatReject IncorrectFormat { get; } = new FormatReject();
-
-        #endregion Закэшированные инстансы
     }
 
 

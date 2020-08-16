@@ -205,10 +205,10 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             {
                 if (reject is EmptyBodyReject || reject is FormatReject)
                 {
-                    _logger.RabbitMessageMovedToCommonErrorQueue(reject.Reason);
-
                     if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
                     {
+                        _logger.RabbitMessageMovedToCommonErrorQueue(reject.Reason, reject.Exception);
+
                         if (channel is IAsyncChannel asyncChannel)
                         {
                             await asyncChannel.BasicPublishAsync(
@@ -229,6 +229,10 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                                 messageContext.EventArgs.Body
                             );
                         }
+                    }
+                    else
+                    {
+                        _logger.RabbitMqMessageNotSupportedFormatError(reject.Reason, reject.Exception);
                     }
 
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
@@ -360,6 +364,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         private const int RABBITMQ_MESSAGE_RETRIED = 1;
         private const int RABBITMQ_MESSAGE_HANDLE_FAILED = 2;
         private const int RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE = 3;
+        private const int RABBITMQ_MESSAGE_NOT_SUPPORTED_FORMAT = 4;
 
         #endregion Константы
 
@@ -386,7 +391,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
                     new EventId(RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE, nameof(RABBITMQ_MESSAGE_MOVED_TO_COMMON_ERROR_QUEUE)),
-                    "Сообщение перемещено в общую ошибочную очередь. {Reason}."
+                    "Сообщение перемещено в общую ошибочную очередь. {Reason}"
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqMessageNotSupportedFormatErrorLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_NOT_SUPPORTED_FORMAT, nameof(RABBITMQ_MESSAGE_NOT_SUPPORTED_FORMAT)),
+                    "Сообщение имеет неподдерживаемый формат. {Reason}"
                 );
 
         #endregion LogActions
@@ -406,9 +419,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RabbitMessageMovedToCommonErrorQueue(this ILogger logger, string reason)
+        public static void RabbitMessageMovedToCommonErrorQueue(this ILogger logger, string reason, Exception exception = null)
         {
-            _rabbitMqMessageMovedToCommonErrorQueueLogAction(logger, reason, null);
+            _rabbitMqMessageMovedToCommonErrorQueueLogAction(logger, reason, exception);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMqMessageNotSupportedFormatError(this ILogger logger, string reason, Exception exception = null)
+        {
+            _rabbitMqMessageNotSupportedFormatErrorLogAction(logger, reason, exception);
         }
 
         #endregion Методы (public)

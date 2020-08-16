@@ -3,6 +3,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Abstractions.Exceptions;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core;
@@ -263,7 +264,7 @@ namespace ReRabbit.Subscribers
 
                     if (string.IsNullOrEmpty(payload))
                     {
-                        return (EmptyBodyReject.EmptyBody, new MessageContext(mqEventData,  ea));
+                        return (EmptyBodyReject.EmptyBody, new MessageContext(mqEventData, ea));
                     }
 
                     messageContext = new MessageContext(
@@ -274,6 +275,10 @@ namespace ReRabbit.Subscribers
                     var acknowledgement = await messageHandler(messageContext);
 
                     return (acknowledgement, messageContext);
+                }
+                catch (MessageSerializationException e)
+                {
+                    return (new FormatReject(e), messageContext);
                 }
                 catch (Exception e)
                 {

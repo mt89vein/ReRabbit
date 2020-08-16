@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using ReRabbit.Abstractions.Exceptions;
 using System;
 using System.IO;
 
@@ -59,13 +60,19 @@ namespace ReRabbit.Core.Serializations
             {
                 return str;
             }
-            string serialized;
-            using (var sw = new StringWriter())
+
+            try
             {
+                using var sw = new StringWriter();
                 _json.Serialize(sw, obj);
-                serialized = sw.GetStringBuilder().ToString();
+                var serialized = sw.GetStringBuilder().ToString();
+
+                return serialized;
             }
-            return serialized;
+            catch (Exception e)
+            {
+                throw new MessageSerializationException("Не удалось десериализовать json.", e);
+            }
         }
 
         /// <summary>
@@ -80,12 +87,18 @@ namespace ReRabbit.Core.Serializations
             {
                 return str;
             }
-            object obj;
-            using (var jsonReader = new JsonTextReader(new StringReader(str)))
+
+            try
             {
-                obj = _json.Deserialize(jsonReader, type);
+                using var jsonReader = new JsonTextReader(new StringReader(str));
+                var obj = _json.Deserialize(jsonReader, type);
+
+                return obj;
             }
-            return obj;
+            catch (Exception e)
+            {
+                throw new MessageSerializationException("Не удалось десериализовать json.", e);
+            }
         }
 
         #endregion Методы (public)
