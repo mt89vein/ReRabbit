@@ -46,17 +46,16 @@ namespace ReRabbit.Subscribers.Extensions
             Dictionary<string, object> loggingScope
         )
         {
-            var retryNumber = properties.GetRetryNumber();
-            var isLastRetry = properties.IsLastRetry(subscriberSettings);
+            var isLastRetry = properties.IsLastRetry(subscriberSettings, out var retryCount);
 
-            loggingScope["RetryNumber"] = retryNumber;
+            loggingScope["RetryNumber"] = retryCount;
 
             if (isLastRetry)
             {
                 loggingScope["IsLastRetry"] = true;
             }
 
-            return (retryNumber, isLastRetry);
+            return (retryCount, isLastRetry);
         }
 
         /// <summary>
@@ -78,18 +77,22 @@ namespace ReRabbit.Subscribers.Extensions
         /// </summary>
         /// <param name="properties">Метаданные сообщения.</param>
         /// <param name="retrySettings">Настройки повтора подписчика.</param>
+        /// <param name="retryCount">Количество повторных попыток.</param>
         /// <returns>Признак попытки последней обработки.</returns>
         internal static bool IsLastRetry(
             this IBasicProperties properties,
-            RetrySettings retrySettings
+            RetrySettings retrySettings,
+            out int retryCount
         )
         {
+            retryCount = properties.GetRetryNumber();
+
             if (retrySettings.DoInfinityRetries)
             {
                 return false;
             }
 
-            return properties.GetRetryNumber() >= retrySettings.RetryCount;
+            return retryCount >= retrySettings.RetryCount;
         }
 
         /// <summary>

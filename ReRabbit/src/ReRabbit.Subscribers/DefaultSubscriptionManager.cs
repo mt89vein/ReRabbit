@@ -58,44 +58,44 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения для обработки.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="subscriberSettings">Настройки подписчика.</param>
-        public async Task BindAsync<TEvent>(SubscriberSettings subscriberSettings)
-            where TEvent : class, IMessage
+        public async Task BindAsync<TMessage>(SubscriberSettings subscriberSettings)
+            where TMessage : class, IMessage
         {
             using var channel =
                 await _subscriberFactory
-                    .GetSubscriber<TEvent>()
-                    .BindAsync<TEvent>(subscriberSettings);
+                    .GetSubscriber<TMessage>()
+                    .BindAsync<TMessage>(subscriberSettings);
         }
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
-        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
-        public Task BindAsync<TMessage>(string configurationSectionName)
+        /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
+        public Task BindAsync<TMessage>(string subscriberName)
             where TMessage : class, IMessage
         {
-            return BindAsync<TMessage>(_configurationManager.GetSubscriberSettings(configurationSectionName));
+            return BindAsync<TMessage>(_configurationManager.GetSubscriberSettings(subscriberName));
         }
 
         /// <summary>
         /// Выполнить привязку.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
-        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
         public Task BindAsync<TMessage>(
-            string configurationSectionName,
+            string subscriberName,
             string connectionName,
             string virtualHost
         )
             where TMessage : class, IMessage
         {
             return BindAsync<TMessage>(_configurationManager.GetSubscriberSettings(
-                    configurationSectionName,
+                    subscriberName,
                     connectionName,
                     virtualHost
                 )
@@ -107,12 +107,12 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик событий.</param>
-        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
         public Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            string configurationSectionName,
+            string subscriberName,
             string connectionName,
             string virtualHost
         )
@@ -121,7 +121,7 @@ namespace ReRabbit.Subscribers
             return RegisterAsync(
                 messageHandler,
                 _configurationManager.GetSubscriberSettings(
-                    configurationSectionName,
+                    subscriberName,
                     connectionName,
                     virtualHost
                 )
@@ -133,16 +133,16 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик событий.</param>
-        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         public Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            string configurationSectionName
+            string subscriberName
         )
             where TMessage : class, IMessage
         {
             return RegisterAsync(
                 messageHandler,
-                _configurationManager.GetSubscriberSettings(configurationSectionName)
+                _configurationManager.GetSubscriberSettings(subscriberName)
             );
         }
 
@@ -193,16 +193,16 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
-        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            string configurationSectionName
+            string subscriberName
         )
             where TMessage : class, IMessage
         {
             return RegisterAsync(
                 eventHandler,
-                _configurationManager.GetSubscriberSettings(configurationSectionName)
+                _configurationManager.GetSubscriberSettings(subscriberName)
             );
         }
 
@@ -211,12 +211,12 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
-        /// <param name="configurationSectionName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            string configurationSectionName,
+            string subscriberName,
             string connectionName,
             string virtualHost
         )
@@ -225,7 +225,7 @@ namespace ReRabbit.Subscribers
             return RegisterAsync(
                 eventHandler,
                 _configurationManager.GetSubscriberSettings(
-                    configurationSectionName,
+                    subscriberName,
                     connectionName,
                     virtualHost
                 )

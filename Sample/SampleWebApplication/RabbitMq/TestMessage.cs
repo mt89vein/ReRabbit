@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
@@ -54,7 +55,7 @@ namespace SampleWebApplication.RabbitMq
                 return Ack.Ok;
             }
 
-            return new Reject( "1"); // Ack.Ok;
+            return new Reject("1"); // Ack.Ok;
         }
     }
 }

@@ -10,9 +10,9 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Получить подписчика.
         /// </summary>
-        /// <typeparam name="TEvent">Тип сообщения.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <returns>Подписчик.</returns>
-        ISubscriber GetSubscriber<TEvent>()
-            where TEvent : IMessage;
+        ISubscriber GetSubscriber<TMessage>()
+            where TMessage : IMessage;
     }
 }

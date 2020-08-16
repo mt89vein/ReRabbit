@@ -12,6 +12,6 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="subscriberSettings">Настройки подписчика.</param>
         /// <returns>Поведение оповещения брокера сообщений.</returns>
-        IAcknowledgementBehaviour GetBehaviour<TEventType>(SubscriberSettings subscriberSettings);
+        IAcknowledgementBehaviour GetBehaviour<TMessage>(SubscriberSettings subscriberSettings);
     }
 }

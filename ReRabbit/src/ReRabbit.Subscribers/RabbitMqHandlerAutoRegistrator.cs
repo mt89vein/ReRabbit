@@ -166,11 +166,11 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <param name="messageHandlerType">Тип обработчика сообщения..</param>
-        /// <param name="configurationSectionName">Секция конфигурации с настройками обработчика.</param>
+        /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="subscribedMessageTypes">Типы сообщений, на которые подписывается обработчик.</param>
         private Task Register<TMessage>(
             Type messageHandlerType,
-            string configurationSectionName,
+            string subscriberName,
             IEnumerable<Type> subscribedMessageTypes
         )
             where TMessage : class, IMessage
@@ -182,7 +182,7 @@ namespace ReRabbit.Subscribers
                 .OfType<RabbitMessage>()
                 .ToList();
 
-            var subscriberSettings = GetSubscriberSettings(configurationSectionName, subscribedMessageInstances);
+            var subscriberSettings = GetSubscriberSettings(subscriberName, subscribedMessageInstances);
 
             return _subscriptionManager.RegisterAsync<TMessage>(ctx =>
             {
@@ -236,12 +236,12 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Получить настройки очереди с учетом подписок на сообщения.
         /// </summary>
-        /// <param name="configurationSectionName">Секция конфигурации с настройками обработчика.</param>
+        /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="rabbitMessages">Сообщения на которые оформляется подписка.</param>
         /// <returns>Настройки потребителя.</returns>
-        private SubscriberSettings GetSubscriberSettings(string configurationSectionName, IEnumerable<RabbitMessage> rabbitMessages)
+        private SubscriberSettings GetSubscriberSettings(string subscriberName, IEnumerable<RabbitMessage> rabbitMessages)
         {
-            var subscriberSettings = _configurationManager.GetSubscriberSettings(configurationSectionName);
+            var subscriberSettings = _configurationManager.GetSubscriberSettings(subscriberName);
 
             foreach (var rabbitMessage in rabbitMessages)
             {

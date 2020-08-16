@@ -36,12 +36,12 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Получить подписчика.
         /// </summary>
-        /// <typeparam name="TEventType">Тип сообщения.</typeparam>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <returns>Подписчик.</returns>
-        public ISubscriber GetSubscriber<TEventType>()
-            where TEventType : IMessage
+        public ISubscriber GetSubscriber<TMessage>()
+            where TMessage : IMessage
         {
-            if (_resolver.TryGet(out var subscriber, typeof(TEventType).Name))
+            if (_resolver.TryGet(out var subscriber, typeof(TMessage).Name))
             {
                 return subscriber;
             }

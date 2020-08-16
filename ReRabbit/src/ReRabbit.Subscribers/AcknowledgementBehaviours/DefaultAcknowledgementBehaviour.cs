@@ -274,11 +274,11 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     return false;
                 }
 
-                if (messageContext.EventArgs.BasicProperties.IsLastRetry(settings.RetrySettings))
+                if (messageContext.EventArgs.BasicProperties.IsLastRetry(settings.RetrySettings, out var retryCount))
                 {
                     if (settings.RetrySettings.LogOnFailLastRetry)
                     {
-                        _logger.RabbitMessageHandleFailed(settings.RetrySettings.RetryCount);
+                        _logger.RabbitMessageHandleFailed(retryCount);
                     }
 
                     return false;
@@ -300,8 +300,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 }
                 else
                 {
-                    var retryDelayComputer =
-                        _retryDelayComputerResolver.GetRequired(settings.RetrySettings.RetryPolicy);
+                    var retryDelayComputer = _retryDelayComputerResolver.GetRequired(settings.RetrySettings.RetryPolicy);
 
                     actualRetryDelay = retryDelayComputer.Compute(
                         settings.RetrySettings,
