@@ -5,9 +5,9 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /src
 COPY Directory.Build.props .
-COPY ReRabbit .
-COPY Sample .
-WORKDIR /src/SampleWebApplication
+COPY ReRabbit ./ReRabbit
+COPY Sample ./Sample
+WORKDIR /src/Sample/SampleWebApplication
 RUN dotnet restore
 RUN dotnet build --no-restore -c Release -o /app/build
 

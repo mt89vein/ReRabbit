@@ -1,17 +1,24 @@
 version: '3.4'
-
 services:
-
   samplewebapplication:
     image: samplewebapplication
     build:
       context: .
       dockerfile: ./Sample/SampleWebApplication/Dockerfile
-
+    env_file:
+      - .env
+    ports:
+      - '8080:80'
   rabbitmq:
     image: re-rabbitmq
     build:
       context: ./Infrastructure/rabbitmq/
-
+    ports:
+      - '15673:15672'
+      - '5673:5672'
+    volumes:
+      - './Infrastructure/rabbitmq/config/rabbitmq_definitions.json:/etc/rabbitmq/rabbitmq_definitions.json'
   redis.cache:
     image: redis
+    ports:
+      - '6380:6379'

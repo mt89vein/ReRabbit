@@ -242,7 +242,7 @@ namespace ReRabbit.Abstractions.Settings.Connection
             {
                 "localhost"
             };
-            Port = port ?? 5432;
+            Port = port ?? 5672;
             NetworkRecoveryInterval = networkRecoveryInterval ?? TimeSpan.FromSeconds(10);
             ContinuationTimeout = continuationTimeout ?? TimeSpan.FromSeconds(10);
             HandshakeContinuationTimeout = handshakeContinuationTimeout ?? TimeSpan.FromSeconds(10);

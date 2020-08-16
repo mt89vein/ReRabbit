@@ -1,9 +1,0 @@
-<Project>
-    <PropertyGroup>
-        <LangVersion>latest</LangVersion>
-        <Version>0.0.0.1</Version>
-        <WarningsAsErrors>false</WarningsAsErrors>
-        <NoWarn>$(NoWarn);1701;1702;1591</NoWarn>
-        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    </PropertyGroup>
-</Project>
