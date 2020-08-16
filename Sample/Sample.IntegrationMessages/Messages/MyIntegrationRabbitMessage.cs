@@ -5,17 +5,17 @@ namespace Sample.IntegrationMessages.Messages
 {
     public class MyIntegrationRabbitMessage : RabbitMessage<MyIntegrationMessageDto>
     {
-        // TODO versioning dispatch
-
         public MyIntegrationRabbitMessage(IConfigurationManager configurationManager)
             : base(configurationManager)
         {
         }
     }
 
-    public sealed class MyIntegrationRabbitMessageV2 : RabbitMessage<MyIntegrationMessageDto>
+    public sealed class MyIntegrationRabbitMessageV2 : RabbitMessage<MyIntegrationMessageDtoV2>
     {
         // TODO versioning dispatch
+
+        public override string Version => "2.0";
 
         public MyIntegrationRabbitMessageV2(IConfigurationManager configurationManager)
             : base(configurationManager)
@@ -26,5 +26,12 @@ namespace Sample.IntegrationMessages.Messages
     public class MyIntegrationMessageDto : IntegrationMessage
     {
         public string Message { get; set; }
+    }
+
+    public class MyIntegrationMessageDtoV2 : IntegrationMessage
+    {
+        public string Message { get; set; }
+
+        public string Value { get; set; }
     }
 }

@@ -6,10 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Extensions;
 using SampleWebApplication.Mappers;
+using SampleWebApplication.Mappings;
 using SampleWebApplication.Middlewares;
-using SampleWebApplication.RabbitMq.TestEvent;
+using SampleWebApplication.RabbitMq;
 using SampleWebApplication.RetryDelayComputers;
-using System;
 
 namespace SampleWebApplication
 {
@@ -51,7 +51,7 @@ namespace SampleWebApplication
                     x.Factories.MessageMapper = sp => sp.GetRequiredService<DefaultMessageMapper>();
                 });
 
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddAutoMapper(a => a.AddProfiles(AutoMapperConfiguration.GetProfiles()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
