@@ -12,6 +12,6 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Получить список типов middleware.
         /// </summary>
         /// <returns>Список типов middleware.</returns>
-        IEnumerable<Type> Get();
+        IReadOnlyCollection<Type> Get();
     }
 }

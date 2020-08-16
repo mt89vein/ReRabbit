@@ -102,14 +102,14 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <param name="messageType">Тип сообщения.</param>
         /// <returns>Список типов middleware.</returns>
-        public IEnumerable<Type> Get(Type messageType)
+        public IReadOnlyCollection<Type> Get(Type messageType)
         {
             if (_middlewareRegistries.TryGetValue(messageType, out var messageMiddlewareRegistry))
             {
                 return ((IMessageMiddlewareRegistryAccessor) messageMiddlewareRegistry).Get();
             }
 
-            return Enumerable.Empty<Type>();
+            return Array.Empty<Type>();
         }
 
         #endregion Методы (public)

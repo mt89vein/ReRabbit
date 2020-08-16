@@ -1,9 +1,7 @@
-using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -55,9 +53,9 @@ namespace ReRabbit.Subscribers.Middlewares
             MessageContext<IMessage> ctx
         )
         {
-            var middlewareInfos = _registry.Get(ctx.Message.GetType()).ToList();
+            var middlewareInfos = _registry.Get(ctx.Message.GetType());
 
-            if (!middlewareInfos.Any())
+            if (middlewareInfos.Count == 0)
             {
                 return await next(ctx);
             }
