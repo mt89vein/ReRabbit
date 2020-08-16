@@ -61,12 +61,12 @@ namespace ReRabbit.Core
         /// <summary>
         /// Получить конфигурацию подписчика по названию секции, подключения и виртуального хоста.
         /// </summary>
-        /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
+        /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование вирутального хоста.</param>
         /// <returns>Настройки подписчика.</returns>
         public SubscriberSettings GetSubscriberSettings(
-            string configurationSectionName,
+            string subscriberName,
             string connectionName,
             string virtualHost
         )
@@ -74,19 +74,19 @@ namespace ReRabbit.Core
             if (!Settings.SubscriberConnections.TryGetValue(connectionName, out var connectionSettings))
             {
                 throw new InvalidConfigurationException(
-                    $"При поиске подписчика {configurationSectionName} не найдено подключение с именем {connectionName}.");
+                    $"При поиске подписчика {subscriberName} не найдено подключение с именем {connectionName}.");
             }
 
             if (!connectionSettings.VirtualHosts.TryGetValue(virtualHost, out var virtualHostSettings))
             {
                 throw new InvalidConfigurationException(
-                    $"При поиске подписчика {configurationSectionName} в настройках подключения {connectionName} не найден виртуальный хост с именем {virtualHost}.");
+                    $"При поиске подписчика {subscriberName} в настройках подключения {connectionName} не найден виртуальный хост с именем {virtualHost}.");
             }
 
-            if (!virtualHostSettings.Subscribers.TryGetValue(configurationSectionName, out var subscriberSettings))
+            if (!virtualHostSettings.Subscribers.TryGetValue(subscriberName, out var subscriberSettings))
             {
                 throw new InvalidConfigurationException(
-                    $"Конфигурация подписчика с именем {configurationSectionName} в настройках подключения {connectionName}:{virtualHost} не найдена.");
+                    $"Конфигурация подписчика с именем {subscriberName} в настройках подключения {connectionName}:{virtualHost} не найдена.");
             }
 
             return subscriberSettings;
@@ -95,24 +95,24 @@ namespace ReRabbit.Core
         /// <summary>
         /// Получить конфигурацию среди всех подключений и виртуальных хостов.
         /// </summary>
-        /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
+        /// <param name="subscriberName">Наименование секции конфигурации подписчика.</param>
         /// <returns>Настройки подписчика.</returns>
-        public SubscriberSettings GetSubscriberSettings(string configurationSectionName)
+        public SubscriberSettings GetSubscriberSettings(string subscriberName)
         {
             // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
             var subscriberSettings = Settings.SubscriberConnections
                 .SelectMany(p => p.Value.VirtualHosts.Values.SelectMany(v => v.Subscribers.Values))
-                .Where(x => x.SubscriberName == configurationSectionName)
+                .Where(x => x.SubscriberName == subscriberName)
                 .ToList();
 
             return subscriberSettings.Count switch
             {
                 0 => throw new InvalidOperationException(
-                    $"Не найдена конфигурация для подписчика с именем {configurationSectionName}."),
+                    $"Не найдена конфигурация для подписчика с именем {subscriberName}."),
                 1 => subscriberSettings[0],
                 _ => throw new InvalidOperationException(
-                    $"Обнаружено {subscriberSettings.Count} конфигураций для подписчика с именем {configurationSectionName}. Укажите явно подключение/виртуальный хост.")
+                    $"Обнаружено {subscriberSettings.Count} конфигураций для подписчика с именем {subscriberName}. Укажите явно подключение/виртуальный хост.")
             };
         }
 

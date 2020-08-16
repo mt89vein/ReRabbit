@@ -125,7 +125,7 @@ namespace ReRabbit.Subscribers
                     Attribute = attribute,
                     Handler = handler
                 });
-            }).GroupBy(g => g.Attribute.ConfigurationSectionName);
+            }).GroupBy(g => g.Attribute.SubscriberName);
 
             var methodInfo = GetType().GetMethod(
                 nameof(Register),
@@ -245,14 +245,14 @@ namespace ReRabbit.Subscribers
 
             foreach (var rabbitMessage in rabbitMessages)
             {
-                // TODO: добавить метод AddBinding...
-                //subscriberSettings.Bindings.Add(new ExchangeBinding
-                //{
-                //    Arguments = rabbitMessage.MessageSettingsDto.Arguments,
-                //    FromExchange = rabbitMessage.MessageSettingsDto.Exchange.Name,
-                //    RoutingKeys = new List<string> { rabbitMessage.MessageSettingsDto.Route },
-                //    ExchangeType = rabbitMessage.MessageSettingsDto.Exchange.Type
-                //});
+                var binding = new ExchangeBinding(
+                    rabbitMessage.MessageSettings.Exchange.Name,
+                    rabbitMessage.MessageSettings.Exchange.Type,
+                    new List<string> {rabbitMessage.MessageSettings.Route},
+                    rabbitMessage.MessageSettings.Arguments
+                );
+
+                subscriberSettings.AddBinding(binding);
             }
 
             return subscriberSettings;

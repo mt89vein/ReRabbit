@@ -5,7 +5,7 @@ using System.Linq;
 namespace ReRabbit.Abstractions.Attributes
 {
     /// <summary>
-    /// Атрибут с наименованием секции конфигурации, в котором находится конфигурация подписчика.
+    /// Атрибут для конфигурации подписчика.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public sealed class SubscriberConfigurationAttribute : Attribute
@@ -13,9 +13,9 @@ namespace ReRabbit.Abstractions.Attributes
         #region Свойства
 
         /// <summary>
-        /// Наименование секции, в котором находится конфигурация.
+        /// Наименование подписчика.
         /// </summary>
-        public string ConfigurationSectionName { get; }
+        public string SubscriberName { get; }
 
         /// <summary>
         /// Типы сообщений на которые оформляется подписка.
@@ -29,15 +29,15 @@ namespace ReRabbit.Abstractions.Attributes
         /// <summary>
         /// Создает новый экземпляр класса <see cref="SubscriberConfigurationAttribute"/>.
         /// </summary>
-        /// <param name="configurationSectionName">Наименование секции, в котором находится конфигурация.</param>
+        /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="messageTypes">Типы сообщений на которые оформляется подписка.</param>
-        public SubscriberConfigurationAttribute(string configurationSectionName, params Type[] messageTypes)
+        public SubscriberConfigurationAttribute(string subscriberName, params Type[] messageTypes)
         {
-            ConfigurationSectionName = !string.IsNullOrWhiteSpace(configurationSectionName)
-                ? configurationSectionName
+            SubscriberName = !string.IsNullOrWhiteSpace(subscriberName)
+                ? subscriberName
                 : throw new ArgumentNullException(
-                    nameof(configurationSectionName),
-                    "Наименование секции конфигурации не может быть пустым"
+                    nameof(subscriberName),
+                    "Наименование подписчика не может быть пустым."
                 );
 
             var incorrectTypeArguments =
@@ -48,7 +48,7 @@ namespace ReRabbit.Abstractions.Attributes
                 throw new ArgumentException(
                     "Переданы некорректные типы сообщений " +
                     $"[{string.Join(", ", incorrectTypeArguments.Select(s => s.FullName))}] " +
-                    $"для {configurationSectionName}");
+                    $"для {subscriberName}");
             }
 
             MessageTypes = messageTypes;

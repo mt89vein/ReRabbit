@@ -11,12 +11,12 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Получить конфигурацию подписчика по названию секции, подключения и виртуального хоста.
         /// </summary>
-        /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
+        /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование вирутального хоста.</param>
         /// <returns>Настройки подписчика.</returns>
         SubscriberSettings GetSubscriberSettings(
-            string configurationSectionName,
+            string subscriberName,
             string connectionName,
             string virtualHost
         );
@@ -24,9 +24,9 @@ namespace ReRabbit.Abstractions
         /// <summary>
         /// Получить конфигурацию среди всех подключений и виртуальных хостов.
         /// </summary>
-        /// <param name="configurationSectionName">Наименование секции конфигурации подписчика.</param>
+        /// <param name="subscriberName">Наименование секции конфигурации подписчика.</param>
         /// <returns>Настройки подписчика.</returns>
-        SubscriberSettings GetSubscriberSettings(string configurationSectionName);
+        SubscriberSettings GetSubscriberSettings(string subscriberName);
 
         /// <summary>
         /// Получить конфигурацию события среди всех подключений и виртуальных хостов.

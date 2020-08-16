@@ -8,6 +8,15 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
     /// </summary>
     public sealed class SubscriberSettings
     {
+        #region Поля
+
+        /// <summary>
+        /// Подписки на обменники.
+        /// </summary>
+        private readonly HashSet<ExchangeBinding> _bindings;
+
+        #endregion Поля
+
         #region Свойства
 
         /// <summary>
@@ -59,7 +68,7 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <summary>
         /// Подписки очереди на обменники.
         /// </summary>
-        public IReadOnlyList<ExchangeBinding> Bindings { get; }
+        public IReadOnlyCollection<ExchangeBinding> Bindings => _bindings;
 
         /// <summary>
         /// Использовать отдельную очередь для хранения сообщений при обработке которых возникла ошибка.
@@ -166,7 +175,6 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
             Arguments = arguments ?? new Dictionary<string, object>();
             UseModelTypeAsSuffix = useModelTypeAsSuffix ?? false;
             ConsumerName = consumerName;
-            Bindings = new List<ExchangeBinding>(bindings ?? Enumerable.Empty<ExchangeBinding>());
             Durable = durable ?? true;
             Exclusive = exclusive ?? false;
             AutoDelete = autoDelete ?? false;
@@ -176,8 +184,18 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
             RetrySettings = retrySettings ?? new RetrySettings();
             ScalingSettings = scalingSettings ?? new ScalingSettings();
             ConnectionSettings = connectionSettings;
+            _bindings = new HashSet<ExchangeBinding>(bindings ?? Enumerable.Empty<ExchangeBinding>());
         }
 
         #endregion Конструктор
+
+        #region Методы (public)
+
+        public void AddBinding(ExchangeBinding exchangeBinding)
+        {
+            _bindings.Add(exchangeBinding);
+        }
+
+        #endregion Методы (public)
     }
 }

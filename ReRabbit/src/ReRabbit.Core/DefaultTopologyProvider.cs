@@ -70,7 +70,7 @@ namespace ReRabbit.Core
 
             foreach (var binding in settings.Bindings)
             {
-                // Пустая строка - обменник по-умолчанию. Его менять нельзя.
+                // Пустая строка - обменник по-умолчанию. Его создавать нельзя.
                 if (!string.IsNullOrWhiteSpace(binding.FromExchange))
                 {
                     channel.ExchangeDeclare(
@@ -79,33 +79,41 @@ namespace ReRabbit.Core
                         autoDelete: settings.AutoDelete,
                         type: binding.ExchangeType
                     );
+                }
 
-                    if (string.Equals(binding.ExchangeType , ExchangeType.Fanout, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // TODO: вместо чистки валидировать.
-                        //binding.RoutingKeys.Clear();
-                        //binding.RoutingKeys.Add(string.Empty);
-                    }
+                if (string.Equals(binding.ExchangeType , ExchangeType.Fanout, StringComparison.OrdinalIgnoreCase))
+                {
+                    channel.QueueBind(
+                        queueName,
+                        binding.FromExchange,
+                        string.Empty,
+                        binding.Arguments
+                    );
 
-                    foreach (var routingKey in binding.RoutingKeys)
-                    {
-                        channel.QueueBind(
-                            queueName,
-                            binding.FromExchange,
-                            routingKey,
-                            binding.Arguments
-                        );
-                    }
+                    continue; // для Fanout не требуются routingKeys, 1 биндинг на обменник и всё.
+                }
 
-                    if (string.Equals(binding.ExchangeType , ExchangeType.Headers, StringComparison.OrdinalIgnoreCase) && binding.Arguments.Keys.Any())
-                    {
-                        channel.QueueBind(
-                            queueName,
-                            binding.FromExchange,
-                            string.Empty,
-                            binding.Arguments
-                        );
-                    }
+                if (string.Equals(binding.ExchangeType, ExchangeType.Headers, StringComparison.OrdinalIgnoreCase) && binding.Arguments.Any())
+                {
+                    channel.QueueBind(
+                        queueName,
+                        binding.FromExchange,
+                        string.Empty,
+                        binding.Arguments
+                    );
+
+                    continue; // для Headers не требуются routingKeys, 1 биндинг на обменник без ключей роутинга. А роут вычисляется по аргументам.
+                }
+
+                // для всех остальных кейсов (direct.. и прочее)
+                foreach (var routingKey in binding.RoutingKeys)
+                {
+                    channel.QueueBind(
+                        queueName,
+                        binding.FromExchange,
+                        routingKey,
+                        binding.Arguments
+                    );
                 }
             }
         }
@@ -150,7 +158,6 @@ namespace ReRabbit.Core
         /// <param name="messageName">Наименование сообщения.</param>
         /// <param name="exchange">Тип обменника.</param>
         /// <param name="routingKey">Роут.</param>
-        /// <param name="arguments">Аргументы.</param>
         /// <param name="retryDelay">Период на которую откладывается паблиш.</param>
         /// <returns>Название очереди с отложенным паблишем.</returns>
         public string DeclareDelayedPublishQueue(
@@ -158,7 +165,6 @@ namespace ReRabbit.Core
             string messageName,
             string exchange,
             string routingKey,
-            IDictionary<string, object> arguments,
             TimeSpan retryDelay
         )
         {
@@ -170,21 +176,22 @@ namespace ReRabbit.Core
             var delayedQueueName = messageName + "-" + retryDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) +
                                    "s-delayed-publish";
 
-            arguments ??= new Dictionary<string, object>();
-
-            // автоматически будет переслан в тот обменник и RoutingKey, который был изначально указан
-            arguments.Add(QueueArgument.DEAD_LETTER_EXCHANGE, exchange);
-            arguments.Add(QueueArgument.DEAD_LETTER_ROUTING_KEY, routingKey);
-            arguments.Add(QueueArgument.EXPIRES, Convert.ToInt32(retryDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds));
-            arguments.Add(QueueArgument.MESSAGE_TTL, Convert.ToInt32(retryDelay.TotalMilliseconds));
-
+            // TODO: проверить DelayedPublish для HeaderExchange
 
             channel.QueueDeclare(
                 queue: delayedQueueName,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
-                arguments: arguments
+                arguments: new Dictionary<string, object>
+                {
+                    // автоматически будет переслан в тот обменник и RoutingKey, который был изначально указан
+                    [QueueArgument.DEAD_LETTER_EXCHANGE] = exchange,
+                    [QueueArgument.DEAD_LETTER_ROUTING_KEY] = routingKey,
+                    [QueueArgument.EXPIRES] =
+                        Convert.ToInt32(retryDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds),
+                    [QueueArgument.MESSAGE_TTL] = Convert.ToInt32(retryDelay.TotalMilliseconds)
+                }
             );
 
             return delayedQueueName;
@@ -234,12 +241,6 @@ namespace ReRabbit.Core
         /// <param name="settings">Настройки подписчика.</param>
         public void UseCommonUnroutedMessagesQueue(IModel channel, SubscriberSettings settings)
         {
-            // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди.
-
-            //settings.ConnectionSettings.VirtualHost
-            //settings.ConnectionSettings.HostNames ->
-            //settings.ConnectionSettings.Port  -> ManagementPort default 15672
-
             channel.QueueDeclare(
                 CommonQueuesConstants.UNROUTED_MESSAGES,
                 durable: true,
@@ -271,12 +272,6 @@ namespace ReRabbit.Core
         /// <param name="settings">Настройки подписчика.</param>
         public void UseCommonErrorMessagesQueue(IModel channel, SubscriberSettings settings)
         {
-            // TODO: httpClient, который будет слать запрос на админку рэббита и ставить политики для этой очереди.
-
-            //settings.ConnectionSettings.VirtualHost
-            //settings.ConnectionSettings.HostNames ->
-            //settings.ConnectionSettings.Port  -> ManagementPort default 15672
-
             channel.QueueDeclare(
                 CommonQueuesConstants.ERROR_MESSAGES,
                 durable: true,

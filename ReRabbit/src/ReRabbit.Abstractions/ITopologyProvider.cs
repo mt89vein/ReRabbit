@@ -61,7 +61,6 @@ namespace ReRabbit.Abstractions
         /// <param name="messageName">Наименование сообщения.</param>
         /// <param name="exchange">Тип обменника.</param>
         /// <param name="routingKey">Роут.</param>
-        /// <param name="arguments">Аргументы.</param>
         /// <param name="retryDelay">Период на которую откладывается паблиш.</param>
         /// <returns>Название очереди с отложенным паблишем.</returns>
         string DeclareDelayedPublishQueue(
@@ -69,7 +68,6 @@ namespace ReRabbit.Abstractions
             string messageName,
             string exchange,
             string routingKey,
-            IDictionary<string, object> arguments,
             TimeSpan retryDelay
         );
     }

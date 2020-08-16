@@ -197,7 +197,6 @@ namespace ReRabbit.Publishers
                     routeInfo.Name,
                     routeInfo.Exchange,
                     routeInfo.Route,
-                    routeInfo.Arguments,
                     routeInfo.Delay.Value
                 );
             }
