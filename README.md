@@ -13,3 +13,5 @@ RabbitMQ framework over official RabbitMQ.Client
 ```
 либо в Visual Studio / Rider запускаем docker-compose.
 или если без докера, то поднимаем RabbitMQ на локальной машине и потом как обычно в IIS/Kestrel запускаем [Sample](https://github.com/mt89vein/ReRabbit/tree/master/Sample)
+
+Далее проект с примером будет доступен по адресу http://localhost:8080
