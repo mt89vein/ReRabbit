@@ -22,6 +22,11 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// </summary>
         public bool LogWhenGenerated { get; }
 
+        /// <summary>
+        /// Логировать факт прихода сообщения.
+        /// </summary>
+        public bool LogWhenMessageIncome { get; }
+
         #endregion Свойства
 
         #region Конструктор
@@ -47,15 +52,23 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// По-умолчанию: true.
         /// </para>
         /// </param>
+        /// <param name="logWhenMessageIncome">
+        /// Логировать факт прихода сообщения.
+        /// <para>
+        /// По-умолчанию: false.
+        /// </para>
+        /// </param>
         public TracingSettings(
             bool? isEnabled = null,
             bool? generateIfNotPresent = null,
-            bool? logWhenGenerated = null
+            bool? logWhenGenerated = null,
+            bool? logWhenMessageIncome = null
         )
         {
             IsEnabled = isEnabled ?? true;
             GenerateIfNotPresent = generateIfNotPresent ?? true;
             LogWhenGenerated = logWhenGenerated ?? true;
+            LogWhenMessageIncome = logWhenMessageIncome ?? false;
         }
 
         #endregion Конструктор

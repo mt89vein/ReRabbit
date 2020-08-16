@@ -220,6 +220,16 @@ namespace ReRabbit.Subscribers
                 ["TraceId"] = ea.BasicProperties.CorrelationId
             };
 
+            if (settings.TracingSettings.LogWhenMessageIncome)
+            {
+                _logger.LogInformation(
+                    "Принято сообщение {MessageId} {TraceId} в размере {Length} байт",
+                    ea.BasicProperties.MessageId,
+                    ea.BasicProperties.CorrelationId,
+                    ea.Body.Length
+                );
+            }
+
             if (_logger.IsEnabled(LogLevel.Trace))
             {
                 if (ea.BasicProperties.Headers["publishTag"] is byte[] bytes && ulong.TryParse(Encoding.UTF8.GetString(bytes), out var tag))

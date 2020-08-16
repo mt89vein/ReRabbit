@@ -23,7 +23,6 @@ namespace ReRabbit.Extensions
         /// </summary>
         public Func<IServiceProvider, ISubscriberFactory> SubscriberFactory { get; set; }
 
-
         /// <summary>
         /// Менеджер подписок.
         /// </summary>

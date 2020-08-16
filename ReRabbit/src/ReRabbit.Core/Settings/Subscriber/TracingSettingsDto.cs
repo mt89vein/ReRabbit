@@ -22,9 +22,14 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// </summary>
         public bool? LogWhenGenerated { get; set; }
 
+        /// <summary>
+        /// Логировать факт прихода сообщения.
+        /// </summary>
+        public bool? LogWhenMessageIncome { get; set; }
+
         public TracingSettings Create()
         {
-            return new TracingSettings(IsEnabled, GenerateIfNotPresent, LogWhenGenerated);
+            return new TracingSettings(IsEnabled, GenerateIfNotPresent, LogWhenGenerated, LogWhenMessageIncome);
         }
     }
 }

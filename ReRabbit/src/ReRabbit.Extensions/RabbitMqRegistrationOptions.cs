@@ -39,7 +39,6 @@ namespace ReRabbit.Extensions
         #endregion Свойства
 
         // TODO: outbox pattern
-        // TODO: deduplication
 
         #region Конструктор
 
@@ -61,7 +60,6 @@ namespace ReRabbit.Extensions
             INamedRegistratorBuilder<string, ISubscriber> subscriberRegistrator,
             INamedRegistratorBuilder<string, IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
             INamedRegistratorBuilder<string, IRetryDelayComputer> retryDelayComputerRegistrator
-
         )
         {
             SubscriberMiddlewares = subscriberMiddlewaresRegistry;
