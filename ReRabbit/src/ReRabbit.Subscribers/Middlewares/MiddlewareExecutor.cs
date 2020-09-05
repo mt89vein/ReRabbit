@@ -72,6 +72,7 @@ namespace ReRabbit.Subscribers.Middlewares
 
             var current = middlewareChain.Last;
 
+            // TODO: формировать цепочку вызовов и кэшировать её.
             while (current != null)
             {
                 var middleware = current.Value as MiddlewareBase;

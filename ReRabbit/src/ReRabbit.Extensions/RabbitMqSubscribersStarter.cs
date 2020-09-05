@@ -46,7 +46,7 @@ namespace ReRabbit.Extensions
             }
             catch (Exception e)
             {
-                // TODO: 
+                // TODO: после того как будет заимплеменчен оркестратор потребителей, ошибки будут отлавливаться и обрабатываться им
                 Console.WriteLine(e);
                 throw;
             }

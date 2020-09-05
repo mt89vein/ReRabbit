@@ -84,6 +84,9 @@ namespace ReRabbit.Subscribers.Middlewares
             where TMessage : class, IMessage
         {
             var messageType = typeof(TMessage);
+
+            // TODO: валидировать на дубликаты настроек
+
             if (!_middlewareRegistries.TryGetValue(messageType, out var messageMiddleware))
             {
                 messageMiddleware = new MessageMiddlewareRegistry(_services, this, messageType, withCurrentGlobals

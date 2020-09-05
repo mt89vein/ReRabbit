@@ -282,6 +282,9 @@ namespace ReRabbit.Subscribers
                 }
                 catch (Exception e)
                 {
+                    // любые ошибки, выброшенные в пользовательском обработчике будут автоматически реджектить.
+                    // TODO: прикрутить здесь poison-message-handling
+
                     return (new Reject(
                         "Ошибка обработки сообщения из очереди.",
                         e,

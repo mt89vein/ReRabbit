@@ -15,7 +15,8 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Publishers
 {
-    // декоратором обмазать IModel, для outbox pattern и делегировать другому интерфейсу сохранение и получение недоставленных сообщений.
+    // декоратором обмазать IMessagePublisher для outbox pattern и делегировать другому интерфейсу сохранение и получение недоставленных сообщений.
+    // TODO: если не удалось опубликовать, должен быть соответствующий экспешн с деталями ошибки и исходным сообщением
 
     /// <summary>
     /// Издатель сообщений.
@@ -127,9 +128,8 @@ namespace ReRabbit.Publishers
                         {
                             _logger.LogError(
                                 ex,
-                                "Попытка опубликовать сообщение {RouteInfo} в RabbitMq {Count} из {RetryCount}",
+                                "Не удалось опубликовать сообщение {RouteInfo} в RabbitMq за {RetryCount} попыток",
                                 routeInfo.ToString(),
-                                count,
                                 routeInfo.RetryCount
                             );
                         }

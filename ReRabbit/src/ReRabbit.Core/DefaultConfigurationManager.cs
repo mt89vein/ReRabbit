@@ -99,7 +99,7 @@ namespace ReRabbit.Core
         /// <returns>Настройки подписчика.</returns>
         public SubscriberSettings GetSubscriberSettings(string subscriberName)
         {
-            // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
+            // конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
             var subscriberSettings = Settings.SubscriberConnections
                 .SelectMany(p => p.Value.VirtualHosts.Values.SelectMany(v => v.Subscribers.Values))
@@ -123,7 +123,7 @@ namespace ReRabbit.Core
         /// <returns>Настройки сообщения.</returns>
         public MessageSettings GetMessageSettings(string messageName)
         {
-            // Конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
+            // конфигурация должна быть уникальной, если ищем среди всех подключений и виртуальных хостов.
 
             var messageSettings = Settings.PublisherConnections
                 .SelectMany(p => p.Value.VirtualHosts.Values.SelectMany(v => v.Messages.Values))
