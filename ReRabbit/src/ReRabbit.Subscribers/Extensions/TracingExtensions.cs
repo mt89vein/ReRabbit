@@ -4,6 +4,7 @@ using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TracingContext;
 
 namespace ReRabbit.Subscribers.Extensions
 {
@@ -19,6 +20,11 @@ namespace ReRabbit.Subscribers.Extensions
         /// </summary>
         private const string TRACE_ID_KEY = "x-trace-id";
 
+        /// <summary>
+        /// Название заголовка или поля, для передачи источника сквозного идентификатора.
+        /// </summary>
+        private const string TRACE_ID_SOURCE_KEY = "x-trace-id-source";
+
         #endregion Константы
 
         #region Методы (public)
@@ -27,37 +33,39 @@ namespace ReRabbit.Subscribers.Extensions
         /// Получить или сгенерировать TraceId и установить контекст трейсинга.
         /// </summary>
         /// <param name="properties">Метаданные сообщения.</param>
-        /// <param name="tracingSettings">Настройки трейсинга.</param>
+        /// <param name="settings">Настройки трейсинга.</param>
         /// <param name="logger">Логгер.</param>
         /// <param name="loggingScope">Скоуп.</param>
         /// <returns>Идентификатор отслеживания.</returns>
-        public static Guid EnsureTraceId(
+        public static Guid? EnsureTraceId(
             this IBasicProperties properties,
-            TracingSettings tracingSettings,
+            TracingSettings settings,
             ILogger logger,
             Dictionary<string, object> loggingScope
         )
         {
-            var traceId = properties.GetTraceId();
-
-            if (traceId == Guid.Empty && tracingSettings.GenerateIfNotPresent)
+            if (!TryGetTraceInfo(properties, out var traceId, out var traceIdSource))
             {
-                traceId = Guid.NewGuid();
-                properties.AddTraceId(traceId);
-
-                if (tracingSettings.LogWhenGenerated)
+                if (settings.GenerateIfNotPresent)
                 {
-                    using (logger.BeginScope(loggingScope))
+                    traceId = Guid.NewGuid();
+
+                    if (settings.LogWhenGenerated)
                     {
-                        logger.LogInformation("TraceId не указан. Сгенерирован новый {TraceId}.", traceId);
+                        using (logger.BeginScope(loggingScope))
+                        {
+                            logger.LogInformation("TraceId не указан. Сгенерирован новый {TraceId}.", traceId);
+                        }
                     }
                 }
             }
 
-            // TraceContext.Create(traceId);
+            TraceContext.Create(traceId, traceIdSource);
 
-            loggingScope.Add(TRACE_ID_KEY, traceId);
-            // TODO: traceIdSource
+            loggingScope["TraceId"] = traceId;
+            loggingScope["TraceIdSource"] = traceIdSource;
+
+            properties.AddTraceId();
 
             return traceId;
         }
@@ -66,33 +74,68 @@ namespace ReRabbit.Subscribers.Extensions
         /// Получить сквозной идентификатор.
         /// </summary>
         /// <param name="properties">Свойства сообщения.</param>
-        /// <returns>Сквозной идентификатор.</returns>
-        public static Guid GetTraceId(this IBasicProperties properties)
+        /// <param name="traceId">Сквозной идентификатор.</param>
+        /// <param name="traceIdSource">Строка-результат.</param>
+        internal static bool TryGetTraceInfo(this IBasicProperties properties, out Guid? traceId, out string? traceIdSource)
         {
-            object rawTraceId = null;
-            return properties.IsCorrelationIdPresent() && Guid.TryParse(properties.CorrelationId, out var traceId)
-                ? traceId
-                : properties.Headers?.TryGetValue(TRACE_ID_KEY, out rawTraceId) == true &&
-                  rawTraceId is byte[] byteTraceIdArray &&
-                  Guid.TryParse(Encoding.UTF8.GetString(byteTraceIdArray), out traceId)
-                    ? traceId
-                    : Guid.Empty;
+            traceIdSource = null;
+            traceId = null;
+            var traceIdResult = TryGetFromCorrelationId(properties) ??
+                                TryGetFromHeaders(properties);
+
+            if (traceIdResult.HasValue && traceIdResult != Guid.Empty)
+            {
+                traceId = traceIdResult;
+                var traceIdSourceResult = properties.TryGetHeaderValue(TRACE_ID_SOURCE_KEY, out var traceIdSourceByteArray);
+                traceIdSource = traceIdSourceResult
+                    ? Encoding.UTF8.GetString(traceIdSourceByteArray)
+                    : "FromMessage";
+
+                return true;
+            }
+            return false;
+
+            static Guid? TryGetFromCorrelationId(IBasicProperties basicProperties)
+            {
+                if (basicProperties.IsCorrelationIdPresent() &&
+                    Guid.TryParse(basicProperties.CorrelationId, out var id) &&
+                    id != Guid.Empty)
+                {
+                    return id;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            static Guid? TryGetFromHeaders(IBasicProperties basicProperties)
+            {
+                if (basicProperties.IsHeadersPresent() &&
+                    basicProperties.Headers.TryGetValue(TRACE_ID_KEY, out var rawTraceId) &&
+                    rawTraceId is byte[] byteTraceIdArray &&
+                    Guid.TryParse(Encoding.UTF8.GetString(byteTraceIdArray), out var id) &&
+                    id != Guid.Empty)
+                {
+                    return id;
+                }
+                else
+                {
+                    return null;
+                }
+            }
         }
 
         /// <summary>
         /// Добавить сквозной идентификатор в свойства сообщения.
         /// </summary>
         /// <param name="properties">Свойства сообщения.</param>
-        /// <param name="traceId">Сквозной идентификатор.</param>
-        public static void AddTraceId(this IBasicProperties properties, Guid traceId)
+        public static void AddTraceId(this IBasicProperties properties)
         {
-            if (properties.Headers == null)
-            {
-                properties.Headers = new Dictionary<string, object>();
-            }
-
-            properties.CorrelationId = traceId.ToString();
+            properties.Headers ??= new Dictionary<string, object>();
+            properties.CorrelationId = TraceContext.Current.TraceId.ToString();
             properties.Headers[TRACE_ID_KEY] = properties.CorrelationId;
+            properties.Headers[TRACE_ID_SOURCE_KEY] = TraceContext.Current.TraceIdSource;
         }
 
         #endregion Методы (public)

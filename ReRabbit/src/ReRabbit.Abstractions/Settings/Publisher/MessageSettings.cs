@@ -21,11 +21,6 @@ namespace ReRabbit.Abstractions.Settings.Publisher
         public string Version { get; }
 
         /// <summary>
-        /// Тип роута.
-        /// </summary>
-        public RouteType RouteType { get; }
-
-        /// <summary>
         /// Роут для публикации.
         /// </summary>
         public string Route { get; }
@@ -99,7 +94,6 @@ namespace ReRabbit.Abstractions.Settings.Publisher
             MqConnectionSettings connectionSettings,
             string name,
             string? version = null,
-            RouteType? routeType = null,
             string? route = null,
             IDictionary<string, object> arguments = null,
             ExchangeInfo exchange = null,
@@ -109,7 +103,6 @@ namespace ReRabbit.Abstractions.Settings.Publisher
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Version = version ?? "1.0";
-            RouteType = routeType ?? RouteType.Constant;
             Route = route ?? string.Empty; // TODO: сделать проверки параметров в зависимости от типа обменника.
             Arguments = arguments ?? new Dictionary<string, object>();
             Exchange = exchange ?? new ExchangeInfo();

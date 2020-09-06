@@ -70,7 +70,7 @@ namespace ReRabbit.Core
 
             foreach (var binding in settings.Bindings)
             {
-                // Пустая строка - обменник по-умолчанию. Его создавать нельзя.
+                // пустая строка - обменник по-умолчанию. Его создавать нельзя.
                 if (!string.IsNullOrWhiteSpace(binding.FromExchange))
                 {
                     channel.ExchangeDeclare(
@@ -81,7 +81,7 @@ namespace ReRabbit.Core
                     );
                 }
 
-                if (string.Equals(binding.ExchangeType , ExchangeType.Fanout, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(binding.ExchangeType, ExchangeType.Fanout, StringComparison.OrdinalIgnoreCase))
                 {
                     channel.QueueBind(
                         queueName,

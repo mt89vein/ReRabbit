@@ -1,7 +1,6 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
-using System.Collections.Generic;
 
 namespace ReRabbit.Abstractions
 {

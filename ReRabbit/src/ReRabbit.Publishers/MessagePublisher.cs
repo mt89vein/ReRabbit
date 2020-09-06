@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using NamedResolver.Abstractions;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
@@ -12,6 +13,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using TracingContext;
 
 namespace ReRabbit.Publishers
 {
@@ -38,7 +40,7 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Провайдер роутов.
         /// </summary>
-        private readonly IRouteProvider _routeProvider;
+        private readonly INamedResolver<string, IRouteProvider> _router;
 
         /// <summary>
         /// Сериализатор.
@@ -58,7 +60,7 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Пул каналов.
         /// </summary>
-        private readonly ConcurrentDictionary<string, ExclusiveChannel> _channelPool;
+        private readonly ConcurrentBag<ExclusiveChannel> _channelPool;
 
         #endregion Поля
 
@@ -70,7 +72,7 @@ namespace ReRabbit.Publishers
         public MessagePublisher(
             IPermanentConnectionManager connectionManager,
             IServiceInfoAccessor serviceInfoAccessor,
-            IRouteProvider routeProvider,
+            INamedResolver<string, IRouteProvider> router,
             ISerializer serializer,
             ITopologyProvider topologyProvider,
             ILogger<MessagePublisher> logger
@@ -78,11 +80,11 @@ namespace ReRabbit.Publishers
         {
             _connectionManager = connectionManager;
             _serviceInfoAccessor = serviceInfoAccessor;
-            _routeProvider = routeProvider;
+            _router = router;
             _serializer = serializer;
             _topologyProvider = topologyProvider;
             _logger = logger;
-            _channelPool = new ConcurrentDictionary<string, ExclusiveChannel>();
+            _channelPool = new ConcurrentBag<ExclusiveChannel>();
         }
 
         #endregion Конструктор
@@ -101,7 +103,11 @@ namespace ReRabbit.Publishers
             where TRabbitMessage : RabbitMessage<TMessage>
             where TMessage : class, IMessage
         {
-            var routeInfo = _routeProvider.GetFor<TRabbitMessage>(message, delay);
+            if (!_router.TryGet(out var routeProvider, typeof(TRabbitMessage).Name))
+            {
+                routeProvider = _router.Get();
+            }
+            var routeInfo = routeProvider.GetFor<TRabbitMessage, TMessage>(message, delay);
             var connection = _connectionManager.GetConnection(routeInfo.ConnectionSettings, ConnectionPurposeType.Publisher);
 
             var mqMessage = new MqMessage(
@@ -138,7 +144,8 @@ namespace ReRabbit.Publishers
             return retryPolicy.ExecuteAsync(async () =>
             {
                 await connection.TryConnectAsync();
-                var (channel, semaphoreSlim) = await GetChannelAsync(routeInfo.Name, connection);
+                var exclusiveChannel = await GetChannelAsync(routeInfo, connection);
+                var (channel, semaphoreSlim) = exclusiveChannel;
 
                 await semaphoreSlim.WaitAsync();
                 try
@@ -171,6 +178,7 @@ namespace ReRabbit.Publishers
                 }
                 finally
                 {
+                    _channelPool.Add(exclusiveChannel);
                     semaphoreSlim.Release();
                 }
             });
@@ -218,7 +226,8 @@ namespace ReRabbit.Publishers
             properties.Persistent = routeInfo.Durable;
             properties.ContentType = contentType;
             properties.MessageId = message.MessageId.ToString();
-            properties.CorrelationId = Guid.NewGuid().ToString(); // TraceContext.Current.TraceId ?? Guid.NewGuid();
+            properties.CorrelationId = TraceContext.Current.TraceId.ToString();
+            // TODO: traceIdSource
             properties.Timestamp = new AmqpTimestamp(((DateTimeOffset)message.MessageCreatedAt).ToUnixTimeSeconds());
 
             if (expires.HasValue)
@@ -232,30 +241,26 @@ namespace ReRabbit.Publishers
             return properties;
         }
 
-        private async ValueTask<ExclusiveChannel> GetChannelAsync(string eventName, IPermanentConnection connection)
+        private async ValueTask<ExclusiveChannel> GetChannelAsync(RouteInfo routeInfo, IPermanentConnection connection)
         {
-            if (_channelPool.TryGetValue(eventName, out var exclusiveChannel) && exclusiveChannel.Channel.IsOpen)
+            if (_channelPool.TryTake(out var exclusiveChannel) && exclusiveChannel.Channel?.IsOpen == true)
             {
                 return exclusiveChannel;
             }
 
-            _channelPool.TryRemove(eventName, out _);
-
             if (exclusiveChannel == null)
             {
                 exclusiveChannel = new ExclusiveChannel(
-                    new PublishConfirmableChannel(await connection.CreateModelAsync(), TimeSpan.FromSeconds(5), _logger),
+                    new PublishConfirmableChannel(await connection.CreateModelAsync(), routeInfo.ConfirmationTimeout, _logger),
                     new SemaphoreSlim(1, 1)
                 );
             }
             else
             {
                 exclusiveChannel.ReplaceChannel(
-                    new PublishConfirmableChannel(await connection.CreateModelAsync(), TimeSpan.FromSeconds(5), _logger)
+                    new PublishConfirmableChannel(await connection.CreateModelAsync(), routeInfo.ConfirmationTimeout, _logger)
                 );
             }
-
-            _channelPool.TryAdd(eventName, exclusiveChannel);
 
             return exclusiveChannel;
         }

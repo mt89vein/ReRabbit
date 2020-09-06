@@ -48,11 +48,16 @@ namespace ReRabbit.Extensions
                     .Add<ExponentialRetryDelayComputer>(RetryPolicyType.Exponential)
                     .Add<LinearRetryDelayComputer>(RetryPolicyType.Linear);
 
+            var routeProviderRegistrator =
+                services.AddNamed<string, IRouteProvider>(ServiceLifetime.Singleton)
+                    .Add<DefaultRouteProvider>();
+
             var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions(
                 middlewareRegistry,
                 subscriberRegistrator,
                 acknowledgementRegistrator,
-                retryDelayComputerRegistrator
+                retryDelayComputerRegistrator,
+                routeProviderRegistrator
             );
 
             options?.Invoke(rabbitMqRegistrationOptions);

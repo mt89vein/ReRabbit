@@ -23,11 +23,6 @@ namespace ReRabbit.Core.Settings.Publisher
         public string Version { get; set; }
 
         /// <summary>
-        /// Тип роута.
-        /// </summary>
-        public RouteType RouteType { get; set; }
-
-        /// <summary>
         /// Роут для публикации.
         /// </summary>
         public string Route { get; set; }
@@ -64,7 +59,6 @@ namespace ReRabbit.Core.Settings.Publisher
                 mqConnectionSettings,
                 Name,
                 Version,
-                RouteType,
                 Route,
                 Arguments,
                 Exchange?.Create(),

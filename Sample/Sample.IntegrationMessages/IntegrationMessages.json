@@ -15,7 +15,6 @@
                   "Type": "direct",
                   "Durable": true
                 },
-                "RouteType": "Constant",
                 "Route": "rk1"
               },
               "MetricsRabbitMessage": {
