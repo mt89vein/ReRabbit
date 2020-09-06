@@ -1,7 +1,6 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Publisher;
-using SmartFormat;
 using System;
 using System.Collections.Concurrent;
 
@@ -9,8 +8,9 @@ namespace ReRabbit.Publishers
 {
     /// <summary>
     /// Провайдер информации о роуте для публикации.
+    /// Этот класс не наследуется.
     /// </summary>
-    public class DefaultRouteProvider : IRouteProvider
+    public sealed class DefaultRouteProvider : IRouteProvider
     {
         #region Поля
 
@@ -22,7 +22,7 @@ namespace ReRabbit.Publishers
         /// <summary>
         /// Кэш настроек сообщений.
         /// </summary>
-        private readonly ConcurrentDictionary<string, MessageSettings> _messagesSettingsCache;
+        private readonly ConcurrentDictionary<Type, MessageSettings> _messagesSettingsCache;
 
         #endregion Поля
 
@@ -35,7 +35,7 @@ namespace ReRabbit.Publishers
         public DefaultRouteProvider(IConfigurationManager configurationManager)
         {
             _configurationManager = configurationManager;
-            _messagesSettingsCache = new ConcurrentDictionary<string, MessageSettings>();
+            _messagesSettingsCache = new ConcurrentDictionary<Type, MessageSettings>();
         }
 
         #endregion Конструктор
@@ -48,20 +48,16 @@ namespace ReRabbit.Publishers
         /// <param name="message">Сообщение.</param>
         /// <param name="delay">Время задержки перед публикацией.</param>
         /// <returns>Информация о роуте.</returns>
-        public RouteInfo GetFor<TRabbitMessage>(IMessage message, TimeSpan? delay = null)
-            where TRabbitMessage : class, IRabbitMessage
+        public RouteInfo GetFor<TRabbitMessage, TMessage>(TMessage message, TimeSpan? delay = null)
+            where TRabbitMessage : IRabbitMessage
+            where TMessage : class, IMessage
         {
-            var messageType = message.GetType();
             var messageSettings = _messagesSettingsCache.GetOrAdd(
-                typeof(TRabbitMessage).Name,
-                messageName => _configurationManager.GetMessageSettings(messageName)
+                typeof(TRabbitMessage),
+                rabbitMessageType => _configurationManager.GetMessageSettings(rabbitMessageType.Name)
             );
 
-            var route = messageSettings.RouteType == RouteType.Constant
-                ? messageSettings.Route
-                : Smart.Format(messageSettings.Route, message);
-
-            return new RouteInfo(messageSettings, messageType, route, delay);
+            return new RouteInfo(messageSettings, delay);
         }
 
         #endregion Методы (public)

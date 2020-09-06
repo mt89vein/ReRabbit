@@ -64,11 +64,14 @@ namespace ReRabbit.Core
         /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование вирутального хоста.</param>
+        /// <exception cref="InvalidConfigurationException">
+        /// В случае, если неудалось найти настройки для подключения/виртуального хоста/подписчика по имени.
+        /// </exception>
         /// <returns>Настройки подписчика.</returns>
         public SubscriberSettings GetSubscriberSettings(
             string subscriberName,
             string connectionName,
-            string virtualHost
+            string virtualHost = "/"
         )
         {
             if (!Settings.SubscriberConnections.TryGetValue(connectionName, out var connectionSettings))
@@ -96,6 +99,9 @@ namespace ReRabbit.Core
         /// Получить конфигурацию среди всех подключений и виртуальных хостов.
         /// </summary>
         /// <param name="subscriberName">Наименование секции конфигурации подписчика.</param>
+        /// <exception cref="InvalidConfigurationException">
+        /// В случае, если неудалось найти настройки подписчика по имени, или найдено более 1.
+        /// </exception>
         /// <returns>Настройки подписчика.</returns>
         public SubscriberSettings GetSubscriberSettings(string subscriberName)
         {
@@ -120,6 +126,9 @@ namespace ReRabbit.Core
         /// Получить конфигурацию сообщения среди всех подключений и виртуальных хостов.
         /// </summary>
         /// <param name="messageName">Наименование сообщения.</param>
+        /// <exception cref="InvalidConfigurationException">
+        /// В случае, если неудалось найти настройки сообщения по имени, или найдено более 1.
+        /// </exception>
         /// <returns>Настройки сообщения.</returns>
         public MessageSettings GetMessageSettings(string messageName)
         {
@@ -138,6 +147,32 @@ namespace ReRabbit.Core
                 _ => throw new InvalidOperationException(
                     $"Обнаружено {messageSettings.Count} конфигураций для сообщения с именем {messageName}. Укажите явно подключение/виртуальный хост.")
             };
+        }
+
+        /// <summary>
+        /// Получить настройки подключения.
+        /// </summary>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Виртуальный хост.</param>
+        /// <exception cref="InvalidConfigurationException">
+        /// В случае, если неудалось найти настройки для подключения/виртуального хоста по имени.
+        /// </exception>
+        /// <returns>Настройки подключения.</returns>
+        public MqConnectionSettings GetMqConnectionSettings(string connectionName= "DefaultConnection", string virtualHost = "/")
+        {
+            if (!Settings.SubscriberConnections.TryGetValue(connectionName, out var connectionSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"Не найдены настройки подключения с именем {connectionName}.");
+            }
+
+            if (!connectionSettings.VirtualHosts.TryGetValue(virtualHost, out var virtualHostSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"В настройках подключения {connectionName} не найден виртуальный хост с именем {virtualHost}.");
+            }
+
+            return CreateConnectionSettings(virtualHostSettings);
         }
 
         #endregion Методы (public)

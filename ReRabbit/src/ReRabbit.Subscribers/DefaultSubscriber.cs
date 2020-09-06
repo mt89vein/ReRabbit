@@ -258,7 +258,7 @@ namespace ReRabbit.Subscribers
         {
             ea.EnsureOriginalExchange();
 
-            var traceId = default(Guid);
+            Guid? traceId = default;
 
             var loggingScope = new Dictionary<string, object>
             {

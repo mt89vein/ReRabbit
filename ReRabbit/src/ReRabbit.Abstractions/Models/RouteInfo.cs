@@ -18,11 +18,6 @@ namespace ReRabbit.Abstractions.Models
         public string Name { get; }
 
         /// <summary>
-        /// Тип сообщения.
-        /// </summary>
-        public Type Type { get; }
-
-        /// <summary>
         /// Наименование обменника.
         /// </summary>
         public string Exchange { get; }
@@ -75,7 +70,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Таймаут на подтверждения.
         /// </summary>
-        public TimeSpan ConfirmationTimeout { get; }
+        public TimeSpan? ConfirmationTimeout { get; }
 
         #endregion Свойства
 
@@ -93,14 +88,12 @@ namespace ReRabbit.Abstractions.Models
             string route,
             int retryCount,
             string messageName,
-            Type messageType,
             string messageVersion,
             MqConnectionSettings connectionSettings,
             TimeSpan? delay,
-            TimeSpan confirmationTimeout
+            TimeSpan? confirmationTimeout
         )
         {
-            Type = messageType;
             Name = messageName;
             Exchange = exchange;
             Durable = durable;
@@ -118,16 +111,15 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает экземпляр класса <see cref="RouteInfo"/>.
         /// </summary>
-        public RouteInfo(MessageSettings messageSettings, Type messageType, string route, TimeSpan? delay = null)
+        public RouteInfo(MessageSettings messageSettings, TimeSpan? delay = null)
         {
             Name = messageSettings.Name;
-            Type = messageType;
             Exchange = messageSettings.Exchange.Name;
             ExchangeType = messageSettings.Exchange.Type;
             Arguments = messageSettings.Arguments;
             Durable = messageSettings.Exchange.Durable;
             AutoDelete = messageSettings.Exchange.AutoDelete;
-            Route = route?.ToLower() ?? string.Empty;
+            Route = messageSettings.Route?.ToLower() ?? string.Empty;
             RetryCount = messageSettings.RetryCount;
             MessageVersion = messageSettings.Version;
             ConnectionSettings = messageSettings.ConnectionSettings;

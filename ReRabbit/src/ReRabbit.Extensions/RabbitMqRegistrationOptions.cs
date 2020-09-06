@@ -36,6 +36,11 @@ namespace ReRabbit.Extensions
         /// </summary>
         public INamedRegistratorBuilder<string, IRetryDelayComputer> RetryDelayComputerRegistrator { get; }
 
+        /// <summary>
+        /// Регистратор кастомных провайдеров роутов.
+        /// </summary>
+        public INamedRegistratorBuilder<string, IRouteProvider> RouteProviderRegistrator { get; }
+
         #endregion Свойства
 
         // TODO: outbox pattern
@@ -55,16 +60,21 @@ namespace ReRabbit.Extensions
         /// <param name="retryDelayComputerRegistrator">
         /// Регистратор реализаций вычислителей задержек между повторными обработками.
         /// </param>
+        /// <param name="routeProviderRegistrator">
+        /// Регистратор кастомных провайдеров роутов.
+        /// </param>
         public RabbitMqRegistrationOptions(
             IMiddlewareRegistry subscriberMiddlewaresRegistry,
             INamedRegistratorBuilder<string, ISubscriber> subscriberRegistrator,
             INamedRegistratorBuilder<string, IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
-            INamedRegistratorBuilder<string, IRetryDelayComputer> retryDelayComputerRegistrator
+            INamedRegistratorBuilder<string, IRetryDelayComputer> retryDelayComputerRegistrator,
+            INamedRegistratorBuilder<string, IRouteProvider> routeProviderRegistrator
         )
         {
             SubscriberMiddlewares = subscriberMiddlewaresRegistry;
             AcknowledgementBehaviourRegistrator = acknowledgementBehaviourRegistrator;
             RetryDelayComputerRegistrator = retryDelayComputerRegistrator;
+            RouteProviderRegistrator = routeProviderRegistrator;
             SubscriberRegistrator = subscriberRegistrator;
             Factories = new RabbitMqFactories();
         }
