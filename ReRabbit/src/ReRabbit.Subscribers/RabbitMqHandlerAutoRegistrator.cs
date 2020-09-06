@@ -1,52 +1,21 @@
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Extensions;
-using ReRabbit.Subscribers.Middlewares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers
 {
-    // TODO: разделить класс на 2 составляющие:
-    // 1. Регистратор, который будет наполнять некий реестр обработчиков "Потребителей"
-    // 2. Сервис оркестратор, который будет собственно триггерить запуск потребления из очередей
-    // и будет следить за их жизнеспособностью
-    // для удобства, имеет смысл создать сущность "Потребитель", который можно будет включать/выключать.
-
     /// <summary>
     /// Авторегистратор обработчиков <see cref="IMessageHandler{TMessage}"/>.
     /// </summary>
     public class RabbitMqHandlerAutoRegistrator
     {
         #region Поля
-
-        /// <summary>
-        /// Интерфейс менеджера подписок.
-        /// </summary>
-        private readonly ISubscriptionManager _subscriptionManager;
-
-        /// <summary>
-        /// Интерфейс менеджера конфигураций.
-        /// </summary>
-        private readonly IConfigurationManager _configurationManager;
-
-        /// <summary>
-        /// Сериализатор.
-        /// </summary>
-        private readonly ISerializer _serializer;
-
-        /// <summary>
-        /// Маппер из одного типа сообщения в другой.
-        /// </summary>
-        private readonly IMessageMapper _mapper;
 
         /// <summary>
         /// Провайдер служб.
@@ -63,10 +32,6 @@ namespace ReRabbit.Subscribers
         /// <param name="serviceProvider">Провайдер служб.</param>
         public RabbitMqHandlerAutoRegistrator(IServiceProvider serviceProvider)
         {
-            _subscriptionManager = serviceProvider.GetRequiredService<ISubscriptionManager>();
-            _configurationManager = serviceProvider.GetRequiredService<IConfigurationManager>();
-            _serializer = serviceProvider.GetRequiredService<ISerializer>();
-            _mapper = serviceProvider.GetRequiredService<IMessageMapper>();
             _serviceProvider = serviceProvider;
         }
 
@@ -77,8 +42,7 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>.
         /// </summary>
-        /// <returns>Регистратор обработчиков.</returns>
-        public async Task RegisterAllMessageHandlersAsync()
+        public void FillConsumersRegistry(IConsumerRegistry consumerRegistry)
         {
             var handlerGenericTypeDefinition = typeof(IMessageHandler<>);
 
@@ -102,7 +66,10 @@ namespace ReRabbit.Subscribers
 
             foreach (var g in groups)
             {
-                await SubscribeToMessageAsync(g.EventType, g.Handlers).ConfigureAwait(false);
+                foreach (var consumer in CreateConsumers(g.EventType, g.Handlers))
+                {
+                    consumerRegistry.Add(consumer);
+                }
             }
         }
 
@@ -111,11 +78,12 @@ namespace ReRabbit.Subscribers
         #region Методы (private)
 
         /// <summary>
-        /// Зарегистрировать на сообщение указанных обработчиков.
+        /// Сформировать потребителей.
         /// </summary>
-        /// <param name="messageType">сообщение.</param>
+        /// <param name="messageType">Тип сообщения.</param>
         /// <param name="handlerTypes">Обработчики сообщения.</param>
-        private async Task SubscribeToMessageAsync(Type messageType, IEnumerable<Type> handlerTypes)
+        /// <returns>Перечисление потребителей.</returns>
+        private IEnumerable<IConsumer> CreateConsumers(Type messageType, IEnumerable<Type> handlerTypes)
         {
             var handlerGroups = handlerTypes.SelectMany(handler =>
             {
@@ -133,94 +101,32 @@ namespace ReRabbit.Subscribers
                 });
             }).GroupBy(g => g.Attribute.SubscriberName);
 
-            var methodInfo = GetType().GetMethod(
-                nameof(Register),
-                BindingFlags.NonPublic | BindingFlags.Instance
-            );
-
-            // ReSharper disable once PossibleNullReferenceException
-            var register = methodInfo.MakeGenericMethod(messageType);
-
             foreach (var group in handlerGroups)
             {
                 if (group.Select(g => g.Handler).Distinct().Count() > 1)
                 {
                     throw new NotSupportedException(
                         "Множественные обработчики одного события в памяти не поддерживаются. " +
-                        "Для этого используйте возможности брокера RabbitMq. " +
+                        "Для этого используйте возможности брокера RabbitMq, выделив для каждого обработчика свою отдельную очередь. " +
                         $"Конфигурация '{group.Key}' используются у следующих обработчиков " +
                         $"({string.Join(", ", group.Select(g => g.Handler.FullName))})"
                     );
                 }
 
-                var task = (Task)register.Invoke(
-                    this,
-                    new object[]
-                    {
-                        group.Single().Handler, // класс обработчик
-                        group.Key, // название секции
-                        group.SelectMany(g => g.Attribute.MessageTypes).Distinct() // список сообщений, на которые подписывается.
-                    }
+                var messageHandlerType = group.Single().Handler;
+                var subscriberName = group.Key;
+                var subscribedMessageTypes = group.SelectMany(g => g.Attribute.MessageTypes).Distinct();
+
+                var consumer = ActivatorUtilities.CreateInstance(
+                    _serviceProvider,
+                    typeof(Consumer<>).MakeGenericType(messageType),
+                    messageHandlerType,
+                    subscriberName,
+                    subscribedMessageTypes
                 );
 
-                await task.ConfigureAwait(false);
+                yield return (IConsumer)consumer;
             }
-        }
-
-        /// <summary>
-        /// Метод, который регистрирует обработчика.
-        /// </summary>
-        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
-        /// <param name="messageHandlerType">Тип обработчика сообщения..</param>
-        /// <param name="subscriberName">Наименование подписчика.</param>
-        /// <param name="subscribedMessageTypes">Типы сообщений, на которые подписывается обработчик.</param>
-        private Task Register<TMessage>(
-            Type messageHandlerType,
-            string subscriberName,
-            IEnumerable<Type> subscribedMessageTypes
-        )
-            where TMessage : class, IMessage
-        {
-            var serviceProvider = _serviceProvider;
-
-            var subscribedMessageInstances = subscribedMessageTypes
-                .Select(serviceProvider.GetRequiredService)
-                .OfType<RabbitMessage>()
-                .ToList();
-
-            var subscriberSettings = GetSubscriberSettings(subscriberName, subscribedMessageInstances);
-
-            return _subscriptionManager.RegisterAsync<TMessage>(ctx =>
-            {
-                using var scope = serviceProvider.CreateScope();
-
-                if (!(scope.ServiceProvider.GetService(messageHandlerType) is IMessageHandler<TMessage> handler))
-                {
-                    throw new InvalidOperationException(
-                        $"Ошибка конфигурирования обработчика {messageHandlerType}." +
-                        $"Проверьте зарегистрированы ли все обработчики реализующие {typeof(IMessageHandler<IMessage>)}. Используйте services.AddRabbitMq() для авто-регистрации."
-                    );
-                }
-
-                var mqMessage = GetMqMessageFrom<TMessage>(subscribedMessageInstances, ctx);
-
-                var middlewareExecutor = scope.ServiceProvider.GetRequiredService<IMiddlewareExecutor>();
-
-                return middlewareExecutor.ExecuteAsync(
-                    ctx => handler.HandleAsync(
-                        new MessageContext<TMessage>(
-                            ctx.Message as TMessage,
-                            ctx.MessageData,
-                            ctx.EventArgs
-                        )
-                    ),
-                    new MessageContext<IMessage>(
-                        mqMessage,
-                        ctx.MessageData,
-                        ctx.EventArgs
-                    )
-                );
-            }, subscriberSettings);
         }
 
         /// <summary>
@@ -237,84 +143,6 @@ namespace ReRabbit.Subscribers
                                               m.GetParameters()[0].ParameterType.GenericTypeArguments[0] == messageType)
                           ?.GetCustomAttributes(false)
                           .OfType<SubscriberConfigurationAttribute>();
-        }
-
-        /// <summary>
-        /// Получить настройки очереди с учетом подписок на сообщения.
-        /// </summary>
-        /// <param name="subscriberName">Наименование подписчика.</param>
-        /// <param name="rabbitMessages">Сообщения на которые оформляется подписка.</param>
-        /// <returns>Настройки потребителя.</returns>
-        private SubscriberSettings GetSubscriberSettings(string subscriberName, IEnumerable<RabbitMessage> rabbitMessages)
-        {
-            var subscriberSettings = _configurationManager.GetSubscriberSettings(subscriberName);
-
-            foreach (var rabbitMessage in rabbitMessages)
-            {
-                var binding = new ExchangeBinding(
-                    rabbitMessage.MessageSettings.Exchange.Name,
-                    rabbitMessage.MessageSettings.Exchange.Type,
-                    new List<string> {rabbitMessage.MessageSettings.Route},
-                    rabbitMessage.MessageSettings.Arguments
-                );
-
-                subscriberSettings.AddBinding(binding);
-            }
-
-            return subscriberSettings;
-        }
-
-        private TMessage GetMqMessageFrom<TMessage>(IEnumerable<RabbitMessage> subscribedMessageInstances, MessageContext ctx)
-            where TMessage : class, IMessage
-        {
-            var rabbitMessage = subscribedMessageInstances.FirstOrDefault(
-                s => s.Is(
-                    ctx.EventArgs.Exchange,
-                    ctx.EventArgs.RoutingKey,
-                    ctx.EventArgs.BasicProperties.Headers
-                )
-            );
-
-            object mqMessage;
-            if (rabbitMessage != null)
-            {
-                var dtoType = rabbitMessage.GetDtoType();
-                mqMessage = _serializer.Deserialize(dtoType, ctx.MessageData.MqMessage.Payload.ToString());
-
-                if (dtoType != typeof(TMessage))
-                {
-                    mqMessage = _mapper.Map<TMessage>(mqMessage, ctx);
-                }
-            }
-            else
-            {
-                mqMessage = ctx.MessageData.MqMessage.Payload is JObject jObject
-                    ? jObject.ToObject<TMessage>()
-                    : _serializer.Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString());
-            }
-
-            var message = (TMessage)mqMessage;
-            if (ctx.EventArgs.BasicProperties.IsTimestampPresent())
-            {
-                message.MessageCreatedAt =
-                    DateTimeOffset.FromUnixTimeSeconds(ctx.EventArgs.BasicProperties.Timestamp.UnixTime)
-                        .DateTime;
-            }
-            else if (message.MessageCreatedAt == default)
-            {
-                message.MessageCreatedAt = DateTime.UtcNow;
-            }
-
-            if (ctx.EventArgs.BasicProperties.IsMessageIdPresent() && Guid.TryParse(ctx.EventArgs.BasicProperties.MessageId, out var gMessageId))
-            {
-                message.MessageId = gMessageId;
-            }
-            else if (message.MessageId == default)
-            {
-                message.MessageId = Guid.NewGuid();
-            }
-
-            return message;
         }
 
         #endregion Методы (private)

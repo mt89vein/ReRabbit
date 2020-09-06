@@ -85,6 +85,13 @@ namespace ReRabbit.Subscribers.Extensions
             out int retryCount
         )
         {
+            if (!retrySettings.IsEnabled)
+            {
+                retryCount = 0;
+
+                return true;
+            }
+
             retryCount = properties.GetRetryNumber();
 
             if (retrySettings.DoInfinityRetries)

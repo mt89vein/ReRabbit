@@ -69,10 +69,10 @@ namespace ReRabbit.Subscribers.Extensions
         /// <returns>Сквозной идентификатор.</returns>
         public static Guid GetTraceId(this IBasicProperties properties)
         {
+            object rawTraceId = null;
             return properties.IsCorrelationIdPresent() && Guid.TryParse(properties.CorrelationId, out var traceId)
                 ? traceId
-                : properties.IsHeadersPresent() &&
-                  properties.Headers.TryGetValue(TRACE_ID_KEY, out var rawTraceId) &&
+                : properties.Headers?.TryGetValue(TRACE_ID_KEY, out rawTraceId) == true &&
                   rawTraceId is byte[] byteTraceIdArray &&
                   Guid.TryParse(Encoding.UTF8.GetString(byteTraceIdArray), out traceId)
                     ? traceId

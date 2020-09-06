@@ -138,14 +138,6 @@ namespace ReRabbit.Core
 
         private void OnModelShutdown(object model, ShutdownEventArgs reason)
         {
-            if (model is IModel channel)
-            {
-                channel.ModelShutdown -= OnModelShutdown;
-                channel.BasicAcks -= OnBasicAcks;
-                channel.BasicNacks -= OnBasicNacks;
-                channel.BasicReturn -= OnBasicReturn;
-            }
-
             FaultPendingPublishes(reason.ReplyText);
         }
 
@@ -281,13 +273,12 @@ namespace ReRabbit.Core
             {
                 return;
             }
-            _logger?.LogDebug("Closing model: {ChannelNumber}", _channel.ChannelNumber);
 
             try
             {
                 if (_channel.IsOpen && _publishTasks.Count > 0)
                 {
-                    _channel.WaitForConfirms();
+                    _channel.WaitForConfirms(TimeSpan.FromSeconds(10));
                 }
             }
             catch (Exception ex)
@@ -295,11 +286,8 @@ namespace ReRabbit.Core
                 _logger?.LogError(ex, "Fault waiting for pending confirms:  {ChannelNumber}", _channel.ChannelNumber);
             }
 
-            _channel.ModelShutdown -= OnModelShutdown;
-            _channel.BasicAcks -= OnBasicAcks;
-            _channel.BasicNacks -= OnBasicNacks;
-            _channel.BasicReturn -= OnBasicReturn;
             _channel.Dispose();
+
             _disposed = true;
         }
 

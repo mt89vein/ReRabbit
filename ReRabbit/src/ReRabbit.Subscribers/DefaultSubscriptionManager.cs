@@ -1,10 +1,9 @@
-using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core;
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers
@@ -16,11 +15,6 @@ namespace ReRabbit.Subscribers
     public sealed class DefaultSubscriptionManager : ISubscriptionManager
     {
         #region Поля
-
-        /// <summary>
-        /// Список канал для подписок.
-        /// </summary>
-        private readonly List<IModel> _channels;
 
         /// <summary>
         /// Менеджер конфигураций.
@@ -46,7 +40,6 @@ namespace ReRabbit.Subscribers
             IConfigurationManager configurationManager
         )
         {
-            _channels = new List<IModel>();
             _subscriberFactory = subscriberFactory;
             _configurationManager = configurationManager;
         }
@@ -110,11 +103,13 @@ namespace ReRabbit.Subscribers
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         public Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             string subscriberName,
             string connectionName,
-            string virtualHost
+            string virtualHost,
+            Action<bool> onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -124,7 +119,8 @@ namespace ReRabbit.Subscribers
                     subscriberName,
                     connectionName,
                     virtualHost
-                )
+                ),
+                onUnregister
             );
         }
 
@@ -134,15 +130,18 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик событий.</param>
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         public Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            string subscriberName
+            string subscriberName,
+            Action<bool> onUnregister = null
         )
             where TMessage : class, IMessage
         {
             return RegisterAsync(
                 messageHandler,
-                _configurationManager.GetSubscriberSettings(subscriberName)
+                _configurationManager.GetSubscriberSettings(subscriberName),
+                onUnregister
             );
         }
 
@@ -152,18 +151,24 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="subscriberSettings">Настройки подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         public async Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            SubscriberSettings subscriberSettings
+            SubscriberSettings subscriberSettings,
+            Action<bool> onUnregister = null
         )
             where TMessage : class, IMessage
         {
             var subscriber = _subscriberFactory.GetSubscriber<TMessage>();
             for (var i = 0; i < subscriberSettings.ScalingSettings.ChannelsCount; i++)
             {
-                var channel = await subscriber.SubscribeAsync(messageHandler, subscriberSettings);
-
-                _channels.Add(channel);
+                await subscriber.SubscribeAsync(
+                    messageHandler,
+                    subscriberSettings,
+                    isForceDisconnect =>
+                    {
+                        onUnregister?.Invoke(isForceDisconnect);
+                    });
             }
         }
 
@@ -173,9 +178,11 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="subscriberSettings">Настройки подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            SubscriberSettings subscriberSettings
+            SubscriberSettings subscriberSettings,
+            Action<bool> onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -185,7 +192,11 @@ namespace ReRabbit.Subscribers
                     .ContinueWith<Acknowledgement>(_ => Ack.Ok);
             });
 
-            return RegisterAsync(handler, subscriberSettings);
+            return RegisterAsync(
+                handler,
+                subscriberSettings,
+                onUnregister
+            );
         }
 
         /// <summary>
@@ -194,15 +205,18 @@ namespace ReRabbit.Subscribers
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик событий.</param>
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            string subscriberName
+            string subscriberName,
+            Action<bool> onUnregister = null
         )
             where TMessage : class, IMessage
         {
             return RegisterAsync(
                 eventHandler,
-                _configurationManager.GetSubscriberSettings(subscriberName)
+                _configurationManager.GetSubscriberSettings(subscriberName),
+                onUnregister
             );
         }
 
@@ -214,11 +228,13 @@ namespace ReRabbit.Subscribers
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
             string subscriberName,
             string connectionName,
-            string virtualHost
+            string virtualHost,
+            Action<bool> onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -228,17 +244,9 @@ namespace ReRabbit.Subscribers
                     subscriberName,
                     connectionName,
                     virtualHost
-                )
+                ),
+                onUnregister
             );
-        }
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            _channels.ForEach(x => x?.Dispose());
-            _channels.Clear();
         }
 
         #endregion Методы (public)
