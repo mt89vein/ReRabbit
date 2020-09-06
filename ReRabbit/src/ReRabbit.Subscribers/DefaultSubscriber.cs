@@ -96,9 +96,16 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="settings">Настройки очереди.</param>
+        /// <param name="onUnsubscribed">
+        /// Функция обратного вызова, для отслеживания ситуации, когда остановлено потребление сообщений.
+        /// </param>
         /// <returns>Канал, на котором работает подписчик.</returns>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
-        public async Task<IModel> SubscribeAsync<TMessage>(AcknowledgableMessageHandler<TMessage> messageHandler, SubscriberSettings settings)
+        public async Task<IModel> SubscribeAsync<TMessage>(
+            AcknowledgableMessageHandler<TMessage> messageHandler,
+            SubscriberSettings settings,
+            Action<bool> onUnsubscribed = null
+        )
             where TMessage : class, IMessage
         {
             var channel = await BindAsync<TMessage>(settings);
@@ -130,22 +137,33 @@ namespace ReRabbit.Subscribers
 
                 _logger.RabbitHandlerRestarted(ea.Exception);
 
-                channel = AsyncHelper.RunSync(() => SubscribeAsync(messageHandler, settings));
+                onUnsubscribed?.Invoke(false);
             };
 
             channel.ModelShutdown += (sender, ea) =>
             {
-                if (ea.Initiator == ShutdownInitiator.Peer && !ea.ReplyText.Contains("stop"))
+                // если отключаем с админки
+                if (ea.Initiator == ShutdownInitiator.Peer && (ea.ReplyText.Contains("stop") || ea.ReplyText.Contains("Closed via management plugin")))
                 {
-                    channel?.Dispose();
+                    _logger.RabbitHandlerForceStopped(ea);
 
+                    onUnsubscribed?.Invoke(true); // force
+                }
+                else
+                {
                     _logger.RabbitHandlerRestartedAfterReconnect(ea);
 
-                    channel = AsyncHelper.RunSync(() => SubscribeAsync(messageHandler, settings));
+                    onUnsubscribed?.Invoke(false);
                 }
             };
 
-            return channel;
+            // создаем канал с подтверждениями публикаций сообщений
+
+            return new PublishConfirmableChannel(
+                channel,
+                TimeSpan.FromSeconds(5),
+                _logger
+            );
         }
 
         /// <summary>
@@ -154,6 +172,42 @@ namespace ReRabbit.Subscribers
         /// <param name="settings">Настройки очереди.</param>
         /// <returns>Канал, на котором была выполнена привязка.</returns>
         public async Task<IModel> BindAsync<TEvent>(SubscriberSettings settings)
+            where TEvent : class, IMessage
+        {
+            var channel = await _permanentConnectionManager
+                .GetConnection(settings.ConnectionSettings, ConnectionPurposeType.Subscriber)
+                .CreateModelAsync();
+
+            _topologyProvider.DeclareQueue(channel, settings, typeof(TEvent));
+
+            if (settings.UseDeadLetter)
+            {
+                _topologyProvider.UseDeadLetteredQueue(channel, settings, typeof(TEvent));
+            }
+
+            if (settings.ConnectionSettings.UseCommonUnroutedMessagesQueue)
+            {
+                _topologyProvider.UseCommonUnroutedMessagesQueue(channel, settings);
+            }
+
+            if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
+            {
+                _topologyProvider.UseCommonErrorMessagesQueue(channel, settings);
+            }
+
+            return channel;
+        }
+
+        #endregion Методы (public)
+
+        #region Методы (private)
+
+        /// <summary>
+        /// Выполнить привязку.
+        /// </summary>
+        /// <param name="settings">Настройки очереди.</param>
+        /// <returns>Канал, на котором была выполнена привязка.</returns>
+        private async Task<IModel> BindInternalAsync<TEvent>(SubscriberSettings settings)
             where TEvent : class, IMessage
         {
             var channel = await _permanentConnectionManager
@@ -185,10 +239,6 @@ namespace ReRabbit.Subscribers
 
             return channel;
         }
-
-        #endregion Методы (public)
-
-        #region Методы (private)
 
         /// <summary>
         /// Обработать сообщение из шины.
@@ -353,6 +403,7 @@ namespace ReRabbit.Subscribers
 
         private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED = 1;
         private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT = 2;
+        private const int RABBITMQ_MESSAGE_HANDLER_FORCE_STOPPED = 3;
 
         #endregion Константы
 
@@ -374,7 +425,17 @@ namespace ReRabbit.Subscribers
                         RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT,
                         nameof(RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT)
                     ),
-                    "Соединение сброшено {Reason}. Потребитель сообщений из очереди инициализирован повторно."
+                    "Соединение сброшено {Reason}. Потребитель сообщений из очереди будет инициализирован повторно."
+                );
+
+        private static readonly Action<ILogger, string, Exception>
+            _rabbitMqHandlerForceStoppedLogAction =
+                LoggerMessage.Define<string>(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_HANDLER_FORCE_STOPPED,
+                        nameof(RABBITMQ_MESSAGE_HANDLER_FORCE_STOPPED)
+                    ),
+                    "Потребитель остановлен {Reason}."
                 );
 
         #endregion LogActions
@@ -391,6 +452,12 @@ namespace ReRabbit.Subscribers
         public static void RabbitHandlerRestartedAfterReconnect(this ILogger logger, ShutdownEventArgs ea)
         {
             _rabbitMqHandlerRestartedAfterReconnectLogAction(logger, ea.ReplyText, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitHandlerForceStopped(this ILogger logger, ShutdownEventArgs ea)
+        {
+            _rabbitMqHandlerForceStoppedLogAction(logger, ea.ReplyText, null);
         }
 
         #endregion Методы (public)

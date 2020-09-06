@@ -1,12 +1,14 @@
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Abstractions;
 using ReRabbit.Subscribers;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Extensions
 {
+    /// <summary>
+    /// Запускает потребление сообщений при старте приложения.
+    /// </summary>
     public class RabbitMqSubscribersStarter : BackgroundService
     {
         #region Поля
@@ -16,6 +18,11 @@ namespace ReRabbit.Extensions
         /// </summary>
         private readonly RabbitMqHandlerAutoRegistrator _rabbitMqHandlerAutoRegistrator;
 
+        /// <summary>
+        /// Реестр-оркестратор потребителей.
+        /// </summary>
+        private readonly IConsumerRegistry _consumerRegistry;
+
         #endregion Поля
 
         #region Конструктор
@@ -23,9 +30,13 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Создает новый экземпляр класса <see cref="RabbitMqSubscribersStarter"/>.
         /// </summary>
-        public RabbitMqSubscribersStarter(RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator)
+        public RabbitMqSubscribersStarter(
+            RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator,
+            IConsumerRegistry consumerRegistry
+        )
         {
             _rabbitMqHandlerAutoRegistrator = rabbitMqHandlerAutoRegistrator;
+            _consumerRegistry = consumerRegistry;
         }
 
         #endregion Конструктор
@@ -38,19 +49,20 @@ namespace ReRabbit.Extensions
         /// </summary>
         /// <param name="stoppingToken">Triggered when <see cref="M:Microsoft.Extensions.Hosting.IHostedService.StopAsync(System.Threading.CancellationToken)" /> is called.</param>
         /// <returns>A <see cref="T:System.Threading.Tasks.Task" /> that represents the long running operations.</returns>
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            try
-            {
-                await _rabbitMqHandlerAutoRegistrator.RegisterAllMessageHandlersAsync().ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                // TODO: после того как будет заимплеменчен оркестратор потребителей, ошибки будут отлавливаться и обрабатываться им
-                Console.WriteLine(e);
-                throw;
-            }
- 
+            _rabbitMqHandlerAutoRegistrator.FillConsumersRegistry(_consumerRegistry);
+
+            return _consumerRegistry.StartAsync();
+        }
+
+        /// <summary>
+        /// Triggered when the application host is performing a graceful shutdown.
+        /// </summary>
+        /// <param name="cancellationToken">Indicates that the shutdown process should no longer be graceful.</param>
+        public override Task StopAsync(CancellationToken cancellationToken)
+        {
+            return _consumerRegistry.StopAsync();
         }
 
         #endregion Методы (protected)

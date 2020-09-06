@@ -31,6 +31,7 @@ namespace ReRabbit.Extensions
             services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistry);
 
             services.AddSingleton<RabbitMqHandlerAutoRegistrator>();
+            services.AddSingleton<IConsumerRegistry, ConsumerRegistry>();
             services.AddHostedService<RabbitMqSubscribersStarter>();
 
             var subscriberRegistrator =

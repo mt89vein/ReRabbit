@@ -122,6 +122,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
+                // TODO: покрыть тестами данный кусок кода
                 if (await TryRetryAsync<TMessage>(channel, messageContext, settings, retry.Span))
                 {
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
@@ -171,7 +172,8 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                if (await TryRetryAsync<TMessage>(channel, messageContext, settings))
+                // TODO: покрыть тестами данный кусок кода
+                if (nack.Requeue && await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -203,6 +205,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
+                // TODO: покрыть тестами данный кусок кода
                 if (reject is EmptyBodyReject || reject is FormatReject)
                 {
                     if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
@@ -237,7 +240,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
                 }
-                else if (await TryRetryAsync<TMessage>(channel, messageContext, settings))
+                else if (reject.Requeue && await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
                     if (!settings.AutoAck)
                     {
@@ -246,7 +249,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 }
                 else
                 {
-                    channel.BasicReject(messageContext.EventArgs.DeliveryTag, reject.Requeue);
+                    channel.BasicReject(messageContext.EventArgs.DeliveryTag, false);
                 }
             }
         }
@@ -269,6 +272,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             // если явно не указали время ретрая, то смотрим настройки и т.д.
             if (retryDelay == null)
             {
+                // проверка на включенность нужна только если явно не указали время задержки перед ретраем
                 if (!settings.RetrySettings.IsEnabled)
                 {
                     return false;
@@ -285,7 +289,11 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 }
             }
 
-            var routingKey = string.Empty;
+            string routingKey;
+
+            // если явно не указали время задержки, но ретраи включены и без задержек,
+            // то просто публикуем в ту же самую очередь в конец через стандартный обменник
+
             if (settings.RetrySettings.RetryDelayInSeconds == 0 && retryDelay == null)
             {
                 routingKey = _namingConvention.QueueNamingConvention(typeof(TMessage), settings);

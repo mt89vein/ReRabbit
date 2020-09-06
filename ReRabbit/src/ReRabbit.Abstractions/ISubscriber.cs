@@ -2,6 +2,7 @@ using RabbitMQ.Client;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Subscriber;
+using System;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Abstractions
@@ -16,10 +17,15 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="settings">Настройки очереди.</param>
+        /// <param name="onUnsubscribed">
+        /// Функция обратного вызова, для отслеживания ситуации, когда остановлено потребление сообщений.
+        /// </param>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
         /// <returns>Канал, на котором работает подписчик.</returns>
         Task<IModel> SubscribeAsync<TMessage>(
-            AcknowledgableMessageHandler<TMessage> messageHandler, SubscriberSettings settings
+            AcknowledgableMessageHandler<TMessage> messageHandler,
+            SubscriberSettings settings,
+            Action<bool> onUnsubscribed = null
         ) where TMessage : class, IMessage;
 
         /// <summary>

@@ -8,7 +8,7 @@ namespace ReRabbit.Abstractions
     /// <summary>
     /// Менеджер подписок.
     /// </summary>
-    public interface ISubscriptionManager : IDisposable
+    public interface ISubscriptionManager
     {
         /// <summary>
         /// Выполнить привязку.
@@ -47,11 +47,13 @@ namespace ReRabbit.Abstractions
         /// <param name="subscriberName">Наименование подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             string subscriberName,
             string connectionName,
-            string virtualHost
+            string virtualHost,
+            Action<bool> onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -60,9 +62,11 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            string subscriberName
+            string subscriberName,
+            Action<bool> onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -71,9 +75,11 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="messageHandler">Обработчик сообщений.</param>
         /// <param name="subscriberSettings">Настройки подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
-            SubscriberSettings subscriberSettings
+            SubscriberSettings subscriberSettings,
+            Action<bool> onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -82,9 +88,11 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик сообщений.</param>
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            string subscriberName
+            string subscriberName,
+            Action<bool> onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -95,11 +103,13 @@ namespace ReRabbit.Abstractions
         /// <param name="subscriberName">Наименование секции с конфигурацией подписчика.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Наименование виртуального хоста.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
             string subscriberName,
             string connectionName,
-            string virtualHost
+            string virtualHost,
+            Action<bool> onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -108,9 +118,11 @@ namespace ReRabbit.Abstractions
         /// <typeparam name="TMessage">Тип сообщения для обработки.</typeparam>
         /// <param name="eventHandler">Обработчик сообщений.</param>
         /// <param name="subscriberSettings">Настройки подписчика.</param>
+        /// <param name="onUnregister">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
-            SubscriberSettings subscriberSettings
+            SubscriberSettings subscriberSettings,
+            Action<bool> onUnregister = null
         ) where TMessage : class, IMessage;
     }
 }

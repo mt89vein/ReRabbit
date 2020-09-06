@@ -23,7 +23,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Данные доставки из шины.
         /// </summary>
-        public BasicDeliverEventArgs EventArgs { get; }
+        public BasicDeliverEventArgs EventArgs { get; } // TODO: заменить на кастомный класс/структуру
 
         #endregion Свойства
 
@@ -57,7 +57,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Данные доставки из шины.
         /// </summary>
-        public BasicDeliverEventArgs EventArgs { get; }
+        public BasicDeliverEventArgs EventArgs { get; } // TODO: заменить на кастомный класс/структуру
 
         #endregion Свойства
 

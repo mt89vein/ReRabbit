@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Core
 {
-    // TODO: таймер на проверку факта подключения, на случай блока или падения подключения - чтобы переподключался.
+    // TODO: обработать блокировку подключения/каналов
 
     /// <summary>
     /// Реализация постоянного соединения с RabbitMq по-умолчанию.
@@ -61,6 +61,8 @@ namespace ReRabbit.Core
         /// Семафор.
         /// </summary>
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
+
+        private readonly List<IModel> _channels = new List<IModel>();
 
         #endregion Поля
 
@@ -138,7 +140,24 @@ namespace ReRabbit.Core
                 throw new InvalidOperationException("Нет активного подключения к RabbitMQ для создания канала");
             }
 
-            return _connection.CreateModel();
+            var model = _connection.CreateModel();
+
+            model.ModelShutdown += (sender, e) =>
+            {
+                if (sender is IModel channel)
+                {
+                    if (channel.IsOpen)
+                    {
+                        model.Close();
+                    }
+                    _channels.Remove(channel);
+                    channel.Dispose();
+                }
+            };
+
+            _channels.Add(model);
+
+            return model;
         }
 
         /// <summary>
@@ -153,9 +172,19 @@ namespace ReRabbit.Core
 
             _disposed = true;
 
+            if (_connection == null)
+            {
+                return;
+            }
+
             try
             {
-                _connection?.Dispose();
+                if (_connection.IsOpen && _channels.Any())
+                {
+                    _connection.Close(TimeSpan.FromSeconds(5));
+                }
+                _connection.Dispose();
+                _connection = null;
             }
             catch (IOException ex)
             {
@@ -228,12 +257,19 @@ namespace ReRabbit.Core
                 return true;
             }
 
+            if (_connection == null)
+            {
+                return true;
+            }
+
             _connection.ConnectionShutdown -= OnConnectionShutdown;
             _connection.ConnectionBlocked -= OnConnectionBlocked;
 
-            _connection.Close();
+            // TODO: вынести в конфиг connection shutdown timeout
+            _connection.Close(TimeSpan.FromSeconds(5));
 
             _connection.Dispose();
+            _connection = null;
 
             return true;
         }
@@ -251,6 +287,9 @@ namespace ReRabbit.Core
 
             _logger.RabbitMqConnectionBlocked(ea);
 
+            // TODO: не позволять запрашивать открывать новые каналы, пока соединение заблокировано
+            // семафором закрыть доступ
+
             // действий никаких не требуется. после завершения блокировки, автоматически все вернется в норму.
         }
 
@@ -264,7 +303,11 @@ namespace ReRabbit.Core
             if (reason.Initiator == ShutdownInitiator.Peer)
             {
                 _logger.RabbitMqConnectionClosed(reason);
-                TryDisconnect();
+
+                if (reason.ReplyText.Contains("stop") || reason.ReplyText.Contains("Closed via management plugin"))
+                {
+                    TryDisconnect();
+                }
             }
         }
 
