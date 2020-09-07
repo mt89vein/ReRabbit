@@ -160,7 +160,7 @@ namespace ReRabbit.Core
         /// <param name="routingKey">Роут.</param>
         /// <param name="retryDelay">Период на которую откладывается паблиш.</param>
         /// <returns>Название очереди с отложенным паблишем.</returns>
-        public string DeclareDelayedPublishQueue(
+        public string? DeclareDelayedPublishQueue(
             IModel channel,
             string messageName,
             string exchange,

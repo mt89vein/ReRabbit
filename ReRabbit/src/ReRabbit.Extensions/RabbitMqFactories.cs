@@ -11,56 +11,56 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Менеджер постоянных подключений.
         /// </summary>
-        public Func<IServiceProvider, IPermanentConnectionManager> PermanentConnectionManager { get; set; }
+        public Func<IServiceProvider, IPermanentConnectionManager>? PermanentConnectionManager { get; set; }
 
         /// <summary>
         /// Предоставляет свойства клиента, используемые при подключении к брокеру.
         /// </summary>
-        public Func<IServiceProvider, IClientPropertyProvider> ClientPropertyProvider { get; set; }
+        public Func<IServiceProvider, IClientPropertyProvider>? ClientPropertyProvider { get; set; }
 
         /// <summary>
         /// Фабрика подписчиков.
         /// </summary>
-        public Func<IServiceProvider, ISubscriberFactory> SubscriberFactory { get; set; }
+        public Func<IServiceProvider, ISubscriberFactory>? SubscriberFactory { get; set; }
 
         /// <summary>
         /// Менеджер подписок.
         /// </summary>
-        public Func<IServiceProvider, ISubscriptionManager> SubscriptionManager { get; set; }
+        public Func<IServiceProvider, ISubscriptionManager>? SubscriptionManager { get; set; }
 
         /// <summary>
         /// Менеджер конфигураций.
         /// </summary>
-        public Func<IServiceProvider, IConfigurationManager> ConfigurationManager { get; set; }
+        public Func<IServiceProvider, IConfigurationManager>? ConfigurationManager { get; set; }
 
         /// <summary>
         /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки.
         /// </summary>
-        public Func<IServiceProvider, IAcknowledgementBehaviourFactory> AcknowledgementBehaviourFactory { get; set; }
+        public Func<IServiceProvider, IAcknowledgementBehaviourFactory>? AcknowledgementBehaviourFactory { get; set; }
 
         /// <summary>
         /// Конвенции именования.
         /// </summary>
-        public Func<IServiceProvider, INamingConvention> NamingConvention { get; set; }
+        public Func<IServiceProvider, INamingConvention>? NamingConvention { get; set; }
 
         /// <summary>
         /// Провайдер топологий.
         /// </summary>
-        public Func<IServiceProvider, ITopologyProvider> TopologyProvider { get; set; }
+        public Func<IServiceProvider, ITopologyProvider>? TopologyProvider { get; set; }
 
         /// <summary>
         /// Сервис сериализации/десериализации.
         /// </summary>
-        public Func<IServiceProvider, ISerializer> Serializer { get; set; }
+        public Func<IServiceProvider, ISerializer>? Serializer { get; set; }
 
         /// <summary>
         /// Маппер сообщений.
         /// </summary>
-        public Func<IServiceProvider, IMessageMapper> MessageMapper { get; set; }
+        public Func<IServiceProvider, IMessageMapper>? MessageMapper { get; set; }
 
         /// <summary>
         /// Провайдер информации о роутах события для издателя.
         /// </summary>
-        public Func<IServiceProvider, IRouteProvider> RouteProvider { get; set; }
+        public Func<IServiceProvider, IRouteProvider>? RouteProvider { get; set; }
     }
 }

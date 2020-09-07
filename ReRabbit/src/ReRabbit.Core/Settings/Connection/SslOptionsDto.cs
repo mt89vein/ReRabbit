@@ -16,12 +16,12 @@ namespace ReRabbit.Core.Settings.Connection
         /// Наименование сервера.
         /// CN сертификата должен совпасть с именем сервера.
         /// </summary>
-        public string ServerName { get; set; }
+        public string? ServerName { get; set; }
 
         /// <summary>
         /// Путь к сертификату.
         /// </summary>
-        public string CertificatePath { get; set; }
+        public string? CertificatePath { get; set; }
 
         public SslOptions Create()
         {

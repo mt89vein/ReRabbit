@@ -22,7 +22,7 @@ namespace ReRabbit.Abstractions.Acknowledgements
         /// <summary>
         /// Исключение.
         /// </summary>
-        public Exception Exception { get; }
+        public Exception? Exception { get; }
 
         #endregion Свойства
 
@@ -34,7 +34,7 @@ namespace ReRabbit.Abstractions.Acknowledgements
         /// <param name="reason">Причина.</param>
         /// <param name="exception">Исключение.</param>
         /// <param name="requeue">Необходимо переотправить.</param>
-        public Reject(string reason, Exception exception = null, bool requeue = true)
+        public Reject(string reason, Exception? exception = null, bool requeue = true)
         {
             Requeue = requeue;
             Reason = reason;

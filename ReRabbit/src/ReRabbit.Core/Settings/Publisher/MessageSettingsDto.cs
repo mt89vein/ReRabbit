@@ -15,28 +15,28 @@ namespace ReRabbit.Core.Settings.Publisher
         /// <summary>
         /// Наименование сообщения.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = null!; // не может быть null в конфигах, т.к. является ключом.
 
         /// <summary>
         /// Версия сообщения.
         /// </summary>
-        public string Version { get; set; }
+        public string? Version { get; set; }
 
         /// <summary>
         /// Роут для публикации.
         /// </summary>
-        public string Route { get; set; }
+        public string? Route { get; set; }
 
         // TODO: добавить в JsonSchema
         /// <summary>
         /// Аргументы.
         /// </summary>
-        public IDictionary<string, object> Arguments { get; set; }
+        public IDictionary<string, object>? Arguments { get; set; }
 
         /// <summary>
         /// Обменник, в который необходимо сообщение опубликовать.
         /// </summary>
-        public ExchangeInfoDto Exchange { get; set; }
+        public ExchangeInfoDto? Exchange { get; set; }
 
         /// <summary>
         /// Количество пыток отправки сообщения.

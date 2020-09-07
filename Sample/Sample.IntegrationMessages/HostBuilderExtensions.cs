@@ -15,7 +15,7 @@ namespace Sample.IntegrationMessages
 
         public static IHostBuilder AddSharedSettings(this IHostBuilder builder, string sharedFileName)
         {
-            if (builder == null || string.IsNullOrEmpty(sharedFileName))
+            if (string.IsNullOrEmpty(sharedFileName))
             {
                 return builder;
             }

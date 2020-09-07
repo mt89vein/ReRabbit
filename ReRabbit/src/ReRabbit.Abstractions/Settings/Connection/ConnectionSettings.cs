@@ -218,7 +218,7 @@ namespace ReRabbit.Abstractions.Settings.Connection
         /// </para>
         /// </param>
         public ConnectionSettings(
-            List<string> hostNames = null,
+            List<string>? hostNames = null,
             int? port = null,
             string? connectionName = null,
             bool? useAsyncConsumer = null,
@@ -250,7 +250,7 @@ namespace ReRabbit.Abstractions.Settings.Connection
             SocketWriteTimeout = socketWriteTimeout ?? TimeSpan.FromSeconds(30);
             SocketReadTimeout = socketReadTimeout ?? TimeSpan.FromSeconds(30);
             RequestedConnectionTimeout = requestedConnectionTimeout ?? TimeSpan.FromSeconds(30);
-            ConnectionName = connectionName;
+            ConnectionName = connectionName ?? "unknown";
             UseAsyncConsumer = useAsyncConsumer ?? true;
             UseBackgroundThreadsForIO = useBackgroundThreadsForIo ?? true;
             SslOptions = sslOptions ?? new SslOptions();

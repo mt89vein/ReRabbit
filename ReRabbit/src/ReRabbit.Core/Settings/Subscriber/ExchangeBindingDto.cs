@@ -11,22 +11,22 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// <summary>
         /// Наименование обменника.
         /// </summary>
-        public string FromExchange { get; set; }
+        public string? FromExchange { get; set; }
 
         /// <summary>
         /// Тип обменника.
         /// </summary>
-        public string ExchangeType { get; set; }
+        public string? ExchangeType { get; set; }
 
         /// <summary>
         /// Ключи роутинга для привязки.
         /// </summary>
-        public List<string> RoutingKeys { get; set; }
+        public List<string>? RoutingKeys { get; set; }
 
         /// <summary>
         /// Дополнительные аргументы привязки.
         /// </summary>
-        public IDictionary<string, object> Arguments { get; set; }
+        public IDictionary<string, object>? Arguments { get; set; }
 
         public ExchangeBinding Create()
         {

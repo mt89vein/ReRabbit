@@ -30,7 +30,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Настройки RabbitMq.
         /// </summary>
-        private RabbitMqSettings _settings;
+        private RabbitMqSettings? _settings;
 
         #endregion Поля
 

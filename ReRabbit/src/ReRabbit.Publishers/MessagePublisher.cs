@@ -189,7 +189,7 @@ namespace ReRabbit.Publishers
         #region Методы (private)
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string EnsureTopology(IModel channel, in RouteInfo routeInfo)
+        private string? EnsureTopology(IModel channel, in RouteInfo routeInfo)
         {
             channel.ExchangeDeclare(
                 exchange: routeInfo.Exchange,

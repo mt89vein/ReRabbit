@@ -25,7 +25,7 @@ namespace ReRabbit.Abstractions
         Task<IModel> SubscribeAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings settings,
-            Action<bool> onUnsubscribed = null
+            Action<bool>? onUnsubscribed = null
         ) where TMessage : class, IMessage;
 
         /// <summary>

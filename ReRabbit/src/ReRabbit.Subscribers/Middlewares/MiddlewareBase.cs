@@ -16,7 +16,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Следующий делегат.
         /// </summary>
-        protected Func<MessageContext<IMessage>, Task<Acknowledgement>> Next { get; private set; }
+        protected Func<MessageContext<IMessage>, Task<Acknowledgement>>? Next { get; private set; }
 
         #endregion Свойства
 

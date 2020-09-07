@@ -22,12 +22,12 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <summary>
         /// Наименование подписчика.
         /// </summary>
-        public string SubscriberName { get; }
+        public string? SubscriberName { get; }
 
         /// <summary>
         /// Название очереди.
         /// </summary>
-        public string QueueName { get; }
+        public string? QueueName { get; }
 
         /// <summary>
         /// Добавлять тип модели в виде суффикса в имя очереди.
@@ -37,7 +37,7 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <summary>
         /// Наименование подписчика в ConsumerTag.
         /// </summary>
-        public string ConsumerName { get; }
+        public string? ConsumerName { get; }
 
         /// <summary>
         /// Очередь автоматически восстанавливается при перезапуске брокера сообщений.
@@ -154,20 +154,20 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <param name="connectionSettings">Настройки подключения, используемые данной очередью.</param>
         public SubscriberSettings(
             MqConnectionSettings connectionSettings,
-            string subscriberName,
-            string queueName,
-            IEnumerable<ExchangeBinding> bindings = null,
-            IDictionary<string, object> arguments = null,
+            string? subscriberName,
+            string? queueName,
+            IEnumerable<ExchangeBinding>? bindings = null,
+            IDictionary<string, object>? arguments = null,
             bool? useModelTypeAsSuffix = null,
-            string consumerName = null,
+            string? consumerName = null,
             bool? durable = null,
             bool? exclusive = null,
             bool? autoDelete = null,
             bool? autoAck = null,
             bool? useDeadLetter = null,
-            TracingSettings tracingSettings = null,
-            RetrySettings retrySettings = null,
-            ScalingSettings scalingSettings = null
+            TracingSettings? tracingSettings = null,
+            RetrySettings? retrySettings = null,
+            ScalingSettings? scalingSettings = null
         )
         {
             SubscriberName = subscriberName;

@@ -104,7 +104,7 @@ namespace ReRabbit.Subscribers
         public async Task<IModel> SubscribeAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings settings,
-            Action<bool> onUnsubscribed = null
+            Action<bool>? onUnsubscribed = null
         )
             where TMessage : class, IMessage
         {
@@ -260,7 +260,7 @@ namespace ReRabbit.Subscribers
 
             Guid? traceId = default;
 
-            var loggingScope = new Dictionary<string, object>
+            var loggingScope = new Dictionary<string, object?>
             {
                 ["Exchange"] = ea.Exchange,
                 ["RoutingKey"] = ea.RoutingKey,
@@ -305,7 +305,7 @@ namespace ReRabbit.Subscribers
                     var payload = mqMessage?.Payload.ToString();
 
                     var mqEventData = new MqMessageData(
-                        mqMessage,
+                        mqMessage!,
                         ea.Redelivered || retryNumber != 0,
                         traceId,
                         retryNumber,
@@ -409,7 +409,7 @@ namespace ReRabbit.Subscribers
 
         #region LogActions
 
-        private static readonly Action<ILogger, Exception>
+        private static readonly Action<ILogger, Exception?>
             _rabbitMqHandlerRestartedLogAction =
                 LoggerMessage.Define(
                     LogLevel.Warning,
@@ -417,7 +417,7 @@ namespace ReRabbit.Subscribers
                     "Потребитель сообщений из очереди инициализирован повторно."
                 );
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqHandlerRestartedAfterReconnectLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
@@ -428,7 +428,7 @@ namespace ReRabbit.Subscribers
                     "Соединение сброшено {Reason}. Потребитель сообщений из очереди будет инициализирован повторно."
                 );
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqHandlerForceStoppedLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,

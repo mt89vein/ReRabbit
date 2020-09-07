@@ -66,7 +66,7 @@ namespace ReRabbit.Core.Serializations
         {
             if (bytes.IsEmpty)
             {
-                return null;
+                return null!;
             }
 
             var serialized = ConvertToString(bytes);

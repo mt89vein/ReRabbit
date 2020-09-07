@@ -169,7 +169,7 @@ namespace ReRabbit.Subscribers
             return middlewareExecutor.ExecuteAsync(
                 ctx => handler.HandleAsync(
                     new MessageContext<TMessage>(
-                        ctx.Message as TMessage,
+                        (TMessage)ctx.Message,
                         ctx.MessageData,
                         ctx.EventArgs
                     )
@@ -219,13 +219,13 @@ namespace ReRabbit.Subscribers
             else
             {
                 mqMessage = ctx.MessageData.MqMessage.Payload is JObject jObject
-                    ? jObject.ToObject<TMessage>()
+                    ? jObject.ToObject<TMessage>()!
                     : serviceProvider
                         .GetRequiredService<ISerializer>()
                         .Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString());
             }
 
-            var message = (TMessage)mqMessage;
+            var message = (TMessage)mqMessage!;
             if (ctx.EventArgs.BasicProperties.IsTimestampPresent())
             {
                 message.MessageCreatedAt =

@@ -34,7 +34,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Логгер результатов публикаций.
         /// </summary>
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
 
         /// <summary>
         /// Пул текущих задач на публикацию.
@@ -43,7 +43,7 @@ namespace ReRabbit.Core
 
         #endregion Поля
 
-        public PublishConfirmableChannel(IModel channel, TimeSpan? confirmTimeout = null, ILogger logger = null)
+        public PublishConfirmableChannel(IModel channel, TimeSpan? confirmTimeout = null, ILogger? logger = null)
         {
             _channel = channel ?? throw new ArgumentNullException(nameof(channel));
             _confirmTimeout = confirmTimeout ?? TimeSpan.FromSeconds(5);
@@ -64,6 +64,11 @@ namespace ReRabbit.Core
         }
 
         #region PublishConfirmableChannel
+
+        internal bool HasTaskWith(ulong taskId)
+        {
+            return _publishTasks.ContainsKey(taskId);
+        }
 
         private void OnBasicNacks(object model, BasicNackEventArgs args)
         {
@@ -848,12 +853,12 @@ namespace ReRabbit.Core
         /// <summary>
         /// Signalled when a Basic.Ack command arrives from the broker.
         /// </summary>
-        public event EventHandler<BasicAckEventArgs> BasicAcks;
+        public event EventHandler<BasicAckEventArgs>? BasicAcks;
 
         /// <summary>
         /// Signalled when a Basic.Nack command arrives from the broker.
         /// </summary>
-        public event EventHandler<BasicNackEventArgs> BasicNacks;
+        public event EventHandler<BasicNackEventArgs>? BasicNacks;
 
         /// <summary>
         /// All messages received before this fires that haven't been ack'ed will be redelivered.
@@ -864,12 +869,12 @@ namespace ReRabbit.Core
         /// It is sometimes useful to allow that thread to know that a recover-ok
         /// has been received, rather than the thread that invoked <see cref="M:RabbitMQ.Client.IModel.BasicRecover(System.Boolean)" />.
         /// </remarks>
-        public event EventHandler<EventArgs> BasicRecoverOk;
+        public event EventHandler<EventArgs>? BasicRecoverOk;
 
         /// <summary>
         /// Signalled when a Basic.Return command arrives from the broker.
         /// </summary>
-        public event EventHandler<BasicReturnEventArgs> BasicReturn;
+        public event EventHandler<BasicReturnEventArgs>? BasicReturn;
 
         /// <summary>
         /// Signalled when an exception occurs in a callback invoked by the model.
@@ -877,23 +882,18 @@ namespace ReRabbit.Core
         /// include exceptions thrown in <see cref="T:RabbitMQ.Client.IBasicConsumer" /> methods, or
         /// exceptions thrown in <see cref="E:RabbitMQ.Client.IModel.ModelShutdown" /> delegates etc.
         /// </summary>
-        public event EventHandler<CallbackExceptionEventArgs> CallbackException;
-        public event EventHandler<FlowControlEventArgs> FlowControl;
+        public event EventHandler<CallbackExceptionEventArgs>? CallbackException;
+        public event EventHandler<FlowControlEventArgs>? FlowControl;
 
         /// <summary>Notifies the destruction of the model.</summary>
         /// <remarks>
         /// If the model is already destroyed at the time an event
         /// handler is added to this event, the event handler will be fired immediately.
         /// </remarks>
-        public event EventHandler<ShutdownEventArgs> ModelShutdown;
+        public event EventHandler<ShutdownEventArgs>? ModelShutdown;
 
 #pragma warning restore CS0067
 
         #endregion IModel proxy
-
-        internal bool HasTaskWith(ulong taskId)
-        {
-            return _publishTasks.ContainsKey(taskId);
-        }
     }
 }

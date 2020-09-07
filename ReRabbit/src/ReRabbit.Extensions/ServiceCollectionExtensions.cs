@@ -24,7 +24,7 @@ namespace ReRabbit.Extensions
     {
         public static IServiceCollection AddRabbitMq(
             this IServiceCollection services,
-            Action<RabbitMqRegistrationOptions> options = null
+            Action<RabbitMqRegistrationOptions>? options = null
         )
         {
             var middlewareRegistry = new MiddlewareRegistry(services);

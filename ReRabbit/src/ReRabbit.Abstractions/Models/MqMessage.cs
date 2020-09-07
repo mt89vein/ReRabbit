@@ -21,7 +21,7 @@ namespace ReRabbit.Abstractions.Models
         /// Версия.
         /// Служебное поле для передачи версии (например клиента, формата  и т.д.).
         /// </summary>
-        public string Version { get; }
+        public string? Version { get; }
 
         /// <summary>
         /// Тело сообщения.
@@ -32,7 +32,7 @@ namespace ReRabbit.Abstractions.Models
         /// Сервис отправитель.
         /// Служебное поле для передачи информации об издателе сообщения.
         /// </summary>
-        public string Sender { get; }
+        public string? Sender { get; }
 
         #endregion Свойства
 
@@ -41,7 +41,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает экземпляр класса <see cref="MqMessage"/>.
         /// </summary>
-        public MqMessage(object payload, string payloadType, string formatVersion, string version, string sender)
+        public MqMessage(object payload, string payloadType, string formatVersion, string? version, string? sender)
         {
             Payload = payload;
             PayloadType = payloadType;

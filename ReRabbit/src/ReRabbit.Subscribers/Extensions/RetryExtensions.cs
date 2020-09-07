@@ -43,7 +43,7 @@ namespace ReRabbit.Subscribers.Extensions
         internal static (int retryNumber, bool isLastRetry) EnsureRetryInfo(
             this IBasicProperties properties,
             RetrySettings subscriberSettings,
-            Dictionary<string, object> loggingScope
+            Dictionary<string, object?> loggingScope
         )
         {
             var isLastRetry = properties.IsLastRetry(subscriberSettings, out var retryCount);

@@ -31,7 +31,7 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// <summary>
         /// Закон по которому вычисляется интервал (задержка) между повторениями.
         /// </summary>
-        public string RetryPolicy { get; set; }
+        public string? RetryPolicy { get; set; }
 
         /// <summary>
         /// Повторять до победного.

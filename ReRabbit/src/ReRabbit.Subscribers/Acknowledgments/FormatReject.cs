@@ -14,7 +14,7 @@ namespace ReRabbit.Subscribers.Acknowledgments
         /// Создает новый экземпляр класса <see cref="FormatReject"/>.
         /// </summary>
         public FormatReject(Exception exception)
-            : base("Ошибка формата: " + exception?.Message, exception, requeue: false)
+            : base("Ошибка формата: " + exception.Message, exception, requeue: false)
         {
         }
 

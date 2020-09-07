@@ -25,13 +25,13 @@ namespace Sample.IntegrationMessages.Messages
 
     public class MyIntegrationMessageDto : IntegrationMessage
     {
-        public string Message { get; set; }
+        public string? Message { get; set; }
     }
 
     public class MyIntegrationMessageDtoV2 : IntegrationMessage
     {
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 }

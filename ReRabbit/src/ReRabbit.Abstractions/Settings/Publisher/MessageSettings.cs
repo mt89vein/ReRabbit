@@ -67,12 +67,6 @@ namespace ReRabbit.Abstractions.Settings.Publisher
         /// По-умолчанию: 1.0.
         /// </para>
         /// </param>
-        /// <param name="routeType">
-        /// Тип роута.
-        /// <para>
-        /// По-умолчанию: <see cref="RouteType.Constant"/>.
-        /// </para>
-        /// </param>
         /// <param name="route">Роут для публикации.</param>
         /// <param name="arguments">Аргументы.</param>
         /// <param name="exchange">
@@ -95,8 +89,8 @@ namespace ReRabbit.Abstractions.Settings.Publisher
             string name,
             string? version = null,
             string? route = null,
-            IDictionary<string, object> arguments = null,
-            ExchangeInfo exchange = null,
+            IDictionary<string, object>? arguments = null,
+            ExchangeInfo? exchange = null,
             int? retryCount = null,
             TimeSpan? confirmationTimeout = null
         )

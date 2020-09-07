@@ -109,7 +109,7 @@ namespace ReRabbit.UnitTests
             return publishTask.ContinueWith(t =>
             {
                 Assert.IsTrue(t.IsFaulted);
-                Assert.AreEqual("The message was not acknowledged by RabbitMQ", t.Exception.InnerException?.Message);
+                Assert.AreEqual("The message was not acknowledged by RabbitMQ", t.Exception?.InnerException?.Message);
                 Assert.IsFalse(confirmableChannel.HasTaskWith(taskId));
             });
 
@@ -162,7 +162,10 @@ namespace ReRabbit.UnitTests
             return publishTask.ContinueWith(t =>
             {
                 Assert.IsTrue(t.IsFaulted, "Task should be faulted.");
-                Assert.AreEqual("The message was not confirmed by RabbitMQ within the specified period. REASON_FROM_RABBIT", t.Exception.InnerException?.Message);
+                Assert.AreEqual(
+                    "The message was not confirmed by RabbitMQ within the specified period. REASON_FROM_RABBIT",
+                    t.Exception?.InnerException?.Message
+                );
                 Assert.IsFalse(confirmableChannel.HasTaskWith(taskId));
             });
 
@@ -221,7 +224,7 @@ namespace ReRabbit.UnitTests
             return publishTask.ContinueWith(t =>
             {
                 Assert.IsTrue(t.IsFaulted, "Task should be faulted");
-                Assert.AreEqual("The message was returned by RabbitMQ: 500-Something went wrong!", t.Exception.InnerException?.Message, "Error message does not equal!");
+                Assert.AreEqual("The message was returned by RabbitMQ: 500-Something went wrong!", t.Exception?.InnerException?.Message, "Error message does not equal!");
                 Assert.IsFalse(confirmableChannel.HasTaskWith(taskId), "PublishTaskInfo not removed!");
             });
 

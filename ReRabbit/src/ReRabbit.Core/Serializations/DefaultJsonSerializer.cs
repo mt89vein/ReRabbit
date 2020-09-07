@@ -93,7 +93,7 @@ namespace ReRabbit.Core.Serializations
                 using var jsonReader = new JsonTextReader(new StringReader(str));
                 var obj = _json.Deserialize(jsonReader, type);
 
-                return obj;
+                return obj!;
             }
             catch (Exception e)
             {

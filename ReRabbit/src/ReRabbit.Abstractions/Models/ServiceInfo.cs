@@ -10,7 +10,7 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Версия приложения.
         /// </summary>
-        public string ApplicationVersion { get; }
+        public string? ApplicationVersion { get; }
 
         /// <summary>
         /// Наименование сервиса.
@@ -35,7 +35,7 @@ namespace ReRabbit.Abstractions.Models
         /// Создает экземпляр класса <see cref="ServiceInfo"/>.
         /// </summary>
         public ServiceInfo(
-            string applicationVersion,
+            string? applicationVersion,
             string serviceName,
             string hostName,
             string environmentName

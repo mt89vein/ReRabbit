@@ -40,7 +40,7 @@ namespace ReRabbit.Core
         /// <summary>
         /// Соединение
         /// </summary>
-        private IConnection _connection;
+        private IConnection? _connection;
 
         /// <summary>
         /// Ресурсы высвобождены.
@@ -140,7 +140,7 @@ namespace ReRabbit.Core
                 throw new InvalidOperationException("Нет активного подключения к RabbitMQ для создания канала");
             }
 
-            var model = _connection.CreateModel();
+            var model = _connection!.CreateModel();
 
             model.ModelShutdown += (sender, e) =>
             {
@@ -332,7 +332,7 @@ namespace ReRabbit.Core
 
         #region LogActions
 
-        private static readonly Action<ILogger, Exception>
+        private static readonly Action<ILogger, Exception?>
             _rabbitMqAccessForbiddenLogAction =
                 LoggerMessage.Define(
                     LogLevel.Critical,
@@ -340,7 +340,7 @@ namespace ReRabbit.Core
                     "Доступ к RabbitMQ запрещен."
                 );
 
-        private static readonly Action<ILogger, int, Exception>
+        private static readonly Action<ILogger, int, Exception?>
             _rabbitMqConnectFailedLogAction =
                 LoggerMessage.Define<int>(
                     LogLevel.Warning,
@@ -348,7 +348,7 @@ namespace ReRabbit.Core
                     "Не удалось установить соединение с RabbitMq за {ConnectionRetryCount} попыток."
                 );
 
-        private static readonly Action<ILogger, Exception>
+        private static readonly Action<ILogger, Exception?>
             _rabbitMqDisconnectFailedLogAction =
                 LoggerMessage.Define(
                     LogLevel.Error,
@@ -356,7 +356,7 @@ namespace ReRabbit.Core
                     "Не удалось разорвать соединение с RabbitMq."
                 );
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqConnectionBlockedLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Critical,
@@ -364,7 +364,7 @@ namespace ReRabbit.Core
                     "Соединение с RabbitMQ заблокировано. Причина: {Reason}"
                 );
 
-        private static readonly Action<ILogger, Exception>
+        private static readonly Action<ILogger, Exception?>
             _rabbitMqConnectionEstablishedLogAction =
                 LoggerMessage.Define(
                     LogLevel.Information,
@@ -372,7 +372,7 @@ namespace ReRabbit.Core
                     "Подключение к RabbitMq установлено."
                 );
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqConnectionClosedLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Information,

@@ -137,12 +137,13 @@ namespace ReRabbit.Subscribers
         /// <returns>Атрибут с наименованием секции конфигурации, в котором находится конфигурация подписчика.</returns>
         private static IEnumerable<SubscriberConfigurationAttribute> GetConfigurationAttributesFrom(Type handler, Type messageType)
         {
-            return handler?.GetMethods()
+            return handler.GetMethods()
                           .FirstOrDefault(m =>
                                               m.Name == nameof(IMessageHandler<IMessage>.HandleAsync) &&
                                               m.GetParameters()[0].ParameterType.GenericTypeArguments[0] == messageType)
                           ?.GetCustomAttributes(false)
-                          .OfType<SubscriberConfigurationAttribute>();
+                          .OfType<SubscriberConfigurationAttribute>() ??
+                   Enumerable.Empty<SubscriberConfigurationAttribute>();
         }
 
         #endregion Методы (private)

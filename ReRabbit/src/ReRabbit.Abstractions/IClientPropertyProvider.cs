@@ -13,6 +13,6 @@ namespace ReRabbit.Abstractions
         /// </summary>
         /// <param name="connectionSettings">Настройки подключения.</param>
         /// <returns>Словарь свойств клиента.</returns>
-        IDictionary<string, object> GetClientProperties(MqConnectionSettings connectionSettings);
+        IDictionary<string, object?> GetClientProperties(MqConnectionSettings connectionSettings);
     }
 }

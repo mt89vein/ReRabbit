@@ -13,7 +13,7 @@ namespace SampleWebApplication.RabbitMq
 {
     public class TestMessage : IntegrationMessage, IMappedFrom<MyIntegrationMessageDto>
     {
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         /// <summary>
         /// Настройка маппинга.

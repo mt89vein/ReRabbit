@@ -53,7 +53,7 @@ namespace ReRabbit.Abstractions
             string subscriberName,
             string connectionName,
             string virtualHost,
-            Action<bool> onUnregister = null
+            Action<bool>? onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace ReRabbit.Abstractions
         Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             string subscriberName,
-            Action<bool> onUnregister = null
+            Action<bool>? onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace ReRabbit.Abstractions
         Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings subscriberSettings,
-            Action<bool> onUnregister = null
+            Action<bool>? onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace ReRabbit.Abstractions
         Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
             string subscriberName,
-            Action<bool> onUnregister = null
+            Action<bool>? onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace ReRabbit.Abstractions
             string subscriberName,
             string connectionName,
             string virtualHost,
-            Action<bool> onUnregister = null
+            Action<bool>? onUnregister = null
         ) where TMessage : class, IMessage;
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace ReRabbit.Abstractions
         Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
             SubscriberSettings subscriberSettings,
-            Action<bool> onUnregister = null
+            Action<bool>? onUnregister = null
         ) where TMessage : class, IMessage;
     }
 }

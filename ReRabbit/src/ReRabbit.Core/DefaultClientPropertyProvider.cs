@@ -40,9 +40,9 @@ namespace ReRabbit.Core
         /// </summary>
         /// <param name="connectionSettings">Настройки подключения.</param>
         /// <returns>Словарь свойств клиента.</returns>
-        public IDictionary<string, object> GetClientProperties(MqConnectionSettings connectionSettings)
+        public IDictionary<string, object?> GetClientProperties(MqConnectionSettings connectionSettings)
         {
-            return new Dictionary<string, object>
+            return new Dictionary<string, object?>
             {
                 ["product"] = _serviceInfoAccessor.ServiceInfo.ServiceName,
                 ["version"] = _serviceInfoAccessor.ServiceInfo.ApplicationVersion,

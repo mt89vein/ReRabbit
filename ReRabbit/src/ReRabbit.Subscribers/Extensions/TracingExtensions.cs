@@ -41,7 +41,7 @@ namespace ReRabbit.Subscribers.Extensions
             this IBasicProperties properties,
             TracingSettings settings,
             ILogger logger,
-            Dictionary<string, object> loggingScope
+            Dictionary<string, object?> loggingScope
         )
         {
             if (!TryGetTraceInfo(properties, out var traceId, out var traceIdSource))
@@ -133,7 +133,7 @@ namespace ReRabbit.Subscribers.Extensions
         public static void AddTraceId(this IBasicProperties properties)
         {
             properties.Headers ??= new Dictionary<string, object>();
-            properties.CorrelationId = TraceContext.Current.TraceId.ToString();
+            properties.CorrelationId = TraceContext.Current.TraceId?.ToString();
             properties.Headers[TRACE_ID_KEY] = properties.CorrelationId;
             properties.Headers[TRACE_ID_SOURCE_KEY] = TraceContext.Current.TraceIdSource;
         }

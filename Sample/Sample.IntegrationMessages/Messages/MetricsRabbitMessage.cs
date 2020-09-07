@@ -13,7 +13,7 @@ namespace Sample.IntegrationMessages.Messages
 
     public class MetricsDto : IntegrationMessage
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         public int Value { get; set; }
     }

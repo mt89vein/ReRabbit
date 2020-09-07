@@ -14,7 +14,7 @@ namespace ReRabbit.Core.Settings.Connection
         /// <summary>
         /// Имена хостов.
         /// </summary>
-        public List<string> HostNames { get; set; }
+        public List<string>? HostNames { get; set; }
 
         /// <summary>
         /// Порт.
@@ -39,7 +39,7 @@ namespace ReRabbit.Core.Settings.Connection
         /// <summary>
         /// Настройки сертификата.
         /// </summary>
-        public SslOptionsDto SslOptions { get; set; }
+        public SslOptionsDto? SslOptions { get; set; }
 
         /// <summary>
         /// Количество повторных попыток подключения.

@@ -377,7 +377,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
         #region LogActions
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqMessageRetriedLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Information,
@@ -385,7 +385,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     "Сообщение отправлено на повтор. Время задержки: {Delay:000} ms."
                 );
 
-        private static readonly Action<ILogger, int, Exception>
+        private static readonly Action<ILogger, int, Exception?>
             _rabbitMqMessageHandleFailedLogAction =
                 LoggerMessage.Define<int>(
                     LogLevel.Error,
@@ -393,7 +393,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     "Сообщение не было обработано за {RetryCount} попыток."
                 );
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqMessageMovedToCommonErrorQueueLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
@@ -401,7 +401,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     "Сообщение перемещено в общую ошибочную очередь. {Reason}"
                 );
 
-        private static readonly Action<ILogger, string, Exception>
+        private static readonly Action<ILogger, string, Exception?>
             _rabbitMqMessageNotSupportedFormatErrorLogAction =
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
@@ -426,13 +426,13 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RabbitMessageMovedToCommonErrorQueue(this ILogger logger, string reason, Exception exception = null)
+        public static void RabbitMessageMovedToCommonErrorQueue(this ILogger logger, string reason, Exception? exception = null)
         {
             _rabbitMqMessageMovedToCommonErrorQueueLogAction(logger, reason, exception);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RabbitMqMessageNotSupportedFormatError(this ILogger logger, string reason, Exception exception = null)
+        public static void RabbitMqMessageNotSupportedFormatError(this ILogger logger, string reason, Exception? exception = null)
         {
             _rabbitMqMessageNotSupportedFormatErrorLogAction(logger, reason, exception);
         }

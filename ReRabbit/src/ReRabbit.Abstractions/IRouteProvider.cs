@@ -20,7 +20,7 @@ namespace ReRabbit.Abstractions
 
         RouteInfo IRouteProvider.GetFor<TRabbitMessage1, TMessage1>(TMessage1 message, TimeSpan? delay)
         {
-            return GetFor(message as TMessage, delay);
+            return GetFor((message as TMessage)!, delay);
         }
     }
 

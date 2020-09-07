@@ -10,22 +10,22 @@ namespace ReRabbit.Core.Settings.Publisher
         /// <summary>
         /// Наименование обменника.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Обменник переживет перезагрузку брокера.
         /// </summary>
-        public bool Durable { get; set; }
+        public bool? Durable { get; set; }
 
         /// <summary>
         /// Автоматическое удаление обменника, если все биндинги были удалены.
         /// </summary>
-        public bool AutoDelete { get; set; }
+        public bool? AutoDelete { get; set; }
 
         /// <summary>
         /// Тип обменника. [direct, fanout, headers, topic]
         /// </summary>
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         public ExchangeInfo Create()
         {

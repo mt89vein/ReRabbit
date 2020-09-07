@@ -50,10 +50,10 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <param name="routingKeys">Ключи роутинга для привязки.</param>
         /// <param name="arguments">Дополнительные аргументы привязки.</param>
         public ExchangeBinding(
-            string fromExchange = null,
-            string exchangeType = null,
-            List<string> routingKeys = null,
-            IDictionary<string, object> arguments = null
+            string? fromExchange = null,
+            string? exchangeType = null,
+            List<string>? routingKeys = null,
+            IDictionary<string, object>? arguments = null
         )
         {
             FromExchange = fromExchange ?? string.Empty;
@@ -70,9 +70,9 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <param name="other">An object to compare with this object.</param>
         /// <returns>
         /// <see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
-        public bool Equals(ExchangeBinding other)
+        public bool Equals(ExchangeBinding? other)
         {
-            if (ReferenceEquals(null, other))
+            if (other is null)
             {
                 return false;
             }
@@ -94,7 +94,7 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// <see langword="true" /> if the specified object  is equal to the current object; otherwise, <see langword="false" />.</returns>
         public override bool Equals(object obj)
         {
-            return ReferenceEquals(this, obj) || obj is ExchangeBinding other && Equals(other);
+            return ReferenceEquals(this, obj) || (obj is ExchangeBinding other && Equals(other));
         }
 
         /// <summary>Serves as the default hash function.</summary>

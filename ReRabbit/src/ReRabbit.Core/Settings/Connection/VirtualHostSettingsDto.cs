@@ -10,17 +10,17 @@ namespace ReRabbit.Core.Settings.Connection
         /// <summary>
         /// Наименование виртуального хоста.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Имя пользователя.
         /// </summary>
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
 
         /// <summary>
         /// Пароль.
         /// </summary>
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
         /// <summary>
         /// Использовать общую очередь с ошибочными сообщениями.

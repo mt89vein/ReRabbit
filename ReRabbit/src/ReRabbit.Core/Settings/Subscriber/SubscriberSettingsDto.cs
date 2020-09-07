@@ -15,7 +15,7 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// <summary>
         /// Наименование подписчика.
         /// </summary>
-        public string SubscriberName { get; set; }
+        public string? SubscriberName { get; set; }
 
         /// <summary>
         /// Название очереди.
@@ -30,7 +30,7 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// <summary>
         /// Наименование подписчика в ConsumerTag.
         /// </summary>
-        public string ConsumerName { get; set; }
+        public string? ConsumerName { get; set; }
 
         /// <summary>
         /// Очередь автоматически восстанавливается при перезапуске брокера сообщений.
@@ -56,12 +56,12 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// Дополнительные аргументы.
         /// TODO: сделать словарь базовых аргументов и конвертировать в тип, который требуется рэббиту по названию. Либо сделать строго типизированную настройку MessageTtl etc.
         /// </summary>
-        public Dictionary<string, object> Arguments { get; set; }
+        public Dictionary<string, object>? Arguments { get; set; }
 
         /// <summary>
         /// Подписки очереди на обменники.
         /// </summary>
-        public List<ExchangeBindingDto> Bindings { get; set; }
+        public List<ExchangeBindingDto>? Bindings { get; set; }
 
         /// <summary>
         /// Использовать отдельную очередь для хранения сообщений при обработке которых возникла ошибка.
@@ -71,17 +71,17 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// <summary>
         /// Настройки отслеживания сообщений.
         /// </summary>
-        public TracingSettingsDto TracingSettings { get; set; }
+        public TracingSettingsDto? TracingSettings { get; set; }
 
         /// <summary>
         /// Настройки повторной обработки сообщений.
         /// </summary>
-        public RetrySettingsDto RetrySettings { get; set; }
+        public RetrySettingsDto? RetrySettings { get; set; }
 
         /// <summary>
         /// Настройки масштабирования подписчика.
         /// </summary>
-        public ScalingSettingsDto ScalingSettings { get; set; }
+        public ScalingSettingsDto? ScalingSettings { get; set; }
 
         #endregion Свойства
 
