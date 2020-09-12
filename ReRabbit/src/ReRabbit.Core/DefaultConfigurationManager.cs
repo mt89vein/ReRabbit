@@ -5,7 +5,7 @@ using ReRabbit.Abstractions.Settings.Connection;
 using ReRabbit.Abstractions.Settings.Publisher;
 using ReRabbit.Abstractions.Settings.Root;
 using ReRabbit.Abstractions.Settings.Subscriber;
-using ReRabbit.Core.Configuration;
+using ReRabbit.Core.Constants;
 using ReRabbit.Core.Exceptions;
 using ReRabbit.Core.Settings.Connection;
 using ReRabbit.Core.Settings.Publisher;

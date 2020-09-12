@@ -203,44 +203,6 @@ namespace ReRabbit.Subscribers
         #region Методы (private)
 
         /// <summary>
-        /// Выполнить привязку.
-        /// </summary>
-        /// <param name="settings">Настройки очереди.</param>
-        /// <returns>Канал, на котором была выполнена привязка.</returns>
-        private async Task<IModel> BindInternalAsync<TEvent>(SubscriberSettings settings)
-            where TEvent : class, IMessage
-        {
-            var channel = await _permanentConnectionManager
-                .GetConnection(settings.ConnectionSettings, ConnectionPurposeType.Subscriber)
-                .CreateModelAsync();
-
-            channel = new PublishConfirmableChannel(
-                channel,
-                TimeSpan.FromSeconds(5),
-                _logger
-            );
-
-            _topologyProvider.DeclareQueue(channel, settings, typeof(TEvent));
-
-            if (settings.UseDeadLetter)
-            {
-                _topologyProvider.UseDeadLetteredQueue(channel, settings, typeof(TEvent));
-            }
-
-            if (settings.ConnectionSettings.UseCommonUnroutedMessagesQueue)
-            {
-                _topologyProvider.UseCommonUnroutedMessagesQueue(channel, settings);
-            }
-
-            if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
-            {
-                _topologyProvider.UseCommonErrorMessagesQueue(channel, settings);
-            }
-
-            return channel;
-        }
-
-        /// <summary>
         /// Обработать сообщение из шины.
         /// </summary>
         /// <param name="ea">Информация о сообщении.</param>

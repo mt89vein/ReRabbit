@@ -2,7 +2,7 @@ using RabbitMQ.Client;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings.Subscriber;
-using ReRabbit.Core.Configuration;
+using ReRabbit.Core.Constants;
 using System;
 using System.Collections.Generic;
 using System.Globalization;

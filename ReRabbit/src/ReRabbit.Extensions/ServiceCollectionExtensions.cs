@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Enums;
 using ReRabbit.Core;
-using ReRabbit.Core.Configuration;
+using ReRabbit.Core.Constants;
 using ReRabbit.Core.Serializations;
 using ReRabbit.Publishers;
 using ReRabbit.Subscribers;

@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 
-namespace ReRabbit.Core.Configuration
+namespace ReRabbit.Core.Constants
 {
     /// <summary>
     /// Аргументы очереди.

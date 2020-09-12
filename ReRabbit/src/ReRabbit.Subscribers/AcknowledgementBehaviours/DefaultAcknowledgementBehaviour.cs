@@ -5,7 +5,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Subscriber;
-using ReRabbit.Core.Configuration;
+using ReRabbit.Core.Constants;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;

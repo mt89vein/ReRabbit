@@ -1,4 +1,4 @@
-namespace ReRabbit.Core.Configuration
+namespace ReRabbit.Core.Constants
 {
     /// <summary>
     /// Константы с наименованиями секций конфигурации.
