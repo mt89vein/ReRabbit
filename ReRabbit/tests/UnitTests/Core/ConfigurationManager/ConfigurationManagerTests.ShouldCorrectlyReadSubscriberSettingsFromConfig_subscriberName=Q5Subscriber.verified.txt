@@ -1,0 +1,59 @@
+{
+  SubscriberName: 'Q5Subscriber',
+  QueueName: 'q5-header',
+  ConsumerName: 'Q5Subscriber',
+  Durable: true,
+  Bindings: [
+    {
+      FromExchange: 'header',
+      ExchangeType: 'headers',
+      Arguments: {
+        type: 'button',
+        x-match: 'any'
+      }
+    }
+  ],
+  TracingSettings: {
+    IsEnabled: true,
+    GenerateIfNotPresent: true,
+    LogWhenGenerated: true
+  },
+  RetrySettings: {
+    LogOnRetry: true,
+    LogOnFailLastRetry: true,
+    RetryCount: 5,
+    RetryPolicy: 'Constant',
+    RetryMaxDelayInSeconds: 3600
+  },
+  ScalingSettings: {
+    ChannelsCount: 1,
+    ConsumersPerChannel: 1,
+    MessagesPerConsumer: 1
+  },
+  ConnectionSettings: {
+    HostNames: [
+      'localhost'
+    ],
+    Port: 5672,
+    UserName: 'user',
+    Password: 'user',
+    VirtualHost: '/',
+    ConnectionRetryCount: 5,
+    ConnectionName: 'SecondConnection',
+    UseCommonErrorMessagesQueue: true,
+    UseCommonUnroutedMessagesQueue: true,
+    UseAsyncConsumer: true,
+    UseBackgroundThreadsForIO: true,
+    RequestedConnectionTimeout: '00:00:30',
+    SocketReadTimeout: '00:00:30',
+    SocketWriteTimeout: '00:00:30',
+    RequestedChannelMax: 100,
+    RequestedHeartbeat: '00:01:00',
+    HandshakeContinuationTimeout: '00:00:10',
+    ContinuationTimeout: '00:00:10',
+    AuthomaticRecoveryEnabled: true,
+    NetworkRecoveryInterval: '00:00:10',
+    TopologyRecoveryEnabled: true,
+    Ssl: {}
+  }
+}

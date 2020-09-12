@@ -10,7 +10,6 @@ using ReRabbit.Core.Exceptions;
 using ReRabbit.Core.Settings.Connection;
 using ReRabbit.Core.Settings.Publisher;
 using ReRabbit.Core.Settings.Subscriber;
-using System;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -114,12 +113,49 @@ namespace ReRabbit.Core
 
             return subscriberSettings.Count switch
             {
-                0 => throw new InvalidOperationException(
+                0 => throw new InvalidConfigurationException(
                     $"Не найдена конфигурация для подписчика с именем {subscriberName}."),
                 1 => subscriberSettings[0],
-                _ => throw new InvalidOperationException(
+                _ => throw new InvalidConfigurationException(
                     $"Обнаружено {subscriberSettings.Count} конфигураций для подписчика с именем {subscriberName}. Укажите явно подключение/виртуальный хост.")
             };
+        }
+
+        /// <summary>
+        /// Получить конфигурацию сообщения среди всех подключений и виртуальных хостов.
+        /// </summary>
+        /// <param name="messageName">Наименование сообщения.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Наименование вирутального хоста.</param>
+        /// <exception cref="InvalidConfigurationException">
+        /// В случае, если неудалось найти настройки сообщения по имени, или найдено более 1.
+        /// </exception>
+        /// <returns>Настройки сообщения.</returns>
+        public MessageSettings GetMessageSettings(
+            string messageName,
+            string connectionName,
+            string virtualHost = "/"
+        )
+        {
+            if (!Settings.PublisherConnections.TryGetValue(connectionName, out var connectionSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"При поиске сообщения {messageName} не найдено подключение с именем {connectionName}.");
+            }
+
+            if (!connectionSettings.VirtualHosts.TryGetValue(virtualHost, out var virtualHostSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"При поиске сообщения {messageName} в настройках подключения {connectionName} не найден виртуальный хост с именем {virtualHost}.");
+            }
+
+            if (!virtualHostSettings.Messages.TryGetValue(messageName, out var messageSettings))
+            {
+                throw new InvalidConfigurationException(
+                    $"Конфигурация сообщения с именем {messageName} в настройках подключения {connectionName}:{virtualHost} не найдена.");
+            }
+
+            return messageSettings;
         }
 
         /// <summary>
@@ -141,10 +177,10 @@ namespace ReRabbit.Core
 
             return messageSettings.Count switch
             {
-                0 => throw new InvalidOperationException(
+                0 => throw new InvalidConfigurationException(
                     $"Не найдена конфигурация для сообщения с именем {messageName}."),
                 1 => messageSettings[0],
-                _ => throw new InvalidOperationException(
+                _ => throw new InvalidConfigurationException(
                     $"Обнаружено {messageSettings.Count} конфигураций для сообщения с именем {messageName}. Укажите явно подключение/виртуальный хост.")
             };
         }
@@ -152,15 +188,24 @@ namespace ReRabbit.Core
         /// <summary>
         /// Получить настройки подключения.
         /// </summary>
+        /// <param name="connectionPurposeType">Предназначение подключения.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Виртуальный хост.</param>
         /// <exception cref="InvalidConfigurationException">
         /// В случае, если неудалось найти настройки для подключения/виртуального хоста по имени.
         /// </exception>
         /// <returns>Настройки подключения.</returns>
-        public MqConnectionSettings GetMqConnectionSettings(string connectionName= "DefaultConnection", string virtualHost = "/")
+        public MqConnectionSettings GetMqConnectionSettings(
+            ConnectionPurposeType connectionPurposeType,
+            string connectionName= "DefaultConnection",
+            string virtualHost = "/"
+        )
         {
-            if (!Settings.SubscriberConnections.TryGetValue(connectionName, out var connectionSettings))
+            var lookUpDictionary = connectionPurposeType == ConnectionPurposeType.Publisher
+                ? Settings.PublisherConnections
+                : Settings.SubscriberConnections;
+
+            if (!lookUpDictionary.TryGetValue(connectionName, out var connectionSettings))
             {
                 throw new InvalidConfigurationException(
                     $"Не найдены настройки подключения с именем {connectionName}.");

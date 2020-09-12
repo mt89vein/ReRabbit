@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReRabbit.UnitTests
+namespace ReRabbit.UnitTests.Core
 {
     [TestFixture(TestOf = typeof(PublishConfirmableChannel))]
     public class PublishConfirmableChannelTests

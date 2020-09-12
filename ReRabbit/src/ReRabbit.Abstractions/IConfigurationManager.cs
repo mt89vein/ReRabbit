@@ -46,14 +46,31 @@ namespace ReRabbit.Abstractions
         MessageSettings GetMessageSettings(string messageName);
 
         /// <summary>
+        /// Получить конфигурацию сообщения среди всех подключений и виртуальных хостов.
+        /// </summary>
+        /// <param name="messageName">Наименование сообщения.</param>
+        /// <param name="connectionName">Наименование подключения.</param>
+        /// <param name="virtualHost">Наименование вирутального хоста.</param>
+        /// <exception cref="InvalidConfigurationException">
+        /// В случае, если неудалось найти настройки сообщения по имени, или найдено более 1.
+        /// </exception>
+        /// <returns>Настройки сообщения.</returns>
+        MessageSettings GetMessageSettings(
+            string messageName,
+            string connectionName,
+            string virtualHost = "/"
+        );
+
+        /// <summary>
         /// Получить настройки подключения.
         /// </summary>
+        /// <param name="connectionPurposeType">Предназначение подключения.</param>
         /// <param name="connectionName">Наименование подключения.</param>
         /// <param name="virtualHost">Виртуальный хост.</param>
         /// <exception cref="InvalidConfigurationException">
         /// В случае, если неудалось найти настройки для подключения/виртуального хоста по имени.
         /// </exception>
         /// <returns>Настройки подключения.</returns>
-        MqConnectionSettings GetMqConnectionSettings(string connectionName= "DefaultConnection", string virtualHost = "/");
+        MqConnectionSettings GetMqConnectionSettings(ConnectionPurposeType connectionPurposeType, string connectionName= "DefaultConnection", string virtualHost = "/");
     }
 }
