@@ -7,6 +7,7 @@ using ReRabbit.Core.Extensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -306,6 +307,7 @@ namespace ReRabbit.Core
         /// <see cref="T:RabbitMQ.Client.Exceptions.AlreadyClosedException" /> or <see cref="T:System.IO.IOException" /> or any other <see cref="T:System.Exception" /> during closing model.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void Abort()
         {
             _channel.Abort();
@@ -323,6 +325,7 @@ namespace ReRabbit.Core
         /// </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void Abort(ushort replyCode, string replyText)
         {
             _channel.Abort(replyCode, replyText);
@@ -330,6 +333,7 @@ namespace ReRabbit.Core
 
         /// <summary>Acknowledge one or more delivered message(s).</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicAck(ulong deliveryTag, bool multiple)
         {
             _channel.BasicAck(deliveryTag, multiple);
@@ -337,6 +341,7 @@ namespace ReRabbit.Core
 
         /// <summary>Delete a Basic content-class consumer.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicCancel(string consumerTag)
         {
             _channel.BasicCancel(consumerTag);
@@ -347,6 +352,7 @@ namespace ReRabbit.Core
         /// will be no response from the server).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicCancelNoWait(string consumerTag)
         {
             _channel.BasicCancelNoWait(consumerTag);
@@ -354,6 +360,7 @@ namespace ReRabbit.Core
 
         /// <summary>Start a Basic content-class consumer.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public string BasicConsume(string queue, bool autoAck, string consumerTag, bool noLocal, bool exclusive, IDictionary<string, object> arguments,
             IBasicConsumer consumer)
         {
@@ -366,6 +373,7 @@ namespace ReRabbit.Core
         /// no messages are currently available. See also <see cref="M:RabbitMQ.Client.IModel.BasicAck(System.UInt64,System.Boolean)" />.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public BasicGetResult BasicGet(string queue, bool autoAck)
         {
             return _channel.BasicGet(queue, autoAck);
@@ -373,6 +381,7 @@ namespace ReRabbit.Core
 
         /// <summary>Reject one or more delivered message(s).</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicNack(ulong deliveryTag, bool multiple, bool requeue)
         {
             _channel.BasicNack(deliveryTag, multiple, requeue);
@@ -385,6 +394,7 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicPublish(
             string exchange,
             string routingKey,
@@ -398,6 +408,7 @@ namespace ReRabbit.Core
 
         /// <summary>Configures QoS parameters of the Basic content-class.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicQos(uint prefetchSize, ushort prefetchCount, bool global)
         {
             _channel.BasicQos(prefetchSize, prefetchCount, global);
@@ -409,6 +420,7 @@ namespace ReRabbit.Core
         /// </summary>
         [Obsolete("Deprecated. Should not be used.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicRecover(bool requeue)
         {
             _channel.BasicRecover(requeue);
@@ -419,6 +431,8 @@ namespace ReRabbit.Core
         /// Deprecated. Should not be used.
         /// </summary>
         [Obsolete("Deprecated. Should not be used.")]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicRecoverAsync(bool requeue)
         {
             _channel.BasicRecoverAsync(requeue);
@@ -426,6 +440,7 @@ namespace ReRabbit.Core
 
         /// <summary> Reject a delivered message.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void BasicReject(ulong deliveryTag, bool requeue)
         {
             _channel.BasicReject(deliveryTag, requeue);
@@ -439,6 +454,7 @@ namespace ReRabbit.Core
         /// caller until the shutdown is complete.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void Close()
         {
             _channel.Close();
@@ -457,6 +473,7 @@ namespace ReRabbit.Core
         /// </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void Close(ushort replyCode, string replyText)
         {
             _channel.Close(replyCode, replyText);
@@ -464,6 +481,7 @@ namespace ReRabbit.Core
 
         /// <summary>Enable publisher acknowledgements.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ConfirmSelect()
         {
             _channel.ConfirmSelect();
@@ -471,6 +489,7 @@ namespace ReRabbit.Core
 
         /// <summary>Creates a BasicPublishBatch instance</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public IBasicPublishBatch CreateBasicPublishBatch()
         {
             return _channel.CreateBasicPublishBatch();
@@ -480,6 +499,7 @@ namespace ReRabbit.Core
         /// Construct a completely empty content header for use with the Basic content class.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public IBasicProperties CreateBasicProperties()
         {
             return _channel.CreateBasicProperties();
@@ -492,6 +512,7 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeBind(string destination, string source, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.ExchangeBind(destination, source, routingKey, arguments);
@@ -504,6 +525,7 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeBindNoWait(string destination, string source, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.ExchangeBindNoWait(destination, source, routingKey, arguments);
@@ -515,6 +537,7 @@ namespace ReRabbit.Core
         /// The "nowait" option is not exercised.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeDeclare(string exchange, string type, bool durable, bool autoDelete, IDictionary<string, object> arguments)
         {
             _channel.ExchangeDeclare(exchange, type, durable, autoDelete, arguments);
@@ -525,6 +548,7 @@ namespace ReRabbit.Core
         /// will be no response from the server).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeDeclareNoWait(string exchange, string type, bool durable, bool autoDelete, IDictionary<string, object> arguments)
         {
             _channel.ExchangeDeclareNoWait(exchange, type, durable, autoDelete, arguments);
@@ -538,6 +562,7 @@ namespace ReRabbit.Core
         /// in a channel-level protocol exception (channel closure) if not.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeDeclarePassive(string exchange)
         {
             _channel.ExchangeDeclarePassive(exchange);
@@ -545,6 +570,7 @@ namespace ReRabbit.Core
 
         /// <summary>Delete an exchange.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeDelete(string exchange, bool ifUnused)
         {
             _channel.ExchangeDelete(exchange, ifUnused);
@@ -552,6 +578,7 @@ namespace ReRabbit.Core
 
         /// <summary>Like ExchangeDelete but sets nowait to true.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeDeleteNoWait(string exchange, bool ifUnused)
         {
             _channel.ExchangeDeleteNoWait(exchange, ifUnused);
@@ -560,6 +587,7 @@ namespace ReRabbit.Core
         /// <summary>Unbind an exchange from an exchange.</summary>
         /// <remarks>Routing key must be shorter than 255 bytes.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeUnbind(string destination, string source, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.ExchangeUnbind(destination, source, routingKey, arguments);
@@ -572,6 +600,7 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void ExchangeUnbindNoWait(string destination, string source, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.ExchangeUnbindNoWait(destination, source, routingKey, arguments);
@@ -584,6 +613,7 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void QueueBind(string queue, string exchange, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.QueueBind(queue, exchange, routingKey, arguments);
@@ -596,12 +626,15 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void QueueBindNoWait(string queue, string exchange, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.QueueBindNoWait(queue, exchange, routingKey, arguments);
         }
 
         /// <summary> Declare a queue.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public QueueDeclareOk QueueDeclare(string queue, bool durable, bool exclusive, bool autoDelete, IDictionary<string, object> arguments)
         {
             return _channel.QueueDeclare(queue, durable, exclusive, autoDelete, arguments);
@@ -612,6 +645,7 @@ namespace ReRabbit.Core
         /// will be no response from the server).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void QueueDeclareNoWait(string queue, bool durable, bool exclusive, bool autoDelete, IDictionary<string, object> arguments)
         {
             _channel.QueueDeclareNoWait(queue, durable, exclusive, autoDelete, arguments);
@@ -624,6 +658,7 @@ namespace ReRabbit.Core
         /// The queue is declared passively; i.e. only check if it exists.
         ///  </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public QueueDeclareOk QueueDeclarePassive(string queue)
         {
             return _channel.QueueDeclarePassive(queue);
@@ -636,6 +671,7 @@ namespace ReRabbit.Core
         /// </summary>
         /// <param name="queue">The name of the queue</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public uint MessageCount(string queue)
         {
             return _channel.MessageCount(queue);
@@ -648,6 +684,7 @@ namespace ReRabbit.Core
         /// </summary>
         /// <param name="queue">The name of the queue</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public uint ConsumerCount(string queue)
         {
             return _channel.ConsumerCount(queue);
@@ -659,6 +696,7 @@ namespace ReRabbit.Core
         ///  <code>uint.MaxValue</code>.
         ///  </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public uint QueueDelete(string queue, bool ifUnused, bool ifEmpty)
         {
             return _channel.QueueDelete(queue, ifUnused, ifEmpty);
@@ -669,6 +707,7 @@ namespace ReRabbit.Core
         /// and returns void (as there will be no response from the server)
         ///  </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void QueueDeleteNoWait(string queue, bool ifUnused, bool ifEmpty)
         {
             _channel.QueueDeleteNoWait(queue, ifUnused, ifEmpty);
@@ -677,6 +716,7 @@ namespace ReRabbit.Core
         /// <summary>Purge a queue of messages.</summary>
         /// <remarks>Returns the number of messages purged.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public uint QueuePurge(string queue)
         {
             return _channel.QueuePurge(queue);
@@ -689,6 +729,7 @@ namespace ReRabbit.Core
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void QueueUnbind(string queue, string exchange, string routingKey, IDictionary<string, object> arguments)
         {
             _channel.QueueUnbind(queue, exchange, routingKey, arguments);
@@ -696,6 +737,7 @@ namespace ReRabbit.Core
 
         /// <summary>Commit this session's active TX transaction.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void TxCommit()
         {
             _channel.TxCommit();
@@ -703,6 +745,7 @@ namespace ReRabbit.Core
 
         /// <summary>Roll back this session's active TX transaction.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void TxRollback()
         {
             _channel.TxRollback();
@@ -710,6 +753,7 @@ namespace ReRabbit.Core
 
         /// <summary>Enable TX mode for this session.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void TxSelect()
         {
             _channel.TxSelect();
@@ -723,6 +767,7 @@ namespace ReRabbit.Core
         /// throws an exception when called on a non-Confirm channel.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public bool WaitForConfirms()
         {
             return _channel.WaitForConfirms();
@@ -742,6 +787,7 @@ namespace ReRabbit.Core
         /// throws an exception when called on a non-Confirm channel.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public bool WaitForConfirms(TimeSpan timeout)
         {
             return _channel.WaitForConfirms(timeout);
@@ -762,6 +808,7 @@ namespace ReRabbit.Core
         /// throws an exception when called on a non-Confirm channel.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public bool WaitForConfirms(TimeSpan timeout, out bool timedOut)
         {
             return _channel.WaitForConfirms(timeout, out timedOut);
@@ -774,6 +821,7 @@ namespace ReRabbit.Core
         /// OperationInterrupedException exception immediately.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void WaitForConfirmsOrDie()
         {
             _channel.WaitForConfirmsOrDie();
@@ -786,18 +834,21 @@ namespace ReRabbit.Core
         /// elapses, throws an OperationInterrupedException exception immediately.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ExcludeFromCodeCoverage]
         public void WaitForConfirmsOrDie(TimeSpan timeout)
         {
             _channel.WaitForConfirmsOrDie(timeout);
         }
 
         /// <summary>_channel number, unique per connections.</summary>
+        [ExcludeFromCodeCoverage]
         public int ChannelNumber => _channel.ChannelNumber;
 
         /// <summary>
         /// Returns null if the session is still in a state where it can be used,
         /// or the cause of its closure otherwise.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public ShutdownEventArgs CloseReason => _channel.CloseReason;
 
         /// <summary>Signalled when an unexpected message is delivered
@@ -817,6 +868,7 @@ namespace ReRabbit.Core
         /// such deliveries. If no default consumer is registered an
         /// InvalidOperationException will be thrown when such a delivery arrives.
         /// Most people will not need to use this.</summary>
+        [ExcludeFromCodeCoverage]
         public IBasicConsumer DefaultConsumer
         {
             get => _channel.DefaultConsumer;
@@ -826,22 +878,26 @@ namespace ReRabbit.Core
         /// <summary>
         /// Returns true if the model is no longer in a state where it can be used.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public bool IsClosed => _disposed || _channel.IsClosed;
 
         /// <summary>
         /// Returns true if the model is still in a state where it can be used.
         /// Identical to checking if <see cref="P:RabbitMQ.Client.IModel.CloseReason" /> equals null.</summary>
+        [ExcludeFromCodeCoverage]
         public bool IsOpen => !_disposed && _channel.IsOpen;
 
         /// <summary>
         /// When in confirm mode, return the sequence number of the next message to be published.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public ulong NextPublishSeqNo => _channel.NextPublishSeqNo;
 
         /// <summary>
         /// Amount of time protocol  operations (e.g. <code>queue.declare</code>) are allowed to take before
         /// timing out.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public TimeSpan ContinuationTimeout
         {
             get => _channel.ContinuationTimeout;
