@@ -19,7 +19,7 @@ namespace ReRabbit.UnitTests.Core
         /// <summary>
         /// Тестируемый класс.
         /// </summary>
-        private readonly DefaultConfigurationManager _configurationManager;
+        private readonly IConfigurationManager _configurationManager;
 
         #endregion Поля
 

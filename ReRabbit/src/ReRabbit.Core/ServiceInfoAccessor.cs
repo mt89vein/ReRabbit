@@ -42,6 +42,15 @@ namespace ReRabbit.Core
             );
         }
 
+        /// <summary>
+        /// Конструктор.
+        /// </summary>
+        /// <param name="serviceInfo">Информация о сервисе.</param>
+        public ServiceInfoAccessor(ServiceInfo serviceInfo)
+        {
+            ServiceInfo = serviceInfo;
+        }
+
         #endregion Конструктор
     }
 }

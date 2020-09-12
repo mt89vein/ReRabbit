@@ -17,7 +17,7 @@ namespace ReRabbit.Subscribers.RetryDelayComputer
         /// <returns>Временной интервал.</returns>
         public TimeSpan Compute(RetrySettings retrySettings, int retryNumber)
         {
-            return TimeSpan.FromSeconds(retrySettings.RetryMaxDelayInSeconds);
+            return TimeSpan.FromSeconds(retrySettings.RetryDelayInSeconds);
         }
     }
 }
