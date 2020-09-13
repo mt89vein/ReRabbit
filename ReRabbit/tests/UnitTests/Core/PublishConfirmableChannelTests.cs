@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.UnitTests.Core
 {
-    [TestFixture(TestOf = typeof(PublishConfirmableChannel))]
+    [TestOf(typeof(PublishConfirmableChannel))]
     public class PublishConfirmableChannelTests
     {
         [Test]

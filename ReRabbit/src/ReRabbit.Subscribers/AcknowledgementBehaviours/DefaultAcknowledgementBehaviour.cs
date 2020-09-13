@@ -249,6 +249,11 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
         /// <param name="retryDelay">Время, через которое необходимо повторить обработку.</param>
+        /// <remarks>
+        /// Если указали явно время ретрая, то настройки конфигурации подписчика не смотрим
+        /// т.е. игнорируем лимит повторов. Клиентский код должен сам контролировать условие выхода и количество повторов
+        /// свойство IsLastRetry будет true, если лимит был указан и достигнут.
+        /// </remarks>
         /// <returns>True, если удалось успешно переотправить.</returns>
         private async Task<bool> TryRetryAsync<TMessage>(
             IModel channel,

@@ -11,7 +11,7 @@ namespace ReRabbit.UnitTests.Core
     /// <summary>
     /// Тесты менеджера конфигураций.
     /// </summary>
-    [TestFixture(TestOf = typeof(DefaultConfigurationManager))]
+    [TestOf(typeof(DefaultConfigurationManager))]
     public class ConfigurationManagerTests
     {
         #region Поля
