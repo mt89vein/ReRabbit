@@ -94,6 +94,7 @@ namespace ReRabbit.Core.Settings.Subscriber
         public SubscriberSettingsDto(string subscriberName)
         {
             SubscriberName = subscriberName;
+            ConsumerName = subscriberName;
         }
 
         #endregion Конструктор

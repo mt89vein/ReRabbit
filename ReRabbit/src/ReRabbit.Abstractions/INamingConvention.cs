@@ -29,6 +29,11 @@ namespace ReRabbit.Abstractions
         Func<Type, SubscriberSettings, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
 
         /// <summary>
+        /// Конвенция именования очереди для отложенной публикации.
+        /// </summary>
+        Func<Type, TimeSpan, string> DelayedPublishQueueNamingConvention { get; set; }
+
+        /// <summary>
         /// Конвенция именования тэга обработчика.
         /// </summary>
         Func<SubscriberSettings, int, int, string> ConsumerTagNamingConvention { get; set; }

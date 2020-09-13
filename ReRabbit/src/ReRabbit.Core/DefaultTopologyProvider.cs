@@ -5,7 +5,6 @@ using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Core.Constants;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -155,26 +154,25 @@ namespace ReRabbit.Core
         /// Объявить очередь с отложенным паблишем.
         /// </summary>
         /// <param name="channel">Канал.</param>
-        /// <param name="messageName">Наименование сообщения.</param>
+        /// <param name="messageType">Тип сообщения.</param>
         /// <param name="exchange">Тип обменника.</param>
         /// <param name="routingKey">Роут.</param>
-        /// <param name="retryDelay">Период на которую откладывается паблиш.</param>
+        /// <param name="publishDelay">Период на которую откладывается паблиш.</param>
         /// <returns>Название очереди с отложенным паблишем.</returns>
         public string? DeclareDelayedPublishQueue(
             IModel channel,
-            string messageName,
+            Type messageType,
             string exchange,
             string routingKey,
-            TimeSpan retryDelay
+            TimeSpan publishDelay
         )
         {
-            if (retryDelay == TimeSpan.Zero)
+            if (publishDelay == TimeSpan.Zero)
             {
                 return null;
             }
 
-            var delayedQueueName = messageName + "-" + retryDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) +
-                                   "s-delayed-publish";
+            var delayedQueueName = _namingConvention.DelayedPublishQueueNamingConvention(messageType, publishDelay);
 
             // TODO: проверить DelayedPublish для HeaderExchange
 
@@ -189,8 +187,8 @@ namespace ReRabbit.Core
                     [QueueArgument.DEAD_LETTER_EXCHANGE] = exchange,
                     [QueueArgument.DEAD_LETTER_ROUTING_KEY] = routingKey,
                     [QueueArgument.EXPIRES] =
-                        Convert.ToInt32(retryDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds),
-                    [QueueArgument.MESSAGE_TTL] = Convert.ToInt32(retryDelay.TotalMilliseconds)
+                        Convert.ToInt32(publishDelay.Add(TimeSpan.FromSeconds(10)).TotalMilliseconds),
+                    [QueueArgument.MESSAGE_TTL] = Convert.ToInt32(publishDelay.TotalMilliseconds)
                 }
             );
 

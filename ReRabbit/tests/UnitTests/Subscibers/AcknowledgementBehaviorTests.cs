@@ -605,6 +605,8 @@ namespace ReRabbit.UnitTests.Subscibers
 
         #endregion Тесты
 
+        #region TestHelpers
+
         private static MessageContext CreateTestMessageContext(
             ulong deliveryTag,
             IBasicProperties? properties = null,
@@ -652,10 +654,11 @@ namespace ReRabbit.UnitTests.Subscibers
             /// </summary>
             public DateTime MessageCreatedAt { get; set; }
         }
+
+        #endregion TestHelpers
     }
 
     // TODO: тест на PermanentConnection / PermanentConnectionManager
-    // TODO: тест на NamingConvention
     // TODO: тест на RetryComputers
     // TODO: тест на TopologyProvider
     // TODO: тест на логику в Subscriber
