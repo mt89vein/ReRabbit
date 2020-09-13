@@ -1,6 +1,7 @@
 # ReRabbit
 
 ![UnitTest](https://github.com/mt89vein/ReRabbit/workflows/UnitTest/badge.svg?event=push)
+[![Coverage Status](https://coveralls.io/repos/github/mt89vein/ReRabbit/badge.svg?branch=master)](https://coveralls.io/github/mt89vein/ReRabbit?branch=master)
 
 RabbitMQ framework over official RabbitMQ.Client
 
