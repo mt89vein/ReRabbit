@@ -659,8 +659,6 @@ namespace ReRabbit.UnitTests.Subscibers
     }
 
     // TODO: тест на PermanentConnection / PermanentConnectionManager
-    // TODO: тест на RetryComputers
-    // TODO: тест на TopologyProvider
     // TODO: тест на логику в Subscriber
     // TODO: тест на RouteProvider
     // TODO: тест на MessagePublisher

@@ -5,7 +5,7 @@ using ReRabbit.Core;
 using ReRabbit.Core.Settings.Subscriber;
 using System;
 
-namespace ReRabbit.UnitTests.Subscibers
+namespace ReRabbit.UnitTests.Core
 {
     /// <summary>
     /// Тесты на конвенции именования.
@@ -36,7 +36,6 @@ namespace ReRabbit.UnitTests.Subscibers
         }
 
         #endregion Конструктор
-
 
         #region Тесты
 
