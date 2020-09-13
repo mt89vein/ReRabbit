@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SampleWebApplication.Middlewares
 {
-    public class TestMiddleware2 : MiddlewareBase
+    public sealed class TestMiddleware2 : MiddlewareBase
     {
         private readonly ILogger<TestMiddleware2> _logger;
 
@@ -15,7 +15,7 @@ namespace SampleWebApplication.Middlewares
             _logger = logger;
         }
 
-        public override async Task<Acknowledgement> HandleAsync(MessageContext<IMessage> ctx)
+        public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
         {
             _logger.LogInformation("before TestMiddleware2");
             // before

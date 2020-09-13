@@ -49,11 +49,11 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат обработки.</returns>
         public async Task<Acknowledgement> ExecuteAsync(
-            Func<MessageContext<IMessage>, Task<Acknowledgement>> next,
-            MessageContext<IMessage> ctx
+            Func<MessageContext, Task<Acknowledgement>> next,
+            MessageContext ctx
         )
         {
-            var middlewareInfos = _registry.Get(ctx.Message.GetType());
+            var middlewareInfos = _registry.Get(ctx.Message!.GetType());
 
             if (middlewareInfos.Count == 0)
             {

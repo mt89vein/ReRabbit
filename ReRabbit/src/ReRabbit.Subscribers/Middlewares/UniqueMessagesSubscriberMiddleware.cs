@@ -4,7 +4,6 @@ using Microsoft.Extensions.Options;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -61,7 +60,7 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат выполнения.</returns>
-        public override async Task<Acknowledgement> HandleAsync(MessageContext<IMessage> ctx)
+        public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
         {
             var messageId = ctx.EventArgs.BasicProperties.MessageId;
 

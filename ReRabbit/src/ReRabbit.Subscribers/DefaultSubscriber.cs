@@ -276,10 +276,11 @@ namespace ReRabbit.Subscribers
 
                     if (string.IsNullOrEmpty(payload))
                     {
-                        return (EmptyBodyReject.EmptyBody, new MessageContext(mqEventData, ea));
+                        return (EmptyBodyReject.EmptyBody, new MessageContext(null, mqEventData, ea));
                     }
 
                     messageContext = new MessageContext(
+                        null, // будет позже десериализован
                         mqEventData,
                         ea
                     );

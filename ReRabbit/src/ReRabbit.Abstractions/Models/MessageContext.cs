@@ -40,6 +40,11 @@ namespace ReRabbit.Abstractions.Models
         }
 
         #endregion Конструктор
+
+        public static implicit operator MessageContext(MessageContext<TMessage> ctx)
+        {
+            return new MessageContext(ctx.Message, ctx.MessageData, ctx.EventArgs);
+        }
     }
 
     /// <summary>
@@ -48,6 +53,11 @@ namespace ReRabbit.Abstractions.Models
     public readonly struct MessageContext
     {
         #region Свойства
+
+        /// <summary>
+        /// Десериализованное сообщение.
+        /// </summary>
+        public object? Message { get; }
 
         /// <summary>
         /// Данные события.
@@ -66,12 +76,19 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageContext"/>.
         /// </summary>
-        public MessageContext(in MqMessageData messageData, BasicDeliverEventArgs eventArgs)
+        public MessageContext(object? message, in MqMessageData messageData, BasicDeliverEventArgs eventArgs)
         {
+            Message = message;
             MessageData = messageData;
             EventArgs = eventArgs;
         }
 
         #endregion Конструктор
+
+        public MessageContext<TMessage> As<TMessage>()
+            where TMessage : class, IMessage
+        {
+            return new MessageContext<TMessage>((TMessage)Message!, MessageData, EventArgs);
+        }
     }
 }

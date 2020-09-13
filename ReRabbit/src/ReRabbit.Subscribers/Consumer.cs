@@ -167,14 +167,8 @@ namespace ReRabbit.Subscribers
             var middlewareExecutor = scope.ServiceProvider.GetRequiredService<IMiddlewareExecutor>();
 
             return middlewareExecutor.ExecuteAsync(
-                ctx => handler.HandleAsync(
-                    new MessageContext<TMessage>(
-                        (TMessage)ctx.Message,
-                        ctx.MessageData,
-                        ctx.EventArgs
-                    )
-                ),
-                new MessageContext<IMessage>(
+                ctx => handler.HandleAsync(ctx.As<TMessage>()),
+                new MessageContext<TMessage>(
                     mqMessage,
                     ctx.MessageData,
                     ctx.EventArgs

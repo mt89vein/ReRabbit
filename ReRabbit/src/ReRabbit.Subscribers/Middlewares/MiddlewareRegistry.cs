@@ -7,8 +7,6 @@ using System.Linq;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
-    // TODO: регистрация мидлварок в DI
-
     /// <summary>
     /// Реестр middlewares.
     /// </summary>

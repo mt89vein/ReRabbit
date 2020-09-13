@@ -615,14 +615,16 @@ namespace ReRabbit.UnitTests.Subscibers
             bool? redelivered = false
         )
         {
+            var msg = new TestMessage();
             var msgBody = new MqMessage(
-                JsonConvert.SerializeObject(new TestMessage()),
+                JsonConvert.SerializeObject(msg),
                 nameof(TestMessage),
                 "1.0",
                 "1.0",
                 "MyApp"
             );
             var messageContext = new MessageContext(
+                msg,
                 new MqMessageData(
                     msgBody,
                     false,
