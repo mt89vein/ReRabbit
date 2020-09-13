@@ -11,6 +11,7 @@ using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -367,6 +368,7 @@ namespace ReRabbit.Subscribers
     /// <summary>
     /// Методы расширения для <see cref="ILogger"/>.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal static class SubscriberLoggingExtensions
     {
         #region Константы

@@ -194,6 +194,10 @@ namespace ReRabbit.UnitTests.Subscibers
             #endregion Assert
         }
 
+        // TODO: тесты на ошибку десериализации Json
+        // TODO: тесты на ошибку в хендлере (reject)
+        // TODO: тесты на Poison message handling
+
         #endregion Тесты
 
         #region TestHelpers

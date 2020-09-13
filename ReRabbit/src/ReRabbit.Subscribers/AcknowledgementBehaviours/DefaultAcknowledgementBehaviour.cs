@@ -9,6 +9,7 @@ using ReRabbit.Core.Constants;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -360,6 +361,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
     /// <summary>
     /// Методы расширения для <see cref="ILogger"/>.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal static class AcknowledgementBehaviourLoggingExtensions
     {
         #region Константы

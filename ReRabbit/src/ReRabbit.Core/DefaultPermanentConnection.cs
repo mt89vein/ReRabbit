@@ -8,6 +8,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -317,6 +318,7 @@ namespace ReRabbit.Core
     /// <summary>
     /// Методы расширения для <see cref="ILogger"/>.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal static class PermanentConnectionLoggingExtensions
     {
         #region Константы
