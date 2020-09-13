@@ -122,14 +122,13 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                // TODO: покрыть тестами данный кусок кода
                 if (await TryRetryAsync<TMessage>(channel, messageContext, settings, retry.Span))
                 {
-                    channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
+                    channel.Ack(messageContext, settings);
                 }
                 else
                 {
-                    channel.BasicNack(messageContext.EventArgs.DeliveryTag, false, false);
+                    channel.Nack(requeue: false, messageContext, settings);
                 }
             }
         }
@@ -146,10 +145,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             SubscriberSettings settings
         )
         {
-            if (!settings.AutoAck)
-            {
-                channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
-            }
+            channel.Ack(messageContext, settings);
 
             return Task.CompletedTask;
         }
@@ -172,17 +168,13 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                // TODO: покрыть тестами данный кусок кода
                 if (nack.Requeue && await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
-                    if (!settings.AutoAck)
-                    {
-                        channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
-                    }
+                    channel.Ack(messageContext, settings);
                 }
                 else
                 {
-                    channel.BasicNack(messageContext.EventArgs.DeliveryTag, false, nack.Requeue);
+                    channel.Nack(nack.Requeue, messageContext, settings);
                 }
             }
         }
@@ -205,7 +197,6 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             { }
             finally
             {
-                // TODO: покрыть тестами данный кусок кода
                 if (reject is EmptyBodyReject || reject is FormatReject)
                 {
                     if (settings.ConnectionSettings.UseCommonErrorMessagesQueue)
@@ -238,18 +229,15 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                         _logger.RabbitMqMessageNotSupportedFormatError(reject.Reason, reject.Exception);
                     }
 
-                    channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
+                    channel.Ack(messageContext, settings);
                 }
                 else if (reject.Requeue && await TryRetryAsync<TMessage>(channel, messageContext, settings))
                 {
-                    if (!settings.AutoAck)
-                    {
-                        channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
-                    }
+                    channel.Ack(messageContext, settings);
                 }
                 else
                 {
-                    channel.BasicReject(messageContext.EventArgs.DeliveryTag, false);
+                    channel.Reject(requeue: false, messageContext, settings);
                 }
             }
         }
@@ -261,6 +249,11 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <param name="settings">Настройки очереди.</param>
         /// <param name="retryDelay">Время, через которое необходимо повторить обработку.</param>
+        /// <remarks>
+        /// Если указали явно время ретрая, то настройки конфигурации подписчика не смотрим
+        /// т.е. игнорируем лимит повторов. Клиентский код должен сам контролировать условие выхода и количество повторов
+        /// свойство IsLastRetry будет true, если лимит был указан и достигнут.
+        /// </remarks>
         /// <returns>True, если удалось успешно переотправить.</returns>
         private async Task<bool> TryRetryAsync<TMessage>(
             IModel channel,

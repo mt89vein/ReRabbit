@@ -1,0 +1,38 @@
+{
+  Name: 'MyIntegrationRabbitMessage',
+  Version: 'v1',
+  Route: 'rk1',
+  Exchange: {
+    Name: 'test-exchange',
+    Durable: true,
+    Type: 'direct'
+  },
+  RetryCount: 5,
+  ConfirmationTimeout: '00:00:10',
+  ConnectionSettings: {
+    HostNames: [
+      'localhost'
+    ],
+    Port: 5672,
+    UserName: 'user',
+    Password: 'user',
+    VirtualHost: '/',
+    ConnectionRetryCount: 5,
+    ConnectionName: 'DefaultConnection',
+    UseCommonErrorMessagesQueue: true,
+    UseCommonUnroutedMessagesQueue: true,
+    UseAsyncConsumer: true,
+    UseBackgroundThreadsForIO: true,
+    RequestedConnectionTimeout: '00:00:30',
+    SocketReadTimeout: '00:00:30',
+    SocketWriteTimeout: '00:00:30',
+    RequestedChannelMax: 100,
+    RequestedHeartbeat: '00:01:00',
+    HandshakeContinuationTimeout: '00:00:10',
+    ContinuationTimeout: '00:00:10',
+    AuthomaticRecoveryEnabled: true,
+    NetworkRecoveryInterval: '00:00:10',
+    TopologyRecoveryEnabled: true,
+    Ssl: {}
+  }
+}

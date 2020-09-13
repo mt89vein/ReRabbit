@@ -13,11 +13,18 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
     <PackageReference Include="Moq" Version="4.14.5" />
+    <PackageReference Include="Verify.NUnit" Version="6.14.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ReRabbit.Publishers\ReRabbit.Publishers.csproj" />
     <ProjectReference Include="..\..\src\ReRabbit.Subscribers\ReRabbit.Subscribers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestFiles\**\*.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

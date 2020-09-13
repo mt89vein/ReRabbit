@@ -32,7 +32,10 @@ namespace ReRabbit.Core
         /// </summary>
         public Func<Type, SubscriberSettings, TimeSpan, string> DelayedQueueNamingConvention { get; set; }
 
-        // TODO: delayed publish queue naming convention
+        /// <summary>
+        /// Конвенция именования очереди для отложенной публикации.
+        /// </summary>
+        public Func<Type, TimeSpan, string> DelayedPublishQueueNamingConvention { get; set; }
 
         /// <summary>
         /// Конвенция именования тэга обработчика.
@@ -70,16 +73,20 @@ namespace ReRabbit.Core
                 QueueNamingConvention(messageType, setting) + "-" +
                 retryDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) + "s-delayed-queue";
 
-            var rerabbitVersion = "v" + GetType().Assembly.GetName().Version;
+            DelayedPublishQueueNamingConvention = (messageType, publishDelay) =>
+                messageType.Name + "-" +
+                publishDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture) + "s-delayed-publish"; 
+
+            var rerabbitVersion = "client-version[" + GetType().Assembly.GetName().Version + "]";
             
             ConsumerTagNamingConvention = (setting, channelNumber, consumerNumberInChannel) =>
-                string.Join("-",
-                serviceInfoAccessor.ServiceInfo.ServiceName + "v" + serviceInfoAccessor.ServiceInfo.ApplicationVersion,
+                string.Join("|",
+                serviceInfoAccessor.ServiceInfo.ServiceName,
+                "v[" + serviceInfoAccessor.ServiceInfo.ApplicationVersion + "]",
                 serviceInfoAccessor.ServiceInfo.HostName,
                 serviceInfoAccessor.ServiceInfo.EnvironmentName,
                 rerabbitVersion,
-                setting.ConsumerName,
-                $"[{channelNumber}-{consumerNumberInChannel}]"
+                setting.ConsumerName + $"-[{channelNumber}-{consumerNumberInChannel}]"
             );
         }
 

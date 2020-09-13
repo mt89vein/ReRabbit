@@ -3,10 +3,19 @@ using System;
 
 namespace ReRabbit.Abstractions
 {
+    /// <summary>
+    /// Предназначение подключения.
+    /// </summary>
     public enum ConnectionPurposeType : byte
     {
-        Unknown = 0,
+        /// <summary>
+        /// Издатель.
+        /// </summary>
         Publisher = 1,
+
+        /// <summary>
+        /// Подписчик.
+        /// </summary>
         Subscriber = 2
     }
 

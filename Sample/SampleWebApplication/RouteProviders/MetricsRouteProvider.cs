@@ -22,7 +22,7 @@ namespace SampleWebApplication.RouteProviders
 
         public RouteInfo GetFor(MetricsDto message, TimeSpan? delay = null)
         {
-            var mqConnection = _configurationManager.GetMqConnectionSettings();
+            var mqConnection = _configurationManager.GetMqConnectionSettings(ConnectionPurposeType.Publisher);
 
             return new RouteInfo(
                 new MessageSettings(

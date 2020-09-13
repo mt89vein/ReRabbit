@@ -17,17 +17,17 @@ namespace ReRabbit.Subscribers.Extensions
         /// <summary>
         /// Название заголовка, для передачи счетчика количества повторных обработок.
         /// </summary>
-        private const string RETRY_NUMBER_KEY = "x-retry-number";
+        public const string RETRY_NUMBER_KEY = "x-retry-number";
 
         /// <summary>
         /// Название заголовка, в котором хранится название оригинального обменника, с которым было опубликовано сообщение.
         /// </summary>
-        private const string ORIGINAL_EXCHANGE_HEADER = "x-original-exchange";
+        public const string ORIGINAL_EXCHANGE_HEADER = "x-original-exchange";
 
         /// <summary>
         /// Название заголовка, в котором хранится оригинальный маркер, с которым было опубликовано сообщение.
         /// </summary>
-        private const string ORIGINAL_ROUTING_KEY_HEADER = "x-original-routing-key";
+        public const string ORIGINAL_ROUTING_KEY_HEADER = "x-original-routing-key";
 
         #endregion Константы
 
@@ -85,14 +85,12 @@ namespace ReRabbit.Subscribers.Extensions
             out int retryCount
         )
         {
+            retryCount = properties.GetRetryNumber();
+
             if (!retrySettings.IsEnabled)
             {
-                retryCount = 0;
-
                 return true;
             }
-
-            retryCount = properties.GetRetryNumber();
 
             if (retrySettings.DoInfinityRetries)
             {

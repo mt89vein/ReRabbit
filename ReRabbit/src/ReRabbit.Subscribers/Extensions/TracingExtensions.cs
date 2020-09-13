@@ -18,12 +18,12 @@ namespace ReRabbit.Subscribers.Extensions
         /// <summary>
         /// Название заголовка или поля, для передачи сквозного идентификатора.
         /// </summary>
-        private const string TRACE_ID_KEY = "x-trace-id";
+        public const string TRACE_ID_KEY = "x-trace-id";
 
         /// <summary>
         /// Название заголовка или поля, для передачи источника сквозного идентификатора.
         /// </summary>
-        private const string TRACE_ID_SOURCE_KEY = "x-trace-id-source";
+        public const string TRACE_ID_SOURCE_KEY = "x-trace-id-source";
 
         #endregion Константы
 

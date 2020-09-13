@@ -150,7 +150,7 @@ namespace ReRabbit.Publishers
                 await semaphoreSlim.WaitAsync();
                 try
                 {
-                    var delayedRoute = EnsureTopology(channel, routeInfo);
+                    var delayedRoute = EnsureTopology<TMessage>(channel, routeInfo);
 
                     var properties = GetPublishProperties(channel, contentType, routeInfo, message, expires);
 
@@ -189,7 +189,7 @@ namespace ReRabbit.Publishers
         #region Методы (private)
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string? EnsureTopology(IModel channel, in RouteInfo routeInfo)
+        private string? EnsureTopology<TMessage>(IModel channel, in RouteInfo routeInfo)
         {
             channel.ExchangeDeclare(
                 exchange: routeInfo.Exchange,
@@ -202,7 +202,7 @@ namespace ReRabbit.Publishers
             {
                 return _topologyProvider.DeclareDelayedPublishQueue(
                     channel,
-                    routeInfo.Name,
+                    typeof(TMessage),
                     routeInfo.Exchange,
                     routeInfo.Route,
                     routeInfo.Delay.Value
