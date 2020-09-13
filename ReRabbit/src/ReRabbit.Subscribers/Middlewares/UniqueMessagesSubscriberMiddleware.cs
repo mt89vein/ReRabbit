@@ -62,9 +62,9 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <returns>Результат выполнения.</returns>
         public override async Task<Acknowledgement> HandleAsync(MessageContext ctx)
         {
-            var messageId = ctx.EventArgs.BasicProperties.MessageId;
+            var messageId = ctx.MessageData.MessageId;
 
-            if (messageId == null)
+            if (!messageId.HasValue || messageId.Value == Guid.Empty)
             {
                 _logger.LogWarning("MessageId не указан.");
 
@@ -73,7 +73,7 @@ namespace ReRabbit.Subscribers.Middlewares
 
             _logger.LogTrace("Получено сообщение для обработки.");
 
-            if (!await TryProcessAsync(messageId))
+            if (!await TryProcessAsync(messageId.ToString()))
             {
                 _logger.LogTrace("Сообщение уже было обработано");
 
@@ -94,7 +94,7 @@ namespace ReRabbit.Subscribers.Middlewares
             {
                 _logger.LogTrace("Произошла ошибка при обработке сообщения");
 
-                await RemoveAsync(messageId);
+                await RemoveAsync(messageId.ToString());
                 throw;
             }
         }

@@ -168,11 +168,7 @@ namespace ReRabbit.Subscribers
 
             return middlewareExecutor.ExecuteAsync(
                 ctx => handler.HandleAsync(ctx.As<TMessage>()),
-                new MessageContext<TMessage>(
-                    mqMessage,
-                    ctx.MessageData,
-                    ctx.EventArgs
-                )
+                new MessageContext<TMessage>(mqMessage, ctx.MessageData)
             );
         }
 
@@ -191,9 +187,9 @@ namespace ReRabbit.Subscribers
         {
             var rabbitMessage = subscribedMessages.FirstOrDefault(
                 s => s.Is(
-                    ctx.EventArgs.Exchange,
-                    ctx.EventArgs.RoutingKey,
-                    ctx.EventArgs.BasicProperties.Headers
+                    ctx.MessageData.Exchange,
+                    ctx.MessageData.RoutingKey,
+                    ctx.MessageData.Headers
                 )
             );
 
@@ -220,24 +216,29 @@ namespace ReRabbit.Subscribers
             }
 
             var message = (TMessage)mqMessage!;
-            if (ctx.EventArgs.BasicProperties.IsTimestampPresent())
+            if (ctx.MessageData.CreatedAt.HasValue)
             {
-                message.MessageCreatedAt =
-                    DateTimeOffset.FromUnixTimeSeconds(ctx.EventArgs.BasicProperties.Timestamp.UnixTime)
-                        .DateTime;
+                message.MessageCreatedAt = ctx.MessageData.CreatedAt.Value;
             }
-            else if (message.MessageCreatedAt == default)
+
+            if (message.MessageCreatedAt == default)
             {
                 message.MessageCreatedAt = DateTime.UtcNow;
             }
 
-            if (ctx.EventArgs.BasicProperties.IsMessageIdPresent() && Guid.TryParse(ctx.EventArgs.BasicProperties.MessageId, out var gMessageId))
+            if (ctx.MessageData.MessageId.HasValue)
             {
-                message.MessageId = gMessageId;
+                message.MessageId = ctx.MessageData.MessageId.Value;
             }
-            else if (message.MessageId == default)
+
+            if (message.MessageId == default)
             {
                 message.MessageId = Guid.NewGuid();
+            }
+
+            if (message is ITracedMessage tracedMessage && ctx.MessageData.TraceId.HasValue && ctx.MessageData.TraceId != Guid.Empty)
+            {
+                tracedMessage.TraceId = ctx.MessageData.TraceId.Value;
             }
 
             return message;

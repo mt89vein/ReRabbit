@@ -19,7 +19,7 @@ namespace ReRabbit.Subscribers.Extensions
         {
             if (!settings.AutoAck) // те у которых включен AutoAck автоматически удаляются из очереди, вручную подтверждать не нужно.
             {
-                channel.BasicAck(messageContext.EventArgs.DeliveryTag, false);
+                channel.BasicAck(messageContext.MessageData.DeliverEventArgs.DeliveryTag, false);
             }
         }
 
@@ -34,7 +34,7 @@ namespace ReRabbit.Subscribers.Extensions
         {
             if (!settings.AutoAck) // те у которых включен AutoAck автоматически удаляются из очереди, вручную подтверждать не нужно.
             {
-                channel.BasicNack(messageContext.EventArgs.DeliveryTag, false, requeue);
+                channel.BasicNack(messageContext.MessageData.DeliverEventArgs.DeliveryTag, false, requeue);
             }
         }
 
@@ -49,7 +49,7 @@ namespace ReRabbit.Subscribers.Extensions
         {
             if (!settings.AutoAck) // те у которых включен AutoAck автоматически удаляются из очереди, вручную подтверждать не нужно.
             {
-                channel.BasicReject(messageContext.EventArgs.DeliveryTag, requeue);
+                channel.BasicReject(messageContext.MessageData.DeliverEventArgs.DeliveryTag, requeue);
             }
         }
     }

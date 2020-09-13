@@ -1,24 +1,27 @@
 using Newtonsoft.Json;
 using System;
+using TracingContext;
 
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Интеграционное сообщение.
     /// </summary>
-    public abstract class IntegrationMessage : IMessage
+    public abstract class IntegrationMessage : IMessage, ITracedMessage
     {
         protected IntegrationMessage()
         {
             MessageId = Guid.NewGuid();
+            TraceId = TraceContext.Current.TraceId ?? Guid.Empty;
             MessageCreatedAt = DateTime.UtcNow;
         }
 
         [JsonConstructor]
-        protected IntegrationMessage(Guid id, DateTime createAt)
+        protected IntegrationMessage(Guid messageId, DateTime createAt, Guid traceId)
         {
-            MessageId = id;
+            MessageId = messageId;
             MessageCreatedAt = createAt;
+            TraceId = traceId;
         }
 
         /// <summary>
@@ -32,5 +35,11 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         [JsonProperty]
         public DateTime MessageCreatedAt { get; set; }
+
+        /// <summary>
+        /// Глобальный идентификатор отслеживания.
+        /// </summary>
+        [JsonProperty]
+        public Guid TraceId { get; set; }
     }
 }

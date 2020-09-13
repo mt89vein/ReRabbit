@@ -283,17 +283,16 @@ namespace ReRabbit.UnitTests.Subscibers
 
             const ulong deliveryTag = 100500;
 
-            var headers = new Dictionary<string, object>();
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(headers);
-
-            propertiesMock.Object.IncrementRetryCount(retryNum);
+            propertiesMock.IncrementRetryCount(retryNum);
 
             var channelMock = new Mock<IModel>();
 
-            var messageContext = CreateTestMessageContext(deliveryTag, propertiesMock.Object);
+            var messageContext = CreateTestMessageContext(deliveryTag, propertiesMock);
 
             var subscriberSettings = _configurationManager.GetSubscriberSettings(subscriberName);
 
@@ -389,17 +388,18 @@ namespace ReRabbit.UnitTests.Subscibers
             const string publishedFromExchange = "my-exchange";
             const string publishedRoutingKey = "my-routing-key";
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(new Dictionary<string, object>());
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
-            propertiesMock.Object.IncrementRetryCount(retryNum);
+            propertiesMock.IncrementRetryCount(retryNum);
 
             var channelMock = new Mock<IModel>();
 
             var messageContext = CreateTestMessageContext(
                 deliveryTag,
-                propertiesMock.Object,
+                propertiesMock,
                 publishedFromExchange,
                 publishedRoutingKey
             );
@@ -522,17 +522,18 @@ namespace ReRabbit.UnitTests.Subscibers
             const string publishedRoutingKey = "to-routing-key";
             var retryDelay = TimeSpan.FromSeconds(10);
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(new Dictionary<string, object>());
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
-            propertiesMock.Object.IncrementRetryCount(retryNum);
+            propertiesMock.IncrementRetryCount(retryNum);
 
             var channelMock = new Mock<IModel>();
 
             var messageContext = CreateTestMessageContext(
                 deliveryTag,
-                propertiesMock.Object,
+                propertiesMock,
                 publishedFromExchange,
                 publishedRoutingKey
             );
@@ -626,20 +627,22 @@ namespace ReRabbit.UnitTests.Subscibers
             var messageContext = new MessageContext(
                 msg,
                 new MqMessageData(
-                    msgBody,
-                    false,
-                    Guid.NewGuid(),
-                    0,
-                    false
-                ), new BasicDeliverEventArgs
-                {
-                    DeliveryTag = deliveryTag,
-                    Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msgBody)),
-                    Exchange = exchange,
-                    RoutingKey = routingKey,
-                    Redelivered = redelivered ?? false,
-                    BasicProperties = properties
-                });
+                    mqMessage: msgBody,
+                    traceId: Guid.NewGuid(),
+                    messageId: null,
+                    createdAt: null,
+                    retryNumber: 0,
+                    isLastRetry: false,
+                    ea: new BasicDeliverEventArgs
+                    {
+                        DeliveryTag = deliveryTag,
+                        Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msgBody)),
+                        Exchange = exchange,
+                        RoutingKey = routingKey,
+                        Redelivered = redelivered ?? false,
+                        BasicProperties = properties
+                    } 
+                ));
 
             return messageContext;
         }

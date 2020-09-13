@@ -208,30 +208,24 @@ namespace ReRabbit.Subscribers
         /// <param name="ea">Информация о сообщении.</param>
         /// <param name="messageHandler">Обработчик.</param>
         /// <param name="settings">Настройки подписчика.</param>
-        /// <param name="queueName">Название очереди.</param>
+        /// <param name="loggingScope">Скоуп логирования.</param>
         /// <returns>Результат обработки.</returns>
-        private async Task<(Acknowledgement, MessageContext)> HandleMessageAsync<TMessage>(
+        internal async Task<(Acknowledgement, MessageContext)> HandleMessageAsync<TMessage>(
             BasicDeliverEventArgs ea,
             AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings settings,
-            string queueName
+            Dictionary<string, object?>? loggingScope = null
         )
             where TMessage : class, IMessage
         {
             ea.EnsureOriginalExchange();
 
-            Guid? traceId = default;
-
-            var loggingScope = new Dictionary<string, object?>
-            {
-                ["Exchange"] = ea.Exchange,
-                ["RoutingKey"] = ea.RoutingKey,
-                ["QueueName"] = queueName,
-                ["MessageName"] = typeof(TMessage).Name,
-                ["Arguments"] = ea.BasicProperties.Headers,
-                ["MessageId"] = ea.BasicProperties.MessageId,
-                ["TraceId"] = ea.BasicProperties.CorrelationId
-            };
+            loggingScope ??= new Dictionary<string, object?>();
+            loggingScope["Exchange"] = ea.Exchange;
+            loggingScope["RoutingKey"] = ea.RoutingKey;
+            loggingScope["Headers"] = ea.BasicProperties.Headers;
+            loggingScope["MessageId"] = ea.BasicProperties.MessageId;
+            loggingScope["TraceId"] = ea.BasicProperties.CorrelationId;
 
             if (settings.TracingSettings.LogWhenMessageIncome)
             {
@@ -251,11 +245,6 @@ namespace ReRabbit.Subscribers
                 }
             }
 
-            if (settings.TracingSettings.IsEnabled)
-            {
-                traceId = ea.BasicProperties.EnsureTraceId(settings.TracingSettings, _logger, loggingScope);
-            }
-
             var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(settings.RetrySettings, loggingScope);
 
             MessageContext messageContext = default;
@@ -264,25 +253,37 @@ namespace ReRabbit.Subscribers
                 try
                 {
                     var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
-                    var payload = mqMessage?.Payload.ToString();
+                    var payload = mqMessage?.Payload?.ToString();
+                    var stubMessage = _serializer.Deserialize<StubMessage>(payload ?? string.Empty);
+
+                    if (settings.TracingSettings.IsEnabled)
+                    {
+                        ea.BasicProperties.EnsureTraceId(
+                            settings.TracingSettings,
+                            _logger,
+                            ref stubMessage,
+                            loggingScope
+                        );
+                    }
 
                     var mqEventData = new MqMessageData(
                         mqMessage!,
-                        ea.Redelivered || retryNumber != 0,
-                        traceId,
+                        stubMessage.TraceId,
+                        stubMessage.MessageId,
+                        stubMessage.MessageCreatedAt,
                         retryNumber,
-                        isLastRetry
+                        isLastRetry,
+                        ea
                     );
 
                     if (string.IsNullOrEmpty(payload))
                     {
-                        return (EmptyBodyReject.EmptyBody, new MessageContext(null, mqEventData, ea));
+                        return (EmptyBodyReject.EmptyBody, new MessageContext(null, mqEventData));
                     }
 
                     messageContext = new MessageContext(
                         null, // будет позже десериализован
-                        mqEventData,
-                        ea
+                        mqEventData
                     );
 
                     var acknowledgement = await messageHandler(messageContext);
@@ -325,12 +326,18 @@ namespace ReRabbit.Subscribers
         {
             var acknowledgementBehaviour = _acknowledgementBehaviourFactory.GetBehaviour<TMessage>(settings);
 
+            var loggingScope = new Dictionary<string, object?>
+            {
+                ["QueueName"] = queueName,
+                ["MessageName"] = typeof(TMessage).Name,
+            };
+
             if (settings.ConnectionSettings.UseAsyncConsumer)
             {
                 var consumer = new AsyncEventingBasicConsumer(channel);
                 consumer.Received += async (sender, ea) =>
                 {
-                    var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, queueName);
+                    var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, loggingScope);
 
                     await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
                 };
@@ -345,7 +352,7 @@ namespace ReRabbit.Subscribers
                 consumer.Received += (sender, ea) =>
                     AsyncHelper.RunSync(async () =>
                     {
-                        var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, queueName);
+                        var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, loggingScope);
 
                         await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
                     });

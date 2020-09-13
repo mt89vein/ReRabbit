@@ -1,5 +1,3 @@
-using RabbitMQ.Client.Events;
-
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
@@ -20,11 +18,6 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         public MqMessageData MessageData { get; }
 
-        /// <summary>
-        /// Данные доставки из шины.
-        /// </summary>
-        public BasicDeliverEventArgs EventArgs { get; } // TODO: заменить на кастомный класс/структуру
-
         #endregion Свойства
 
         #region Конструктор
@@ -32,18 +25,17 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageContext{TMessage}"/>.
         /// </summary>
-        public MessageContext(TMessage message, in MqMessageData messageData, BasicDeliverEventArgs eventArgs)
+        public MessageContext(TMessage message, in MqMessageData messageData)
         {
             Message = message;
             MessageData = messageData;
-            EventArgs = eventArgs;
         }
 
         #endregion Конструктор
 
         public static implicit operator MessageContext(MessageContext<TMessage> ctx)
         {
-            return new MessageContext(ctx.Message, ctx.MessageData, ctx.EventArgs);
+            return new MessageContext(ctx.Message, ctx.MessageData);
         }
     }
 
@@ -64,11 +56,6 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         public MqMessageData MessageData { get; }
 
-        /// <summary>
-        /// Данные доставки из шины.
-        /// </summary>
-        public BasicDeliverEventArgs EventArgs { get; } // TODO: заменить на кастомный класс/структуру
-
         #endregion Свойства
 
         #region Конструктор
@@ -76,11 +63,10 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageContext"/>.
         /// </summary>
-        public MessageContext(object? message, in MqMessageData messageData, BasicDeliverEventArgs eventArgs)
+        public MessageContext(object? message, in MqMessageData messageData)
         {
             Message = message;
             MessageData = messageData;
-            EventArgs = eventArgs;
         }
 
         #endregion Конструктор
@@ -88,7 +74,7 @@ namespace ReRabbit.Abstractions.Models
         public MessageContext<TMessage> As<TMessage>()
             where TMessage : class, IMessage
         {
-            return new MessageContext<TMessage>((TMessage)Message!, MessageData, EventArgs);
+            return new MessageContext<TMessage>((TMessage)Message!, MessageData);
         }
     }
 }

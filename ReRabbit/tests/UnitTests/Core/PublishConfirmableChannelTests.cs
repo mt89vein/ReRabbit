@@ -3,6 +3,7 @@ using NUnit.Framework;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Core;
+using ReRabbit.UnitTests.Subscibers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -25,9 +26,10 @@ namespace ReRabbit.UnitTests.Core
             modelMock.Setup(m => m.NextPublishSeqNo)
                 .Returns(taskId);
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(new Dictionary<string, object>());
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
             var confirmableChannel = new PublishConfirmableChannel(modelMock.Object);
 
@@ -39,7 +41,7 @@ namespace ReRabbit.UnitTests.Core
                 string.Empty,
                 string.Empty,
                 true,
-                propertiesMock.Object,
+                propertiesMock,
                 ReadOnlyMemory<byte>.Empty
             );
 
@@ -76,9 +78,10 @@ namespace ReRabbit.UnitTests.Core
             modelMock.Setup(m => m.NextPublishSeqNo)
                 .Returns(taskId);
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(new Dictionary<string, object>());
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
             var confirmableChannel = new PublishConfirmableChannel(modelMock.Object);
 
@@ -90,7 +93,7 @@ namespace ReRabbit.UnitTests.Core
                 string.Empty,
                 string.Empty,
                 true,
-                propertiesMock.Object,
+                propertiesMock,
                 ReadOnlyMemory<byte>.Empty
             );
 
@@ -128,9 +131,10 @@ namespace ReRabbit.UnitTests.Core
             modelMock.Setup(m => m.NextPublishSeqNo)
                 .Returns(taskId);
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(new Dictionary<string, object>());
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
             var confirmableChannel = new PublishConfirmableChannel(modelMock.Object);
 
@@ -142,7 +146,7 @@ namespace ReRabbit.UnitTests.Core
                 string.Empty,
                 string.Empty,
                 true,
-                propertiesMock.Object,
+                propertiesMock,
                 ReadOnlyMemory<byte>.Empty
             );
 
@@ -183,12 +187,10 @@ namespace ReRabbit.UnitTests.Core
             modelMock.Setup(m => m.NextPublishSeqNo)
                 .Returns(taskId);
 
-            var propertiesHeaders = new Dictionary<string, object>();
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.IsHeadersPresent())
-                .Returns(true);
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(propertiesHeaders);
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
             var confirmableChannel = new PublishConfirmableChannel(modelMock.Object);
 
@@ -200,21 +202,21 @@ namespace ReRabbit.UnitTests.Core
                 string.Empty,
                 string.Empty,
                 true,
-                propertiesMock.Object,
+                propertiesMock,
                 ReadOnlyMemory<byte>.Empty
             );
 
-            Assert.IsTrue(propertiesHeaders.ContainsKey("publishTag"), "publishTag header not set!");
+            Assert.IsTrue(propertiesMock.Headers.ContainsKey("publishTag"), "publishTag header not set!");
             Assert.IsTrue(confirmableChannel.HasTaskWith(taskId), "PublishTaskInfo not added!");
 
             // emulate rabbitmq internal encoding.
-            propertiesHeaders["publishTag"] = Encoding.UTF8.GetBytes(taskId.ToString());
+            propertiesMock.Headers["publishTag"] = Encoding.UTF8.GetBytes(taskId.ToString());
 
             modelMock.Raise(m => m.BasicReturn+=null, new BasicReturnEventArgs
             {
                 ReplyCode = 500,
                 ReplyText = "Something went wrong!",
-                BasicProperties = propertiesMock.Object
+                BasicProperties = propertiesMock
             });
 
             #endregion Act
@@ -243,9 +245,10 @@ namespace ReRabbit.UnitTests.Core
             modelMock.Setup(m => m.NextPublishSeqNo)
                 .Returns(taskId);
 
-            var propertiesMock = new Mock<IBasicProperties>();
-            propertiesMock.Setup(p => p.Headers)
-                .Returns(new Dictionary<string, object>());
+            var propertiesMock = new FakeOptions
+            {
+                Headers = new Dictionary<string, object>()
+            };
 
             // timeout confirm immediatelly - we can add task to tracker, but timeout cancel it fast
             var confirmTimeout = TimeSpan.FromMilliseconds(10);
@@ -260,7 +263,7 @@ namespace ReRabbit.UnitTests.Core
                 string.Empty,
                 string.Empty,
                 true,
-                propertiesMock.Object,
+                propertiesMock,
                 ReadOnlyMemory<byte>.Empty,
                 0
             );

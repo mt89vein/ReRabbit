@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using System;
 using System.Collections.Generic;
@@ -35,16 +36,18 @@ namespace ReRabbit.Subscribers.Extensions
         /// <param name="properties">Метаданные сообщения.</param>
         /// <param name="settings">Настройки трейсинга.</param>
         /// <param name="logger">Логгер.</param>
+        /// <param name="stubMessage">TraceId из тела сообщения.</param>
         /// <param name="loggingScope">Скоуп.</param>
         /// <returns>Идентификатор отслеживания.</returns>
-        public static Guid? EnsureTraceId(
+        public static void EnsureTraceId(
             this IBasicProperties properties,
             TracingSettings settings,
             ILogger logger,
+            ref StubMessage stubMessage,
             Dictionary<string, object?> loggingScope
         )
         {
-            if (!TryGetTraceInfo(properties, out var traceId, out var traceIdSource))
+            if (!TryGetTraceInfo(properties, stubMessage.TraceId, out var traceId, out var traceIdSource))
             {
                 if (settings.GenerateIfNotPresent)
                 {
@@ -67,21 +70,31 @@ namespace ReRabbit.Subscribers.Extensions
 
             properties.AddTraceId();
 
-            return traceId;
+            if (traceId.HasValue)
+            {
+                stubMessage.TraceId = traceId.Value;
+            }
         }
 
         /// <summary>
         /// Получить сквозной идентификатор.
         /// </summary>
         /// <param name="properties">Свойства сообщения.</param>
+        /// <param name="traceIdFromBody">TraceId из тела сообщения.</param>
         /// <param name="traceId">Сквозной идентификатор.</param>
         /// <param name="traceIdSource">Строка-результат.</param>
-        internal static bool TryGetTraceInfo(this IBasicProperties properties, out Guid? traceId, out string? traceIdSource)
+        internal static bool TryGetTraceInfo(
+            this IBasicProperties properties,
+            Guid? traceIdFromBody,
+            out Guid? traceId,
+            out string? traceIdSource
+        )
         {
             traceIdSource = null;
             traceId = null;
             var traceIdResult = TryGetFromCorrelationId(properties) ??
-                                TryGetFromHeaders(properties);
+                                TryGetFromHeaders(properties) ??
+                                traceIdFromBody;
 
             if (traceIdResult.HasValue && traceIdResult != Guid.Empty)
             {
@@ -103,10 +116,8 @@ namespace ReRabbit.Subscribers.Extensions
                 {
                     return id;
                 }
-                else
-                {
-                    return null;
-                }
+
+                return null;
             }
 
             static Guid? TryGetFromHeaders(IBasicProperties basicProperties)
@@ -119,10 +130,8 @@ namespace ReRabbit.Subscribers.Extensions
                 {
                     return id;
                 }
-                else
-                {
-                    return null;
-                }
+
+                return null;
             }
         }
 

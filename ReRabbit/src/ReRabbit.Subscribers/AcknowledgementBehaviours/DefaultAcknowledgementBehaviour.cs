@@ -209,8 +209,8 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                                 CommonQueuesConstants.ERROR_MESSAGES,
                                 string.Empty,
                                 mandatory: true,
-                                messageContext.EventArgs.BasicProperties,
-                                messageContext.EventArgs.Body
+                                messageContext.MessageData.DeliverEventArgs.BasicProperties,
+                                messageContext.MessageData.DeliverEventArgs.Body
                             );
                         }
                         else
@@ -219,8 +219,8 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                                 CommonQueuesConstants.ERROR_MESSAGES,
                                 string.Empty,
                                 mandatory: true,
-                                messageContext.EventArgs.BasicProperties,
-                                messageContext.EventArgs.Body
+                                messageContext.MessageData.DeliverEventArgs.BasicProperties,
+                                messageContext.MessageData.DeliverEventArgs.Body
                             );
                         }
                     }
@@ -262,6 +262,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
             TimeSpan? retryDelay = null
         )
         {
+            var body = messageContext.MessageData.DeliverEventArgs.Body;
+            var properties = messageContext.MessageData.DeliverEventArgs.BasicProperties;
+
             // если явно не указали время ретрая, то смотрим настройки и т.д.
             if (retryDelay == null)
             {
@@ -271,7 +274,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     return false;
                 }
 
-                if (messageContext.EventArgs.BasicProperties.IsLastRetry(settings.RetrySettings, out var retryCount))
+                if (properties.IsLastRetry(settings.RetrySettings, out var retryCount))
                 {
                     if (settings.RetrySettings.LogOnFailLastRetry)
                     {
@@ -305,7 +308,7 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 
                     actualRetryDelay = retryDelayComputer.Compute(
                         settings.RetrySettings,
-                        messageContext.EventArgs.BasicProperties.GetRetryNumber()
+                        properties.GetRetryNumber()
                     );
                 }
 
@@ -316,12 +319,12 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     actualRetryDelay
                 );
 
-                messageContext.EventArgs.BasicProperties.Expiration =
+                properties.Expiration =
                     actualRetryDelay.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
             }
 
-            messageContext.EventArgs.BasicProperties.IncrementRetryCount(1);
-            messageContext.EventArgs.BasicProperties.EnsureOriginalExchange(messageContext.EventArgs);
+            properties.IncrementRetryCount(1);
+            properties.EnsureOriginalExchange(messageContext.MessageData.DeliverEventArgs);
 
             if (channel is IAsyncChannel asyncChannel)
             {
@@ -329,8 +332,8 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                     string.Empty,
                     routingKey,
                     true,
-                    messageContext.EventArgs.BasicProperties,
-                    messageContext.EventArgs.Body
+                    properties,
+                    body
                 );
             }
             else
@@ -338,14 +341,14 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
                 channel.BasicPublish(
                     exchange: string.Empty,
                     routingKey: routingKey,
-                    basicProperties: messageContext.EventArgs.BasicProperties,
-                    body: messageContext.EventArgs.Body
+                    basicProperties: properties,
+                    body: body
                 );
             }
 
             if (settings.RetrySettings.LogOnRetry)
             {
-                _logger.RabbitMessageRetried(messageContext.EventArgs.BasicProperties.Expiration ?? "0");
+                _logger.RabbitMessageRetried(properties.Expiration ?? "0");
             }
 
             return true;

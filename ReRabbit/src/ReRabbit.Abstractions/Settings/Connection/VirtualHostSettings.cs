@@ -133,7 +133,7 @@ namespace ReRabbit.Abstractions.Settings.Connection
         /// </summary>
         public void AddMessage(MessageSettings messageSettings)
         {
-            _messageSettings.Add(messageSettings.Name, messageSettings);
+            _messageSettings.Add(messageSettings.Name!, messageSettings);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace ReRabbit.Abstractions.Settings.Connection
         /// </summary>
         public void AddSubscriber(SubscriberSettings subscriberSettings)
         {
-            _subscriberSettings.Add(subscriberSettings.SubscriberName, subscriberSettings);
+            _subscriberSettings.Add(subscriberSettings.SubscriberName!, subscriberSettings);
         }
 
         #endregion Методы (public)

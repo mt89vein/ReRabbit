@@ -1,4 +1,7 @@
+using RabbitMQ.Client.Events;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ReRabbit.Abstractions.Models
 {
@@ -20,9 +23,34 @@ namespace ReRabbit.Abstractions.Models
         public bool IsRedelivered { get; }
 
         /// <summary>
+        /// Обменник.
+        /// </summary>
+        public string Exchange { get; }
+
+        /// <summary>
+        /// Ключ роутинга.
+        /// </summary>
+        public string RoutingKey { get; }
+
+        /// <summary>
+        /// Заголовки.
+        /// </summary>
+        public IReadOnlyDictionary<string, object> Headers { get; }
+
+        /// <summary>
         /// Глобальный идентификатор отслеживания.
         /// </summary>
         public Guid? TraceId { get; }
+
+        /// <summary>
+        /// Идентификатор сообщения.
+        /// </summary>
+        public Guid? MessageId { get; }
+
+        /// <summary>
+        /// Дата создания сообщения.
+        /// </summary>
+        public DateTime? CreatedAt { get; }
 
         /// <summary>
         /// Номер повторной обработки.
@@ -34,6 +62,16 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         public bool IsLastRetry { get; }
 
+        /// <summary>
+        /// Оригинальное сообщение.
+        /// </summary>
+        public ReadOnlyMemory<byte> OriginalMessage { get; }
+
+        /// <summary>
+        /// Аргументы доставки сообщения.
+        /// </summary>
+        internal BasicDeliverEventArgs DeliverEventArgs { get; }
+
         #endregion Свойства
 
         #region Конструктор
@@ -41,19 +79,28 @@ namespace ReRabbit.Abstractions.Models
         /// <summary>
         /// Создает экземпляр структуры <see cref="MqMessageData"/>.
         /// </summary>
-        public MqMessageData(
+        internal MqMessageData(
             MqMessage mqMessage,
-            bool isRedelivered,
             Guid? traceId,
+            Guid? messageId,
+            DateTime? createdAt,
             int retryNumber,
-            bool isLastRetry
+            bool isLastRetry,
+            BasicDeliverEventArgs ea
         )
         {
             MqMessage = mqMessage;
-            IsRedelivered = isRedelivered;
+            IsRedelivered = ea.Redelivered;
+            Exchange = ea.Exchange;
+            RoutingKey = ea.RoutingKey;
             TraceId = traceId;
+            MessageId = messageId;
+            CreatedAt = createdAt;
+            Headers = ea.BasicProperties?.Headers?.ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, object>();
             RetryNumber = retryNumber;
             IsLastRetry = isLastRetry;
+            OriginalMessage = ea.Body;
+            DeliverEventArgs = ea;
         }
 
         #endregion Конструктор

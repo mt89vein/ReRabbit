@@ -41,7 +41,7 @@ namespace ReRabbit.Abstractions
 
         public abstract Type GetDtoType();
 
-        public bool Is(string exchange, string routingKey, IDictionary<string, object> arguments)
+        public bool Is(string exchange, string routingKey, IReadOnlyDictionary<string, object> arguments)
         {
             if (!string.Equals(MessageSettings.Exchange.Name, exchange))
             {
