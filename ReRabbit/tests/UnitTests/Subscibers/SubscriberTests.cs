@@ -9,6 +9,7 @@ using ReRabbit.Abstractions.Models;
 using ReRabbit.Core.Serializations;
 using ReRabbit.Core.Settings.Subscriber;
 using ReRabbit.Subscribers;
+using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using System;
 using System.Collections.Generic;
@@ -91,7 +92,7 @@ namespace ReRabbit.UnitTests.Subscibers
 
             var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
 
-            var (_,b) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
+            var (_, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
                 args,
                 x => Task.FromResult<Acknowledgement>(Ack.Ok),
                 subscriberSettingsDto.Create(null!)
@@ -99,8 +100,8 @@ namespace ReRabbit.UnitTests.Subscibers
 
             Assert.Multiple(() =>
             {
-                Assert.AreEqual(originalExchange, b.MessageData.Exchange, "Оригинальный обменник не установлен.");
-                Assert.AreEqual(originalRoutingKey, b.MessageData.RoutingKey, "Оригинальный ключ роутинга не установлен.");
+                Assert.AreEqual(originalExchange, ctx.MessageData.Exchange, "Оригинальный обменник не установлен.");
+                Assert.AreEqual(originalRoutingKey, ctx.MessageData.RoutingKey, "Оригинальный ключ роутинга не установлен.");
             });
         }
 
@@ -163,7 +164,7 @@ namespace ReRabbit.UnitTests.Subscibers
 
             #region Act
 
-            var (_,b) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
+            var (_, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
                 args,
                 x =>
                 {
@@ -182,20 +183,90 @@ namespace ReRabbit.UnitTests.Subscibers
             {
                 if (tracesShouldMatch)
                 {
-                    Assert.AreEqual(expectedTraceId, b.MessageData.TraceId, "TraceId в MessageContext не установлен.");
+                    Assert.AreEqual(expectedTraceId, ctx.MessageData.TraceId, "TraceId в MessageContext не установлен.");
                     Assert.AreEqual(expectedTraceId, actualTraceIdFromContext, "TraceContext не установлен.");
                 }
                 else
                 {
-                    Assert.AreEqual(actualTraceIdFromContext, b.MessageData.TraceId, "TraceId в мете и контексте не совпадают.");
+                    Assert.AreEqual(actualTraceIdFromContext, ctx.MessageData.TraceId, "TraceId в мете и контексте не совпадают.");
                 }
             });
 
             #endregion Assert
         }
 
-        // TODO: тесты на ошибку десериализации Json
-        // TODO: тесты на ошибку в хендлере (reject)
+        /// <summary>
+        /// Корректно обрабатывает ошибку пустого тела сообщения.
+        /// </summary>
+        [Test]
+        public async Task CorrectlyHandlesEmptyPayloadAsync()
+        {
+            var mqMessage = new MqMessage(null!, "Type", "1.0", "1.0", "myApp");
+
+            var args = new BasicDeliverEventArgs
+            {
+                DeliveryTag = 500,
+                RoutingKey = "some-key",
+                Exchange = "some-exchange",
+                BasicProperties = new FakeOptions
+                {
+                    Headers = new Dictionary<string, object>(),
+                    ContentType = "application/json",
+                    ContentEncoding = "UTF8"
+                },
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mqMessage))
+            };
+
+            var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
+
+            var (acknowledgement, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
+                args,
+                x => Task.FromResult<Acknowledgement>(Ack.Ok),
+                subscriberSettingsDto.Create(null!)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsInstanceOf<EmptyBodyReject>(acknowledgement, "Тип Acknowledgement некорректен.");
+                Assert.AreEqual(args.DeliveryTag, ctx.MessageData.DeliverEventArgs?.DeliveryTag, "DeliveryTag не совпадает.");
+            });
+        }
+
+        /// <summary>
+        /// Корректно обрабатывает ошибку некорректного Json.
+        /// </summary>
+        [Test]
+        public async Task CorrectlyHandlesIncorrectJsonAsync()
+        {
+            var args = new BasicDeliverEventArgs
+            {
+                DeliveryTag = 123,
+                RoutingKey = "some-key",
+                Exchange = "some-exchange",
+                BasicProperties = new FakeOptions
+                {
+                    Headers = new Dictionary<string, object>(),
+                    ContentType = "application/json",
+                    ContentEncoding = "UTF8"
+                },
+                Body = Encoding.UTF8.GetBytes("NotJson")
+            };
+
+            var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
+
+            var (acknowledgement, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
+                args,
+                x => Task.FromResult<Acknowledgement>(Ack.Ok),
+                subscriberSettingsDto.Create(null!)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsInstanceOf<FormatReject>(acknowledgement, "Тип Acknowledgement некорректен.");
+                Assert.AreEqual(args.DeliveryTag, ctx.MessageData.DeliverEventArgs?.DeliveryTag, "DeliveryTag не совпадает.");
+            });
+        }
+
         // TODO: тесты на Poison message handling
 
         #endregion Тесты

@@ -248,13 +248,15 @@ namespace ReRabbit.Subscribers
 
             var (retryNumber, isLastRetry) = ea.BasicProperties.EnsureRetryInfo(settings.RetrySettings, loggingScope);
 
-            MessageContext messageContext = default;
+            MessageContext? messageContext = null;
+            MqMessage? mqMessage = null;
+            string? payload = null;
             using (_logger.BeginScope(loggingScope))
             {
                 try
                 {
-                    var mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
-                    var payload = mqMessage?.Payload?.ToString();
+                    mqMessage = _serializer.Deserialize<MqMessage>(ea.Body);
+                    payload = mqMessage.Payload?.ToString();
                     var stubMessage = _serializer.Deserialize<StubMessage>(payload ?? string.Empty);
 
                     if (settings.TracingSettings.IsEnabled)
@@ -268,7 +270,7 @@ namespace ReRabbit.Subscribers
                     }
 
                     var mqEventData = new MqMessageData(
-                        mqMessage!,
+                        mqMessage,
                         stubMessage.TraceId,
                         stubMessage.MessageId,
                         stubMessage.MessageCreatedAt,
@@ -277,23 +279,27 @@ namespace ReRabbit.Subscribers
                         ea
                     );
 
-                    if (string.IsNullOrEmpty(payload))
-                    {
-                        return (EmptyBodyReject.EmptyBody, new MessageContext(null, mqEventData));
-                    }
-
                     messageContext = new MessageContext(
                         null, // будет позже десериализован
                         mqEventData
                     );
 
-                    var acknowledgement = await messageHandler(messageContext);
+                    var acknowledgement = await messageHandler(messageContext.Value);
 
-                    return (acknowledgement, messageContext);
+                    return (acknowledgement, messageContext.Value);
                 }
                 catch (MessageSerializationException e)
                 {
-                    return (new FormatReject(e), messageContext);
+                    messageContext ??= new MessageContext(
+                        null,
+                        new MqMessageData(null!, null, null, null, retryNumber, isLastRetry, ea)
+                    );
+                    if (string.IsNullOrEmpty(payload) && mqMessage is {})
+                    {
+                        return (EmptyBodyReject.EmptyBody, messageContext.Value);
+                    }
+
+                    return (new FormatReject(e), messageContext.Value);
                 }
                 catch (Exception e)
                 {
@@ -304,7 +310,7 @@ namespace ReRabbit.Subscribers
                         "Ошибка обработки сообщения из очереди.",
                         e,
                         settings.RetrySettings.IsEnabled && !isLastRetry
-                    ), messageContext);
+                    ), messageContext!.Value);
                 }
             }
         }

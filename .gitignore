@@ -342,3 +342,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 Sample/SampleWebApplication/SampleWebApplication.xml
+
+ReRabbit/tests/UnitTests/coverage.info
