@@ -1,6 +1,7 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace ReRabbit.Core
@@ -9,6 +10,7 @@ namespace ReRabbit.Core
     /// Предоставляет свойства клиента, используемые при подключении к брокеру.
     /// Этот класс не наследуется.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class DefaultClientPropertyProvider : IClientPropertyProvider
     {
         #region Поля

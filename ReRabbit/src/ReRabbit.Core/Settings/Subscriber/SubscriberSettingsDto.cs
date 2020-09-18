@@ -1,6 +1,7 @@
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ReRabbit.Core.Settings.Subscriber
@@ -8,6 +9,7 @@ namespace ReRabbit.Core.Settings.Subscriber
     /// <summary>
     /// Настройки подписчика.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class SubscriberSettingsDto
     {
         #region Свойства

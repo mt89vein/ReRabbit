@@ -1,10 +1,12 @@
 using ReRabbit.Abstractions.Settings.Connection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Connection
 {
     /// <summary>
     /// Настройки виртуального хоста.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class VirtualHostSettingsDto
     {
         /// <summary>

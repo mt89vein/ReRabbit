@@ -1,10 +1,12 @@
 using ReRabbit.Abstractions.Settings.Subscriber;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Subscriber
 {
     /// <summary>
     /// Настроки масштабирования подписчика.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class ScalingSettingsDto
     {
         /// <summary>

@@ -1,10 +1,12 @@
 using ReRabbit.Abstractions.Settings.Publisher;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Publisher
 {
     /// <summary>
     /// Информация об обменнике.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class ExchangeInfoDto
     {
         /// <summary>

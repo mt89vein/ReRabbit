@@ -1,10 +1,12 @@
 using ReRabbit.Abstractions.Settings.Subscriber;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Subscriber
 {
     /// <summary>
     /// Параметры повторной обработки сообщений.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class RetrySettingsDto
     {
         /// <summary>

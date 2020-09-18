@@ -1,10 +1,12 @@
 using ReRabbit.Abstractions.Settings.Connection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Connection
 {
     /// <summary>
     /// Настройки TLS.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class SslOptionsDto
     {
         /// <summary>

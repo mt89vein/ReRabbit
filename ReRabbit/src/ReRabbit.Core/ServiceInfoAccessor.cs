@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace ReRabbit.Core
@@ -10,6 +11,7 @@ namespace ReRabbit.Core
     /// <summary>
     /// Предоставляет информацию о сервисе.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class ServiceInfoAccessor : IServiceInfoAccessor
     {
         #region Свойства

@@ -1,11 +1,13 @@
 using ReRabbit.Abstractions.Settings.Subscriber;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Subscriber
 {
     /// <summary>
     /// Параметры привязки.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class ExchangeBindingDto
     {
         /// <summary>

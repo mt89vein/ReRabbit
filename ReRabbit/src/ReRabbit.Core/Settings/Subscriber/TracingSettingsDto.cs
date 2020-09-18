@@ -1,10 +1,12 @@
 using ReRabbit.Abstractions.Settings.Subscriber;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Subscriber
 {
     /// <summary>
     /// Настройки поведения работы с глобальным идентификатором отслеживания.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class TracingSettingsDto
     {
         /// <summary>

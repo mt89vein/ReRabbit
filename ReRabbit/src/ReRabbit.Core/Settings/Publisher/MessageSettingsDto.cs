@@ -2,12 +2,14 @@ using ReRabbit.Abstractions.Settings;
 using ReRabbit.Abstractions.Settings.Publisher;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Publisher
 {
     /// <summary>
     /// Настройки сообщения.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class MessageSettingsDto
     {
         #region Свойства

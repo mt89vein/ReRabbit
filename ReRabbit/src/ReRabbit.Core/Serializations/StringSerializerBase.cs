@@ -1,6 +1,7 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Exceptions;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace ReRabbit.Core.Serializations
@@ -8,6 +9,7 @@ namespace ReRabbit.Core.Serializations
     /// <summary>
     /// Базовый сериализатор в строку.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public abstract class StringSerializerBase : ISerializer
     {
         #region Свойства

@@ -1,12 +1,14 @@
 using ReRabbit.Abstractions.Settings.Connection;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Settings.Connection
 {
     /// <summary>
     /// Настройки подключения к RabbitMq с установками по-умолчанию.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal sealed class ConnectionSettingsDto
     {
         #region Свойства

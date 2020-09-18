@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using ReRabbit.Abstractions.Exceptions;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace ReRabbit.Core.Serializations
@@ -9,6 +10,7 @@ namespace ReRabbit.Core.Serializations
     /// Стандартный сериализатор Newtonsoft.Json.
     /// Этот класс не наследуется.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class DefaultJsonSerializer : StringSerializerBase
     {
         #region Поля
