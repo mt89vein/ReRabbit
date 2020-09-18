@@ -1,0 +1,37 @@
+{
+  Name: 'TestRabbitMessage',
+  Exchange: 'trm',
+  ExchangeType: 'fanout',
+  Route: '',
+  Durable: true,
+  RetryCount: 5,
+  MessageVersion: 'v1',
+  ConnectionSettings: {
+    HostNames: [
+      'localhost'
+    ],
+    Port: 5672,
+    UserName: 'user',
+    Password: 'user',
+    VirtualHost: '/',
+    ConnectionRetryCount: 5,
+    ConnectionName: 'DefaultConnection',
+    UseCommonErrorMessagesQueue: true,
+    UseCommonUnroutedMessagesQueue: true,
+    UseAsyncConsumer: true,
+    UseBackgroundThreadsForIO: true,
+    RequestedConnectionTimeout: '00:00:30',
+    SocketReadTimeout: '00:00:30',
+    SocketWriteTimeout: '00:00:30',
+    RequestedChannelMax: 100,
+    RequestedHeartbeat: '00:01:00',
+    HandshakeContinuationTimeout: '00:00:10',
+    ContinuationTimeout: '00:00:10',
+    AuthomaticRecoveryEnabled: true,
+    NetworkRecoveryInterval: '00:00:10',
+    TopologyRecoveryEnabled: true,
+    Ssl: {}
+  },
+  Delay: '00:00:01',
+  ConfirmationTimeout: '00:00:10'
+}

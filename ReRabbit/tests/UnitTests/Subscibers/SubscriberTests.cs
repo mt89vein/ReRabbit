@@ -155,7 +155,7 @@ namespace ReRabbit.UnitTests.Subscibers
                 )
             };
 
-            Assert.IsNull(TraceContext.Current.TraceId);
+            Assert.IsNull(TraceContext.Current.TraceId, "TraceId is not null");
             Guid? actualTraceIdFromContext = default;
 
             var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
@@ -272,6 +272,12 @@ namespace ReRabbit.UnitTests.Subscibers
         #endregion Тесты
 
         #region TestHelpers
+
+        [TearDown]
+        public void OnTearDown()
+        {
+            TraceContext.Create(null);
+        }
 
         private class MyIntegrationEvent : IMessage, ITracedMessage
         {

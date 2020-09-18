@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ namespace ReRabbit.Subscribers.Extensions
     /// Licensed under the MIT License, Version 2.0. See License.txt in the project root for license information.
     /// https://github.com/aspnet/AspNetIdentity/blob/master/src/Microsoft.AspNet.Identity.Core/AsyncHelper.cs
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public static class AsyncHelper
     {
         private static readonly TaskFactory _myTaskFactory = new TaskFactory(

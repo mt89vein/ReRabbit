@@ -665,9 +665,7 @@ namespace ReRabbit.UnitTests.Subscibers
 
     // TODO: тест на PermanentConnection / PermanentConnectionManager
     // TODO: тест на логику в Subscriber
-    // TODO: тест на RouteProvider
     // TODO: тест на MessagePublisher
-    // TODO: тест на ConsumerRegistry / Consumer
-    // TODO: тест на AutoRegistrator (создать парочку классов, реализаций и проверить все ли зарегается)
+    // TODO: тест на Consumer
     // TODO: тест на Middlewares
 }

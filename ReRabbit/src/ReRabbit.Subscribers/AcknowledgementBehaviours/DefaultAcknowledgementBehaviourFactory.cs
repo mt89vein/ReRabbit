@@ -1,12 +1,14 @@
 using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Settings.Subscriber;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 {
     /// <summary>
     /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class DefaultAcknowledgementBehaviourFactory : IAcknowledgementBehaviourFactory
     {
         #region Поля
