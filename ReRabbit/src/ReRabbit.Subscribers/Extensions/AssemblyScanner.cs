@@ -16,8 +16,9 @@ namespace ReRabbit.Subscribers.Extensions
         /// Если тип реализует 2 интерфейса, он будет продублирован.
         /// </summary>
         /// <param name="implementedInterface">Тип интерфейса. Например IMessageHandler{T}.</param>
+        /// <param name="filter">Фильтр типов.</param>
         /// <returns>Список типов, реализующий указанный интерфейс.</returns>
-        public static IEnumerable<Type> GetClassesImplementingAnInterface(Type implementedInterface)
+        public static IEnumerable<Type> GetClassesImplementingAnInterface(Type implementedInterface, Func<Type, bool>? filter = null)
         {
             if (!implementedInterface.IsInterface)
             {
@@ -51,7 +52,10 @@ namespace ReRabbit.Subscribers.Extensions
                         if (typeInterface.IsGenericType &&
                             typeInterface.GetGenericTypeDefinition() == genericTypeDefinition)
                         {
-                            yield return typeInTheAssembly;
+                            if (filter?.Invoke(typeInTheAssembly) != false)
+                            {
+                                yield return typeInTheAssembly;
+                            }
                         }
                     }
                 }
@@ -62,7 +66,10 @@ namespace ReRabbit.Subscribers.Extensions
                 {
                     if (implementedInterface.IsAssignableFrom(typeInTheAssembly))
                     {
-                        yield return typeInTheAssembly;
+                        if (filter?.Invoke(typeInTheAssembly) != false)
+                        {
+                            yield return typeInTheAssembly;
+                        }
                     }
                 }
             }
@@ -74,10 +81,13 @@ namespace ReRabbit.Subscribers.Extensions
         /// <param name="services">Регистратор сервисов.</param>
         /// <param name="interfaceType">Интерфейс.</param>
         /// <param name="lifetime">Время жизни объекта.</param>
+        /// <param name="filter">Фильтр типов.</param>
         public static IServiceCollection AddClassesAsImplementedInterface(
             this IServiceCollection services,
             Type interfaceType,
-            ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            ServiceLifetime lifetime = ServiceLifetime.Scoped,
+            Func<Type, bool>? filter = null
+        )
         {
             if (!interfaceType.IsInterface && !interfaceType.IsGenericType)
             {
@@ -90,7 +100,8 @@ namespace ReRabbit.Subscribers.Extensions
                                      .Where(p => p.IsClass && !p.IsAbstract &&
                                                  p.GetInterfaces()
                                                      .Any(i => i.IsGenericType &&
-                                                               i.GetGenericTypeDefinition() == interfaceType))
+                                                               i.GetGenericTypeDefinition() == interfaceType) &&
+                                                 filter?.Invoke(p) != false)
                                      .Select(t => t.GetTypeInfo());
 
             foreach (var type in typeInfos)

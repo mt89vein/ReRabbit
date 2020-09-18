@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ReRabbit.Extensions\ReRabbit.Extensions.csproj" />
     <ProjectReference Include="..\..\src\ReRabbit.Publishers\ReRabbit.Publishers.csproj" />
     <ProjectReference Include="..\..\src\ReRabbit.Subscribers\ReRabbit.Subscribers.csproj" />
   </ItemGroup>

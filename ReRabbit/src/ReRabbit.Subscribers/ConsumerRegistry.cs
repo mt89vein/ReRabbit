@@ -10,7 +10,7 @@ namespace ReRabbit.Subscribers
     /// Реестр-оркестратор потребителей.
     /// Этот класс не наследуется.
     /// </summary>
-    public sealed class ConsumerRegistry : IConsumerRegistry
+    public sealed class ConsumerRegistry : IConsumerRegistry, IConsumerRegistryAccessor
     {
         #region Поля
 
@@ -25,6 +25,15 @@ namespace ReRabbit.Subscribers
         private readonly Timer _hcTimer;
 
         #endregion Поля
+
+        #region Свойства
+
+        /// <summary>
+        /// Потребители.
+        /// </summary>
+        public IReadOnlyList<IConsumer> Consumers => _consumers;
+
+        #endregion Свойства
 
         #region Конструктор
 

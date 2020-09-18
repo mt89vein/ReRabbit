@@ -42,12 +42,12 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>.
         /// </summary>
-        public void FillConsumersRegistry(IConsumerRegistry consumerRegistry)
+        public void FillConsumersRegistry(IConsumerRegistry consumerRegistry, Func<Type, bool>? typeFilter = null)
         {
             var handlerGenericTypeDefinition = typeof(IMessageHandler<>);
 
             // достаем все реализации интерфейса IMessageHandler<T>.
-            var handlerTypes = AssemblyScanner.GetClassesImplementingAnInterface(handlerGenericTypeDefinition);
+            var handlerTypes = AssemblyScanner.GetClassesImplementingAnInterface(handlerGenericTypeDefinition, typeFilter);
 
             // получаем все интерфейсы каждого из обработчиков и маппим { тип сообщения - хэндлер }
             var groups = handlerTypes

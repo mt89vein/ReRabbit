@@ -14,6 +14,9 @@ using ReRabbit.Subscribers.Extensions;
 using ReRabbit.Subscribers.Middlewares;
 using ReRabbit.Subscribers.RetryDelayComputer;
 using System;
+using System.Diagnostics.CodeAnalysis;
+
+[assembly: ExcludeFromCodeCoverage]
 
 namespace ReRabbit.Extensions
 {
