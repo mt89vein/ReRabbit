@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 
 namespace ReRabbit.Abstractions.Exceptions
@@ -6,6 +7,7 @@ namespace ReRabbit.Abstractions.Exceptions
     /// <summary>
     /// Выбрасывается в случае если не удалось сериализовать / десериализовать сообщение.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class MessageSerializationException : Exception
     {
         #region Конструкторы

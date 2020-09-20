@@ -41,7 +41,9 @@ namespace ReRabbit.Abstractions.Attributes
                 );
 
             var incorrectTypeArguments =
-                messageTypes.Where(et => et.GetInterfaces().All(i => i != typeof(IRabbitMessage)));
+                messageTypes
+                    .Where(et => et.GetInterfaces().All(i => i != typeof(IRabbitMessage)))
+                    .ToList();
 
             if (incorrectTypeArguments.Any())
             {

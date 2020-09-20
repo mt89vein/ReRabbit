@@ -1,12 +1,14 @@
 using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Subscribers
 {
     /// <summary>
     /// Фабрика подписчиков.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class DefaultSubscriberFactory : ISubscriberFactory
     {
         #region Поля

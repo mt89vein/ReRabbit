@@ -2,7 +2,7 @@ using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers.Middlewares
+namespace ReRabbit.Abstractions
 {
     /// <summary>
     /// Middleware.

@@ -30,8 +30,9 @@ namespace ReRabbit.Extensions
             Action<RabbitMqRegistrationOptions>? options = null
         )
         {
-            var middlewareRegistry = new MiddlewareRegistry(services);
-            services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistry);
+            var middlewareRegistrator = new MiddlewareRegistrator(services);
+            services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistrator);
+            services.AddSingleton<IRuntimeMiddlewareRegistrator>(middlewareRegistrator);
 
             services.AddSingleton<RabbitMqHandlerAutoRegistrator>();
             services.AddSingleton<IConsumerRegistry, ConsumerRegistry>();
@@ -56,7 +57,7 @@ namespace ReRabbit.Extensions
                     .Add<DefaultRouteProvider>();
 
             var rabbitMqRegistrationOptions = new RabbitMqRegistrationOptions(
-                middlewareRegistry,
+                middlewareRegistrator,
                 subscriberRegistrator,
                 acknowledgementRegistrator,
                 retryDelayComputerRegistrator,

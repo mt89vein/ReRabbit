@@ -1,10 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Exceptions
 {
     /// <summary>
     /// Базовое исключение для ReRabbit.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public abstract class ReRabbitException : Exception
     {
         #region Свойства
@@ -45,6 +47,7 @@ namespace ReRabbit.Core.Exceptions
         InvalidConfiguration = 2
     }
 
+    [ExcludeFromCodeCoverage]
     public sealed class ConnectionException : ReRabbitException
     {
         /// <summary>
@@ -72,7 +75,7 @@ namespace ReRabbit.Core.Exceptions
         #endregion Конструкторы
     }
 
-
+    [ExcludeFromCodeCoverage]
     public sealed class InvalidConfigurationException : ReRabbitException
     {
         /// <summary>

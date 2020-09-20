@@ -4,6 +4,7 @@ using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Extensions;
+using ReRabbit.Subscribers.Middlewares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,11 @@ namespace ReRabbit.Subscribers
         /// </summary>
         private readonly IServiceProvider _serviceProvider;
 
+        /// <summary>
+        /// Реестр middleware.
+        /// </summary>
+        private readonly IRuntimeMiddlewareRegistrator _middlewareRegistrator;
+
         #endregion Поля
 
         #region Конструктор
@@ -33,6 +39,7 @@ namespace ReRabbit.Subscribers
         public RabbitMqHandlerAutoRegistrator(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
+            _middlewareRegistrator = serviceProvider.GetRequiredService<IRuntimeMiddlewareRegistrator>();
         }
 
         #endregion Конструктор
@@ -87,17 +94,20 @@ namespace ReRabbit.Subscribers
         {
             var handlerGroups = handlerTypes.SelectMany(handler =>
             {
-                var attributes = GetConfigurationAttributesFrom(handler, messageType);
+                var attributes = GetAttributesFrom<SubscriberConfigurationAttribute>(handler, messageType);
 
                 if (!attributes.Any())
                 {
                     throw new SubscriberNotConfiguredException(handler, messageType);
                 }
 
+                var middlewares = GetAttributesFrom<MiddlewareAttribute>(handler, messageType);
+
                 return attributes.Select(attribute => new
                 {
                     Attribute = attribute,
-                    Handler = handler
+                    Handler = handler,
+                    Middlwares = middlewares
                 });
             }).GroupBy(g => g.Attribute.SubscriberName);
 
@@ -116,6 +126,9 @@ namespace ReRabbit.Subscribers
                 var messageHandlerType = group.Single().Handler;
                 var subscriberName = group.Key;
                 var subscribedMessageTypes = group.SelectMany(g => g.Attribute.MessageTypes).Distinct();
+                var middlewares = group.SelectMany(g => g.Middlwares);
+
+                _middlewareRegistrator.Add(messageType, middlewares);
 
                 var consumer = ActivatorUtilities.CreateInstance(
                     _serviceProvider,
@@ -130,20 +143,20 @@ namespace ReRabbit.Subscribers
         }
 
         /// <summary>
-        /// Получить атрибут <see cref="SubscriberConfigurationAttribute"/> из обработчика.
+        /// Получить атрибут <see cref="T"/> из обработчика.
         /// </summary>
         /// <param name="handler">Обработчик сообщения.</param>
         /// <param name="messageType">Тип сообщения.</param>
         /// <returns>Атрибут с наименованием секции конфигурации, в котором находится конфигурация подписчика.</returns>
-        private static IEnumerable<SubscriberConfigurationAttribute> GetConfigurationAttributesFrom(Type handler, Type messageType)
+        private static IEnumerable<T> GetAttributesFrom<T>(Type handler, Type messageType)
         {
             return handler.GetMethods()
-                          .FirstOrDefault(m =>
-                                              m.Name == nameof(IMessageHandler<IMessage>.HandleAsync) &&
-                                              m.GetParameters()[0].ParameterType.GenericTypeArguments[0] == messageType)
-                          ?.GetCustomAttributes(false)
-                          .OfType<SubscriberConfigurationAttribute>() ??
-                   Enumerable.Empty<SubscriberConfigurationAttribute>();
+                       .FirstOrDefault(m =>
+                           m.Name == nameof(IMessageHandler<IMessage>.HandleAsync) &&
+                           m.GetParameters()[0].ParameterType.GenericTypeArguments[0] == messageType)
+                       ?.GetCustomAttributes(false)
+                       .OfType<T>() ??
+                   Enumerable.Empty<T>();
         }
 
         #endregion Методы (private)

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Subscribers.Middlewares;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.Middlewares

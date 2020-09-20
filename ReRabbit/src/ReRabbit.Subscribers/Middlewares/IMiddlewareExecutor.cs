@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
-    /// Интерфейс вызывателя реализаций middleware.
+    /// Интерфейс вызывателя реализаций <see cref="IMiddleware"/>.
     /// </summary>
     public interface IMiddlewareExecutor
     {

@@ -41,5 +41,12 @@ namespace ReRabbit.Abstractions.Models
         /// </summary>
         [JsonProperty]
         public Guid TraceId { get; set; }
+
+        /// <summary>Returns a string that represents the current object.</summary>
+        /// <returns>A string that represents the current object.</returns>
+        public override string ToString()
+        {
+            return "TraceId: (" + TraceId + ") MessageId: (" + MessageId + ") CreatedAt: (" + MessageCreatedAt + ")";
+        }
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
@@ -7,6 +6,7 @@ using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
 using Sample.IntegrationMessages.Messages;
 using SampleWebApplication.Mappings.Interfaces;
+using SampleWebApplication.Middlewares;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.RabbitMq
@@ -22,6 +22,13 @@ namespace SampleWebApplication.RabbitMq
         public void Mapping(Profile profile)
         {
             profile.CreateMap<MyIntegrationMessageDto, TestMessage>();
+        }
+
+        /// <summary>Returns a string that represents the current object.</summary>
+        /// <returns>A string that represents the current object.</returns>
+        public override string ToString()
+        {
+            return base.ToString() + " Msg: (" + Message + ")";
         }
     }
 
@@ -41,6 +48,8 @@ namespace SampleWebApplication.RabbitMq
         /// <returns>Результат выполнения обработчика.</returns>
         [SubscriberConfiguration("Q1Subscriber", typeof(MyIntegrationRabbitMessage))]
         [SubscriberConfiguration("Q2Subscriber")]
+        [Middleware(typeof(TestMiddleware), -1)]
+        [Middleware(typeof(TestMiddleware2), 1)]
         public async Task<Acknowledgement> HandleAsync(MessageContext<TestMessage> ctx)
         {
             _logger.LogInformation(

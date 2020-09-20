@@ -75,7 +75,7 @@ namespace ReRabbit.Subscribers
         /// <param name="subscriberName">Наименование потребителя.</param>
         /// <param name="subscribedMessageTypes">Тип сообщений, на которые подписан потребитель.</param>
         /// <remarks>
-        /// Создается через <see cref="ActivatorUtilities"/> в <see cref="RabbitMqHandlerAutoRegistrator"/>.
+        /// Создается через <see cref="ActivatorUtilities"/> в <see cref="RabbitMqHandlerAutoRegistrator.CreateConsumers"/>.
         /// </remarks>
         public Consumer(
             ISubscriptionManager subscriptionManager,
@@ -119,7 +119,7 @@ namespace ReRabbit.Subscribers
             await _subscriptionManager.BindAsync<TMessage>(_settings);
 
             // ждём 1 минуту TODO: взять с конфига
-            await Task.Delay(60_000);
+            //await Task.Delay(60_000);
 
             // и запускаем потребление из очереди
             await _subscriptionManager.RegisterAsync<TMessage>(

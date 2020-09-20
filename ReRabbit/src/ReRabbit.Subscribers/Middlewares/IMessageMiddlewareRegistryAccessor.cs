@@ -1,4 +1,4 @@
-using System;
+using ReRabbit.Abstractions.Attributes;
 using System.Collections.Generic;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -12,6 +12,6 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Получить список типов middleware.
         /// </summary>
         /// <returns>Список типов middleware.</returns>
-        IReadOnlyCollection<Type> Get();
+        IReadOnlyCollection<MiddlewareInfo> Get();
     }
 }

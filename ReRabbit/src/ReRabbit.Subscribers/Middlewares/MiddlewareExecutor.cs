@@ -1,3 +1,4 @@
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
@@ -62,9 +63,9 @@ namespace ReRabbit.Subscribers.Middlewares
 
             var middlewareChain = new LinkedList<IMiddleware>();
 
-            foreach (var middlewareType in middlewareInfos)
+            foreach (var middlewareInfo in middlewareInfos)
             {
-                if (_serviceProvider.GetService(middlewareType) is IMiddleware middleware)
+                if (_serviceProvider.GetService(middlewareInfo.MiddlewareType) is MiddlewareBase middleware)
                 {
                     middlewareChain.AddLast(middleware);
                 }
@@ -72,7 +73,6 @@ namespace ReRabbit.Subscribers.Middlewares
 
             var current = middlewareChain.Last;
 
-            // TODO: формировать цепочку вызовов и кэшировать её.
             while (current != null)
             {
                 var middleware = current.Value as MiddlewareBase;

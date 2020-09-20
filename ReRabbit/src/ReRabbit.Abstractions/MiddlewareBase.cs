@@ -3,7 +3,7 @@ using ReRabbit.Abstractions.Models;
 using System;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers.Middlewares
+namespace ReRabbit.Abstractions
 {
     /// <summary>
     /// Базовая реализация мидлварки подписчика.

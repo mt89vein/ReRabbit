@@ -71,7 +71,7 @@ namespace ReRabbit.Abstractions.Models
 
         #endregion Конструктор
 
-        public MessageContext<TMessage> As<TMessage>()
+        internal MessageContext<TMessage> As<TMessage>()
             where TMessage : class, IMessage
         {
             return new MessageContext<TMessage>((TMessage)Message!, MessageData);

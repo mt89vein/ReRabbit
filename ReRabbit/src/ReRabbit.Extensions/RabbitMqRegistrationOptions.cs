@@ -19,7 +19,7 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Реестр мидлварок подписчиков.
         /// </summary>
-        public IMiddlewareRegistry SubscriberMiddlewares { get; }
+        public IMiddlewareRegistrator SubscriberMiddlewares { get; }
 
         /// <summary>
         /// Регистратор реализаций подписчиков.
@@ -50,7 +50,7 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Создает экземпляр класса <see cref="RabbitMqRegistrationOptions"/>.
         /// </summary>
-        /// <param name="subscriberMiddlewaresRegistry">Реестр мидлварок подписчиков.</param>
+        /// <param name="subscriberMiddlewaresRegistrator">Реестр мидлварок подписчиков.</param>
         /// <param name="subscriberRegistrator">
         /// Регистратор реализаций подписчиков.
         /// </param>
@@ -64,14 +64,14 @@ namespace ReRabbit.Extensions
         /// Регистратор кастомных провайдеров роутов.
         /// </param>
         public RabbitMqRegistrationOptions(
-            IMiddlewareRegistry subscriberMiddlewaresRegistry,
+            IMiddlewareRegistrator subscriberMiddlewaresRegistrator,
             INamedRegistratorBuilder<string, ISubscriber> subscriberRegistrator,
             INamedRegistratorBuilder<string, IAcknowledgementBehaviour> acknowledgementBehaviourRegistrator,
             INamedRegistratorBuilder<string, IRetryDelayComputer> retryDelayComputerRegistrator,
             INamedRegistratorBuilder<string, IRouteProvider> routeProviderRegistrator
         )
         {
-            SubscriberMiddlewares = subscriberMiddlewaresRegistry;
+            SubscriberMiddlewares = subscriberMiddlewaresRegistrator;
             AcknowledgementBehaviourRegistrator = acknowledgementBehaviourRegistrator;
             RetryDelayComputerRegistrator = retryDelayComputerRegistrator;
             RouteProviderRegistrator = routeProviderRegistrator;

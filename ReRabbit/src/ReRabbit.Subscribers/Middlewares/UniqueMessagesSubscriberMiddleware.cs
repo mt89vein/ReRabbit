@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
