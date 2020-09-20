@@ -45,6 +45,7 @@ namespace ReRabbit.UnitTests.Subscibers
         [TestCase(1, 10, ExpectedResult = 10_000)]
         [TestCase(2, 10, ExpectedResult = 11_000)]
         [TestCase(3, 10, ExpectedResult = 11_000)]
+        [TestCase(3000000, 10000000, ExpectedResult = 11_000)] // OverflowException
         public double LinearRetryDelayComputer(int retryNum, int retryDelay, int maxRetryDelay = 11)
         {
             var retryComputer = new LinearRetryDelayComputer();

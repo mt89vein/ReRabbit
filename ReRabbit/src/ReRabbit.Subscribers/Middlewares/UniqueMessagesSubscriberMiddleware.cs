@@ -65,6 +65,8 @@ namespace ReRabbit.Subscribers.Middlewares
         {
             var messageId = ctx.MessageData.MessageId;
 
+            using var _ = _logger.BeginScope("{MessageId}", messageId);
+
             if (!messageId.HasValue || messageId.Value == Guid.Empty)
             {
                 _logger.LogWarning("MessageId не указан.");
@@ -76,26 +78,37 @@ namespace ReRabbit.Subscribers.Middlewares
 
             if (!await TryProcessAsync(messageId.ToString()))
             {
-                _logger.LogTrace("Сообщение уже было обработано");
+                _logger.LogTrace("Сообщение уже было обработано.");
 
                 return new Reject("Already processed", requeue: false);
             }
 
             try
             {
-                _logger.LogTrace("Производится обработка сообщения");
+                _logger.LogTrace("Производится обработка сообщения.");
 
                 var result = await Next(ctx);
 
-                _logger.LogTrace("Обработка завершена");
+                if (result is Ack)
+                {
+                    _logger.LogTrace("Обработка завершена.");
+
+                    return result;
+                }
+
+                _logger.LogTrace("Сообщение не обработано, флаг убираем.");
+
+                // если не Ack, то убираем.
+                await RemoveAsync(messageId.ToString());
 
                 return result;
             }
-            catch
+            catch (Exception e)
             {
-                _logger.LogTrace("Произошла ошибка при обработке сообщения");
+                _logger.LogTrace(e, "Произошла ошибка при обработке сообщения {MessageId}.", messageId);
 
                 await RemoveAsync(messageId.ToString());
+
                 throw;
             }
         }

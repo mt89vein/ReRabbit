@@ -1,10 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
     /// <summary>
     /// Настройки middleware для дедупликации сообщений.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class UniqueMessagesMiddlewareSettings
     {
         /// <summary>
