@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NamedResolver.Abstractions;
@@ -16,6 +15,7 @@ using ReRabbit.Subscribers.AcknowledgementBehaviours;
 using ReRabbit.Subscribers.Acknowledgments;
 using ReRabbit.Subscribers.Extensions;
 using ReRabbit.Subscribers.RetryDelayComputer;
+using ReRabbit.UnitTests.TestFiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -89,11 +89,7 @@ namespace ReRabbit.UnitTests.Subscibers
                 NullLogger<DefaultAcknowledgementBehaviour>.Instance
             );
 
-            var configurationBuilder = new ConfigurationBuilder();
-            configurationBuilder.AddJsonFile("TestFiles/appsettings.json", optional: false);
-            var configuration = configurationBuilder.Build();
-
-            _configurationManager = new DefaultConfigurationManager(configuration);
+            _configurationManager = new DefaultConfigurationManager(ConfigurationHelper.GetConfiguration());
         }
 
         #endregion Конструктор

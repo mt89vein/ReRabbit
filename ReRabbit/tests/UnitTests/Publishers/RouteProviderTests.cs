@@ -1,9 +1,9 @@
-using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Core;
 using ReRabbit.Publishers;
+using ReRabbit.UnitTests.TestFiles;
 using System;
 using System.Threading.Tasks;
 using static VerifyNUnit.Verifier;
@@ -26,10 +26,7 @@ namespace ReRabbit.UnitTests.Publishers
 
         public RouteProviderTests()
         {
-            var configurationBuilder = new ConfigurationBuilder();
-            configurationBuilder.AddJsonFile("TestFiles/appsettings.json", optional: false);
-
-            _routeProvider = new DefaultRouteProvider(new DefaultConfigurationManager(configurationBuilder.Build()));
+            _routeProvider = new DefaultRouteProvider(new DefaultConfigurationManager(ConfigurationHelper.GetConfiguration()));
         }
 
         #endregion Конструктор

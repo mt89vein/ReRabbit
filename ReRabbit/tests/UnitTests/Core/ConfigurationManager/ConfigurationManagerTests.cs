@@ -1,8 +1,8 @@
-using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 using ReRabbit.Abstractions;
 using ReRabbit.Core;
 using ReRabbit.Core.Exceptions;
+using ReRabbit.UnitTests.TestFiles;
 using System.Threading.Tasks;
 using static VerifyNUnit.Verifier;
 
@@ -30,10 +30,7 @@ namespace ReRabbit.UnitTests.Core
         /// </summary>
         public ConfigurationManagerTests()
         {
-            var configurationBuilder = new ConfigurationBuilder();
-            configurationBuilder.AddJsonFile("TestFiles/appsettings.json", optional: false);
-
-            _configurationManager = new DefaultConfigurationManager(configurationBuilder.Build());
+            _configurationManager = new DefaultConfigurationManager(ConfigurationHelper.GetConfiguration());
         }
 
         #endregion Конструктор
