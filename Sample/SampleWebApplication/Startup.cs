@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Extensions;
+using ReRabbit.Subscribers.Middlewares;
 using Sample.IntegrationMessages.Messages;
 using SampleWebApplication.Extensions;
 using SampleWebApplication.Mappers;
@@ -50,6 +51,7 @@ namespace SampleWebApplication
                         x.SubscriberMiddlewares
                             //.AddGlobal<UniqueMessagesSubscriberMiddleware>()
                             .AddFor<TestMessage>()
+                                .Add<MessageProcessingPerfCounterMiddleware>()
                                 .Add<TestMiddleware3>()
                             .Registrator
                             .AddGlobal<GlobalTestMiddleware>() // adds only for Metrics.
