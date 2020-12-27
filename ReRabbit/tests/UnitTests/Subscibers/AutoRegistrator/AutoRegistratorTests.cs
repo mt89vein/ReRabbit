@@ -20,6 +20,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<NormalConsumer.TestRabbitMessage>();
             services.AddConfiguration();
+            services.AddFakeLogger();
             var sp = services.BuildServiceProvider();
 
             var registrator = new RabbitMqHandlerAutoRegistrator(sp);
@@ -36,6 +37,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<MultipleConsumersOnSingleQueue.SecondTestRabbitMessage>();
             services.AddConfiguration();
+            services.AddFakeLogger();
             var sp = services.BuildServiceProvider();
 
             var registrator = new RabbitMqHandlerAutoRegistrator(sp);
@@ -53,6 +55,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<NotConfiguredConsumer.TestRabbitMessage>();
             services.AddConfiguration();
+            services.AddFakeLogger();
             var sp = services.BuildServiceProvider();
 
             var registrator = new RabbitMqHandlerAutoRegistrator(sp);
@@ -70,6 +73,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<MultipleConfigurationAttributes.TestRabbitMessage>();
             services.AddConfiguration();
+            services.AddFakeLogger();
             var sp = services.BuildServiceProvider();
 
             var registrator = new RabbitMqHandlerAutoRegistrator(sp);
@@ -97,6 +101,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage>();
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage2>();
             services.AddConfiguration();
+            services.AddFakeLogger();
             var sp = services.BuildServiceProvider();
 
             var registrator = new RabbitMqHandlerAutoRegistrator(sp);
@@ -152,6 +157,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage>();
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage2>();
             services.AddConfiguration();
+            services.AddFakeLogger();
             var sp = services.BuildServiceProvider();
 
             var registrator = new RabbitMqHandlerAutoRegistrator(sp);

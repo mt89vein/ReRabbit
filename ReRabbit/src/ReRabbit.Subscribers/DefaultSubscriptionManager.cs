@@ -109,7 +109,7 @@ namespace ReRabbit.Subscribers
             string subscriberName,
             string connectionName,
             string virtualHost,
-            Action<bool>? onUnregister = null
+            Action<bool, string>? onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -134,7 +134,7 @@ namespace ReRabbit.Subscribers
         public Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             string subscriberName,
-            Action<bool>? onUnregister = null
+            Action<bool, string>? onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -155,7 +155,7 @@ namespace ReRabbit.Subscribers
         public async Task RegisterAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings subscriberSettings,
-            Action<bool>? onUnregister = null
+            Action<bool, string>? onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -165,10 +165,7 @@ namespace ReRabbit.Subscribers
                 await subscriber.SubscribeAsync(
                     messageHandler,
                     subscriberSettings,
-                    isForceDisconnect =>
-                    {
-                        onUnregister?.Invoke(isForceDisconnect);
-                    });
+                    onUnregister);
             }
         }
 
@@ -182,7 +179,7 @@ namespace ReRabbit.Subscribers
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
             SubscriberSettings subscriberSettings,
-            Action<bool>? onUnregister = null
+            Action<bool, string>? onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -209,7 +206,7 @@ namespace ReRabbit.Subscribers
         public Task RegisterAsync<TMessage>(
             MessageHandler<TMessage> eventHandler,
             string subscriberName,
-            Action<bool>? onUnregister = null
+            Action<bool, string>? onUnregister = null
         )
             where TMessage : class, IMessage
         {
@@ -234,7 +231,7 @@ namespace ReRabbit.Subscribers
             string subscriberName,
             string connectionName,
             string virtualHost,
-            Action<bool>? onUnregister = null
+            Action<bool, string>? onUnregister = null
         )
             where TMessage : class, IMessage
         {

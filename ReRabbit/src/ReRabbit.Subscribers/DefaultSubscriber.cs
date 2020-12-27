@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Nito.AsyncEx;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions;
@@ -105,7 +106,7 @@ namespace ReRabbit.Subscribers
         public async Task<IModel> SubscribeAsync<TMessage>(
             AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings settings,
-            Action<bool>? onUnsubscribed = null
+            Action<bool, string>? onUnsubscribed = null
         )
             where TMessage : class, IMessage
         {
@@ -123,22 +124,26 @@ namespace ReRabbit.Subscribers
 
             for (var i = 0; i < settings.ScalingSettings.ConsumersPerChannel; i++)
             {
+                var consumer = GetBasicConsumer(channel, messageHandler, settings, queueName);
+                consumer.ConsumerCancelled += delegate
+                {
+                    onUnsubscribed?.Invoke(true, "The channel is closed. Looks like the queue has been deleted via management plugin.");
+                };
+
                 channel.BasicConsume(
                     queue: queueName,
                     autoAck: settings.AutoAck,
                     exclusive: settings.Exclusive,
-                    consumer: GetBasicConsumer(channel, messageHandler, settings, queueName),
+                    consumer: consumer,
                     consumerTag: _namingConvention.ConsumerTagNamingConvention(settings, channel.ChannelNumber, i)
                 );
             }
 
             channel.CallbackException += (sender, ea) =>
             {
-                channel?.Dispose();
-
                 _logger.RabbitHandlerRestarted(ea.Exception);
 
-                onUnsubscribed?.Invoke(false);
+                onUnsubscribed?.Invoke(false, ea.Exception?.Message ?? "Channel callback exception.");
             };
 
             channel.ModelShutdown += (sender, ea) =>
@@ -148,13 +153,13 @@ namespace ReRabbit.Subscribers
                 {
                     _logger.RabbitHandlerForceStopped(ea);
 
-                    onUnsubscribed?.Invoke(true); // force
+                    onUnsubscribed?.Invoke(true, ea.ToString()); // force
                 }
                 else
                 {
                     _logger.RabbitHandlerRestartedAfterReconnect(ea);
 
-                    onUnsubscribed?.Invoke(false);
+                    onUnsubscribed?.Invoke(false, ea.ToString());
                 }
             };
 
@@ -230,8 +235,7 @@ namespace ReRabbit.Subscribers
 
             if (settings.TracingSettings.LogWhenMessageIncome)
             {
-                _logger.LogInformation(
-                    "Принято сообщение {MessageId} {TraceId} в размере {Length} байт",
+                _logger.RabbitMessageIncome(
                     ea.BasicProperties.MessageId,
                     ea.BasicProperties.CorrelationId,
                     ea.Body.Length
@@ -294,7 +298,7 @@ namespace ReRabbit.Subscribers
                         null,
                         new MqMessageData(null!, null, null, null, retryNumber, isLastRetry, ea)
                     );
-                    if (string.IsNullOrEmpty(payload) && mqMessage is {})
+                    if (string.IsNullOrEmpty(payload) && mqMessage is not null)
                     {
                         return (EmptyBodyReject.EmptyBody, messageContext.Value);
                     }
@@ -342,12 +346,7 @@ namespace ReRabbit.Subscribers
             if (settings.ConnectionSettings.UseAsyncConsumer)
             {
                 var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.Received += async (sender, ea) =>
-                {
-                    var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, loggingScope);
-
-                    await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
-                };
+                consumer.Received += (sender, ea) => OnReceivedAsync(ea);
 
                 return consumer;
             }
@@ -355,16 +354,17 @@ namespace ReRabbit.Subscribers
             {
                 var consumer = new EventingBasicConsumer(channel);
 
-                // FIX: async void unhandled exceptions.
-                consumer.Received += (sender, ea) =>
-                    AsyncHelper.RunSync(async () =>
-                    {
-                        var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, loggingScope);
-
-                        await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
-                    });
+                // AsyncContext handle async-void problem.
+                consumer.Received += (_, ea) => AsyncContext.Run(() => OnReceivedAsync(ea));
 
                 return consumer;
+            }
+
+            async Task OnReceivedAsync(BasicDeliverEventArgs ea)
+            {
+                var (acknowledgement, messageContext) = await HandleMessageAsync(ea, messageHandler, settings, loggingScope);
+
+                await acknowledgementBehaviour.HandleAsync<TMessage>(acknowledgement, channel, messageContext, settings);
             }
         }
 
@@ -382,6 +382,7 @@ namespace ReRabbit.Subscribers
         private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED = 1;
         private const int RABBITMQ_MESSAGE_HANDLER_RESTARTED_AFTER_RECONNECT = 2;
         private const int RABBITMQ_MESSAGE_HANDLER_FORCE_STOPPED = 3;
+        private const int RABBITMQ_MESSAGE_INCOME = 4;
 
         #endregion Константы
 
@@ -416,6 +417,16 @@ namespace ReRabbit.Subscribers
                     "Потребитель остановлен {Reason}."
                 );
 
+        private static readonly Action<ILogger, string, string, int, Exception?>
+            _rabbitMqIncomeMessageLogAction =
+                LoggerMessage.Define<string, string, int>(
+                    LogLevel.Warning,
+                    new EventId(RABBITMQ_MESSAGE_INCOME,
+                        nameof(RABBITMQ_MESSAGE_INCOME)
+                    ),
+                    "Принято сообщение {MessageId} {TraceId} в размере {Length} байт"
+                );
+
         #endregion LogActions
 
         #region Методы (public)
@@ -436,6 +447,12 @@ namespace ReRabbit.Subscribers
         public static void RabbitHandlerForceStopped(this ILogger logger, ShutdownEventArgs ea)
         {
             _rabbitMqHandlerForceStoppedLogAction(logger, ea.ReplyText, null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RabbitMessageIncome(this ILogger logger, string messageId, string traceId, int messageLength)
+        {
+            _rabbitMqIncomeMessageLogAction(logger, messageId, traceId, messageLength, null);
         }
 
         #endregion Методы (public)

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
@@ -32,9 +33,14 @@ namespace ReRabbit.Subscribers
         private readonly IConfigurationManager _configurationManager;
 
         /// <summary>
-        /// Провайдер скоупов.
+        /// Провайдер служб.
         /// </summary>
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IServiceProvider _serviceProvider;
+
+        /// <summary>
+        /// Логгер.
+        /// </summary>
+        private readonly ILogger<Consumer<TMessage>> _logger;
 
         /// <summary>
         /// Тип класса обработчика.
@@ -50,6 +56,11 @@ namespace ReRabbit.Subscribers
         /// Настройки потребителя.
         /// </summary>
         private readonly SubscriberSettings _settings;
+
+        /// <summary>
+        /// Объект синхронизации.
+        /// </summary>
+        private readonly object _lock = new();
 
         #endregion Поля
 
@@ -70,7 +81,7 @@ namespace ReRabbit.Subscribers
         /// <param name="subscriptionManager">Менеджер подписок.</param>
         /// <param name="configurationManager">Менеджер конфигураций.</param>
         /// <param name="serviceProvider">Провайдер служб.</param>
-        /// <param name="serviceScopeFactory">Фабрика скоупов.</param>
+        /// <param name="logger">Логгер.</param>
         /// <param name="messageHandlerType">Тип обработчика (класс), который будет обрабатывать сообщения.</param>
         /// <param name="subscriberName">Наименование потребителя.</param>
         /// <param name="subscribedMessageTypes">Тип сообщений, на которые подписан потребитель.</param>
@@ -81,7 +92,7 @@ namespace ReRabbit.Subscribers
             ISubscriptionManager subscriptionManager,
             IConfigurationManager configurationManager,
             IServiceProvider serviceProvider,
-            IServiceScopeFactory serviceScopeFactory,
+            ILogger<Consumer<TMessage>> logger,
             Type messageHandlerType,
             string subscriberName,
             IEnumerable<Type> subscribedMessageTypes
@@ -89,7 +100,8 @@ namespace ReRabbit.Subscribers
         {
             _subscriptionManager = subscriptionManager;
             _configurationManager = configurationManager;
-            _serviceScopeFactory = serviceScopeFactory;
+            _serviceProvider = serviceProvider;
+            _logger = logger;
             _messageHandlerType = messageHandlerType;
 
             _subscribedRabbitMessages = subscribedMessageTypes
@@ -98,8 +110,6 @@ namespace ReRabbit.Subscribers
                 .ToList();
 
             _settings = GetSubscriberSettings(subscriberName, _subscribedRabbitMessages);
-
-            IsActive = false;
         }
 
         #endregion Конструктор
@@ -113,7 +123,7 @@ namespace ReRabbit.Subscribers
         {
             var messageType = _messageHandlerType;
             var subscribedMessages = _subscribedRabbitMessages;
-            var scopeFactory = _serviceScopeFactory;
+            var scopeFactory = _serviceProvider;
 
             // сперва объявляем топологию
             await _subscriptionManager.BindAsync<TMessage>(_settings);
@@ -125,12 +135,22 @@ namespace ReRabbit.Subscribers
             await _subscriptionManager.RegisterAsync<TMessage>(
                 ctx => ConsumeAsync(scopeFactory, messageType, subscribedMessages, ctx),
                 _settings,
-                isForceStopped =>
+                (isForceStopped, reason) =>
                 {
-                    IsActive = false;
+                    if (SetActiveTo(false))
+                    {
+                        _logger.LogWarning(
+                            "Потребитель сообщений {ConsumerName} с типом {EventType} остановлен по причине {Reason} {IsForceStopped}.",
+                            _settings.ConsumerName,
+                            typeof(TMessage).Name,
+                            reason,
+                            isForceStopped
+                        );
+
+                    }
                 });
 
-            IsActive = true;
+            SetActiveTo(true);
         }
 
         #endregion Методы (public)
@@ -140,19 +160,19 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Обработать сообщение.
         /// </summary>
-        /// <param name="scopeFactory">Фабрика скоупов.</param>
+        /// <param name="serviceProvider">Фабрика скоупов.</param>
         /// <param name="messageType">Тип сообщения.</param>
         /// <param name="subscribedMessages">Сообщения, на которые подписан потребитель.</param>
         /// <param name="ctx">Контекст сообщения.</param>
         /// <returns>Результат обработки сообщения.</returns>
         private static Task<Acknowledgement> ConsumeAsync(
-            IServiceScopeFactory scopeFactory,
+            IServiceProvider serviceProvider,
             Type messageType,
             IEnumerable<RabbitMessage> subscribedMessages,
             MessageContext ctx
         )
         {
-            using var scope = scopeFactory.CreateScope();
+            using var scope = serviceProvider.CreateScope();
 
             if (!(scope.ServiceProvider.GetService(messageType) is IMessageHandler<TMessage> handler))
             {
@@ -268,6 +288,24 @@ namespace ReRabbit.Subscribers
 
             return subscriberSettings;
         }
+
+        /// <summary>
+        /// Устанавливает новое значение статусу активности потребителя.
+        /// </summary>
+        /// <param name="isActive">Новый статус потребителя.</param>
+        /// <returns>true, если флаг активности был изменен.</returns>
+        private bool SetActiveTo(bool isActive)
+        {
+            bool changed;
+            lock(_lock)
+            {
+                changed = IsActive != isActive;
+                IsActive = isActive;
+            }
+
+            return changed;
+        }
+
 
         #endregion Методы (private)
     }

@@ -49,7 +49,7 @@ namespace ReRabbit.UnitTests.Core
 
         [TestCase(1, true, ExpectedResult = true)]
         [TestCase(1, false, ExpectedResult = false)]
-        public async Task<bool> ShouldCorrectlyHandleResult(int caseItem, bool isOpen)
+        public async Task<bool> ShouldCorrectlyHandleResultAsync(int caseItem, bool isOpen)
         {
             var connectionFactoryMock = new Mock<IConnectionFactory>();
 
@@ -73,7 +73,7 @@ namespace ReRabbit.UnitTests.Core
         }
 
         [TestCase(1)]
-        public async Task ShouldReturnModel(int caseItem)
+        public async Task ShouldReturnModelAsync(int caseItem)
         {
             var connectionFactoryMock = new Mock<IConnectionFactory>();
 

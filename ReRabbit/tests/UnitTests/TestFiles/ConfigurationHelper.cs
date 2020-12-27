@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ReRabbit.UnitTests.TestFiles
 {
@@ -15,6 +16,14 @@ namespace ReRabbit.UnitTests.TestFiles
         public static IServiceCollection AddConfiguration(this IServiceCollection services, string fileName = "appsettings.json")
         {
             return services.AddSingleton(GetConfiguration(fileName));
+        }
+
+        public static IServiceCollection AddFakeLogger(this IServiceCollection services)
+        {
+            return services.AddLogging(x =>
+            {
+                x.ClearProviders();
+            });
         }
     }
 }

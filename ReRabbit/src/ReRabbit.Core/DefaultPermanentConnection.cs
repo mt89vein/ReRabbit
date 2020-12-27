@@ -61,12 +61,12 @@ namespace ReRabbit.Core
         /// <summary>
         /// Семафор.
         /// </summary>
-        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
+        private readonly SemaphoreSlim _semaphoreSlim = new(1,1);
 
         /// <summary>
         /// Список открытых каналов.
         /// </summary>
-        private readonly List<IModel> _channels = new List<IModel>();
+        private readonly List<IModel> _channels = new();
 
         #endregion Поля
 
