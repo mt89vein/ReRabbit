@@ -63,6 +63,9 @@ namespace ReRabbit.Core
         /// </summary>
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
 
+        /// <summary>
+        /// Список открытых каналов.
+        /// </summary>
         private readonly List<IModel> _channels = new List<IModel>();
 
         #endregion Поля
@@ -145,15 +148,8 @@ namespace ReRabbit.Core
 
             model.ModelShutdown += (sender, e) =>
             {
-                if (sender is IModel channel)
-                {
-                    if (channel.IsOpen)
-                    {
-                        model.Close();
-                    }
-                    _channels.Remove(channel);
-                    channel.Dispose();
-                }
+                _channels.Remove(model);
+                model.Dispose();
             };
 
             _channels.Add(model);
@@ -212,39 +208,44 @@ namespace ReRabbit.Core
             await _semaphoreSlim.WaitAsync();
             try
             {
+                // на случай, если пока ждали у входа в семафор, кто-то уже подключился - переиспользуем.
                 if (IsConnected)
                 {
                     return true;
                 }
 
-                _connection =_connectionRetryPolicy.Execute(() =>
+                _connection = _connectionRetryPolicy.Execute(() =>
                 {
-                    if (_connection != null)
-                    {
-                        TryDisconnect();
-                    }
+                    TryDisconnect();
 
                     return _connectionFactory.CreateConnection(_settings.HostNames.ToList());
                 });
+
+                if (IsConnected)
+                {
+                    _connection.ConnectionShutdown += OnConnectionShutdown;
+                    _connection.ConnectionBlocked += OnConnectionBlocked;
+
+                    _logger.RabbitMqConnectionEstablished();
+
+                    _disposed = false;
+                }
+            }
+            catch
+            {
+                // hide any exception
+
+                _connection?.Close();
+                _connection?.Dispose();
+                _connection = null;
+                _disposed = true;
             }
             finally
             {
                 _semaphoreSlim.Release();
             }
 
-            if (IsConnected)
-            {
-                _connection.ConnectionShutdown += OnConnectionShutdown;
-                _connection.ConnectionBlocked += OnConnectionBlocked;
-
-                _logger.RabbitMqConnectionEstablished();
-
-                _disposed = false;
-
-                return true;
-            }
-
-            return false;
+            return IsConnected;
         }
 
         /// <summary>

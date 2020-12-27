@@ -160,6 +160,8 @@ namespace ReRabbit.Abstractions.Settings
             SslOptions ssl
         )
         {
+            // TODO: проверки на некорректные параметры
+
             HostNames = hostNames;
             Port = port;
             UserName = userName;
@@ -191,8 +193,9 @@ namespace ReRabbit.Abstractions.Settings
 
         /// <summary>Indicates whether the current object is equal to another object of the same type.</summary>
         /// <param name="other">An object to compare with this object.</param>
-        /// <returns>true if the current object is equal to the <paramref name="other">other</paramref> parameter; otherwise, false.</returns>
-        public bool Equals(MqConnectionSettings other)
+        /// <returns>
+        /// <see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
+        public bool Equals(MqConnectionSettings? other)
         {
             if (other is null)
             {
@@ -204,19 +207,20 @@ namespace ReRabbit.Abstractions.Settings
                 return true;
             }
 
-            return Equals(HostNames, other.HostNames) &&
+            return HostNames.Equals(other.HostNames) &&
                    Port == other.Port &&
-                   string.Equals(UserName,other.UserName) &&
-                   string.Equals(Password, other.Password) &&
-                   string.Equals(VirtualHost, other.VirtualHost) &&
-                   string.Equals(ConnectionName, other.ConnectionName) &&
-                   UseAsyncConsumer == other.UseAsyncConsumer;
+                   UseAsyncConsumer == other.UseAsyncConsumer &&
+                   string.Equals(UserName, other.UserName, StringComparison.Ordinal) &&
+                   string.Equals(Password, other.Password, StringComparison.Ordinal) &&
+                   string.Equals(VirtualHost, other.VirtualHost, StringComparison.Ordinal) &&
+                   string.Equals(ConnectionName, other.ConnectionName, StringComparison.Ordinal);
         }
 
         /// <summary>Determines whether the specified object is equal to the current object.</summary>
         /// <param name="obj">The object to compare with the current object.</param>
-        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
-        public override bool Equals(object obj)
+        /// <returns>
+        /// <see langword="true" /> if the specified object  is equal to the current object; otherwise, <see langword="false" />.</returns>
+        public override bool Equals(object? obj)
         {
             if (obj is null)
             {
@@ -240,28 +244,14 @@ namespace ReRabbit.Abstractions.Settings
         /// <returns>A hash code for the current object.</returns>
         public override int GetHashCode()
         {
-            const int offset = 5031;
-            const int primeMultiplier = 1223;
-            unchecked
-            {
-                var hashCode = offset;
-                hashCode = (hashCode * primeMultiplier) ^ Port;
-                hashCode = (hashCode * primeMultiplier) ^ UseAsyncConsumer.GetHashCode();
-                hashCode = (hashCode * primeMultiplier) ^ (HostNames != null ? HostNames.GetHashCode() : 0);
-                hashCode = (hashCode * primeMultiplier) ^ (UserName != null ? UserName.GetHashCode() : 0);
-                hashCode = (hashCode * primeMultiplier) ^ (Password != null ? Password.GetHashCode() : 0);
-                hashCode = (hashCode * primeMultiplier) ^ (VirtualHost != null ? VirtualHost.GetHashCode() : 0);
-                hashCode = (hashCode * primeMultiplier) ^ (ConnectionName != null ? ConnectionName.GetHashCode() : 0);
-
-                return hashCode;
-            }
+            return HashCode.Combine(HostNames, Port, UserName, Password, VirtualHost, ConnectionName, UseAsyncConsumer);
         }
 
         /// <summary>Returns a value that indicates whether the values of two <see cref="T:ReRabbit.Abstractions.Settings.MqConnectionSettings" /> objects are equal.</summary>
         /// <param name="left">The first value to compare.</param>
         /// <param name="right">The second value to compare.</param>
         /// <returns>true if the <paramref name="left" /> and <paramref name="right" /> parameters have the same value; otherwise, false.</returns>
-        public static bool operator ==(MqConnectionSettings left, MqConnectionSettings right)
+        public static bool operator ==(MqConnectionSettings? left, MqConnectionSettings? right)
         {
             return Equals(left, right);
         }
@@ -270,7 +260,7 @@ namespace ReRabbit.Abstractions.Settings
         /// <param name="left">The first value to compare.</param>
         /// <param name="right">The second value to compare.</param>
         /// <returns>true if <paramref name="left" /> and <paramref name="right" /> are not equal; otherwise, false.</returns>
-        public static bool operator !=(MqConnectionSettings left, MqConnectionSettings right)
+        public static bool operator !=(MqConnectionSettings? left, MqConnectionSettings? right)
         {
             return !Equals(left, right);
         }

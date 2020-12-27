@@ -120,13 +120,13 @@ namespace ReRabbit.Core
                 TopologyRecoveryEnabled = settings.TopologyRecoveryEnabled,
                 HandshakeContinuationTimeout = settings.HandshakeContinuationTimeout,
                 ContinuationTimeout = settings.ContinuationTimeout,
-                Ssl = settings.Ssl == null
-                    ? new SslOption()
-                    : new SslOption(
+                Ssl = settings.Ssl.IsEnabled
+                    ? new SslOption(
                         settings.Ssl.ServerName,
                         settings.Ssl.CertificatePath,
                         settings.Ssl.IsEnabled
-                    ),
+                    )
+                    : new SslOption(),
                 ClientProvidedName =
                     _serviceInfoAccessor.ServiceInfo.ServiceName + "-"
                                                                  + _serviceInfoAccessor.ServiceInfo.EnvironmentName +
