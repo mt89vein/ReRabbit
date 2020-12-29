@@ -1,15 +1,15 @@
 {
-  SubscriberName: 'Q2Subscriber',
-  QueueName: 'q2',
-  ConsumerName: 'Q2Subscriber',
+  SubscriberName: Q2Subscriber,
+  QueueName: q2,
+  ConsumerName: Q2Subscriber,
   Durable: true,
   Bindings: [
     {
-      FromExchange: 'test-exchange',
-      ExchangeType: 'direct',
+      FromExchange: test-exchange,
+      ExchangeType: direct,
       RoutingKeys: [
-        'rk1',
-        'rk2'
+        rk1,
+        rk2
       ]
     }
   ],
@@ -22,7 +22,7 @@
     LogOnRetry: true,
     LogOnFailLastRetry: true,
     RetryCount: 5,
-    RetryPolicy: 'Constant',
+    RetryPolicy: Constant,
     RetryMaxDelayInSeconds: 3600
   },
   ScalingSettings: {
@@ -32,27 +32,27 @@
   },
   ConnectionSettings: {
     HostNames: [
-      'localhost'
+      localhost
     ],
     Port: 5672,
-    UserName: 'user',
-    Password: 'user',
-    VirtualHost: 'TESTHOST',
+    UserName: user,
+    Password: user,
+    VirtualHost: TESTHOST,
     ConnectionRetryCount: 5,
-    ConnectionName: 'DefaultConnection',
+    ConnectionName: DefaultConnection,
     UseCommonErrorMessagesQueue: true,
     UseCommonUnroutedMessagesQueue: true,
     UseAsyncConsumer: true,
     UseBackgroundThreadsForIO: true,
-    RequestedConnectionTimeout: '00:00:30',
-    SocketReadTimeout: '00:00:30',
-    SocketWriteTimeout: '00:00:30',
+    RequestedConnectionTimeout: 00:00:30,
+    SocketReadTimeout: 00:00:30,
+    SocketWriteTimeout: 00:00:30,
     RequestedChannelMax: 100,
-    RequestedHeartbeat: '00:01:00',
-    HandshakeContinuationTimeout: '00:00:10',
-    ContinuationTimeout: '00:00:10',
+    RequestedHeartbeat: 00:01:00,
+    HandshakeContinuationTimeout: 00:00:10,
+    ContinuationTimeout: 00:00:10,
     AuthomaticRecoveryEnabled: true,
-    NetworkRecoveryInterval: '00:00:10',
+    NetworkRecoveryInterval: 00:00:10,
     TopologyRecoveryEnabled: true,
     Ssl: {}
   }

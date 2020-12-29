@@ -1,12 +1,12 @@
 {
-  SubscriberName: 'Q3Subscriber',
-  QueueName: 'q-metrics',
-  ConsumerName: 'Q3Subscriber',
+  SubscriberName: Q3Subscriber,
+  QueueName: q-metrics,
+  ConsumerName: Q3Subscriber,
   Durable: true,
   Bindings: [
     {
-      FromExchange: 'metrics',
-      ExchangeType: 'fanout'
+      FromExchange: metrics,
+      ExchangeType: fanout
     }
   ],
   TracingSettings: {
@@ -18,7 +18,7 @@
     LogOnRetry: true,
     LogOnFailLastRetry: true,
     RetryCount: 5,
-    RetryPolicy: 'Constant',
+    RetryPolicy: Constant,
     RetryMaxDelayInSeconds: 3600
   },
   ScalingSettings: {
@@ -28,27 +28,27 @@
   },
   ConnectionSettings: {
     HostNames: [
-      'localhost'
+      localhost
     ],
     Port: 5672,
-    UserName: 'user',
-    Password: 'user',
-    VirtualHost: '/',
+    UserName: user,
+    Password: user,
+    VirtualHost: /,
     ConnectionRetryCount: 5,
-    ConnectionName: 'SecondConnection',
+    ConnectionName: SecondConnection,
     UseCommonErrorMessagesQueue: true,
     UseCommonUnroutedMessagesQueue: true,
     UseAsyncConsumer: true,
     UseBackgroundThreadsForIO: true,
-    RequestedConnectionTimeout: '00:00:30',
-    SocketReadTimeout: '00:00:30',
-    SocketWriteTimeout: '00:00:30',
+    RequestedConnectionTimeout: 00:00:30,
+    SocketReadTimeout: 00:00:30,
+    SocketWriteTimeout: 00:00:30,
     RequestedChannelMax: 100,
-    RequestedHeartbeat: '00:01:00',
-    HandshakeContinuationTimeout: '00:00:10',
-    ContinuationTimeout: '00:00:10',
+    RequestedHeartbeat: 00:01:00,
+    HandshakeContinuationTimeout: 00:00:10,
+    ContinuationTimeout: 00:00:10,
     AuthomaticRecoveryEnabled: true,
-    NetworkRecoveryInterval: '00:00:10',
+    NetworkRecoveryInterval: 00:00:10,
     TopologyRecoveryEnabled: true,
     Ssl: {}
   }
