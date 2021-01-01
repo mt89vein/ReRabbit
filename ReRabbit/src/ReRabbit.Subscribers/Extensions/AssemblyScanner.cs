@@ -35,7 +35,7 @@ namespace ReRabbit.Subscribers.Extensions
             }
             catch (ReflectionTypeLoadException e)
             {
-                typesInTheAssembly = e.Types.Where(t => t != null);
+                typesInTheAssembly = e.Types.Where(t => t != null).Cast<Type>();
             }
 
             typesInTheAssembly = typesInTheAssembly.Where(t => t.IsClass && !t.IsAbstract);
@@ -128,10 +128,10 @@ namespace ReRabbit.Subscribers.Extensions
                     switch (lifetime)
                     {
                         case ServiceLifetime.Scoped:
-                            services.AddScoped(implementedInterface, sp => sp.GetService(type));
+                            services.AddScoped(implementedInterface, sp => sp.GetRequiredService(type));
                             break;
                         case ServiceLifetime.Singleton:
-                            services.AddSingleton(implementedInterface, sp => sp.GetService(type));
+                            services.AddSingleton(implementedInterface, sp => sp.GetRequiredService(type));
                             break;
                         case ServiceLifetime.Transient:
                             services.AddTransient(implementedInterface, type);

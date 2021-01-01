@@ -280,7 +280,7 @@ namespace ReRabbit.Core
 
         #region Методы (private)
 
-        private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs ea)
+        private void OnConnectionBlocked(object? sender, ConnectionBlockedEventArgs ea)
         {
             if (_disposed)
             {
@@ -295,7 +295,7 @@ namespace ReRabbit.Core
             // действий никаких не требуется. после завершения блокировки, автоматически все вернется в норму.
         }
 
-        private void OnConnectionShutdown(object sender, ShutdownEventArgs reason)
+        private void OnConnectionShutdown(object? sender, ShutdownEventArgs reason)
         {
             if (_disposed)
             {

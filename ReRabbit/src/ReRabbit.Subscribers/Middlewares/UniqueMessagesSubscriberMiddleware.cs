@@ -76,7 +76,7 @@ namespace ReRabbit.Subscribers.Middlewares
 
             _logger.LogTrace("Получено сообщение для обработки.");
 
-            if (!await TryProcessAsync(messageId.ToString()))
+            if (!await TryProcessAsync(messageId.ToString()!))
             {
                 _logger.LogTrace("Сообщение уже было обработано.");
 
@@ -99,7 +99,7 @@ namespace ReRabbit.Subscribers.Middlewares
                 _logger.LogTrace("Сообщение не обработано, флаг убираем.");
 
                 // если не Ack, то убираем.
-                await RemoveAsync(messageId.ToString());
+                await RemoveAsync(messageId.ToString()!);
 
                 return result;
             }
@@ -107,7 +107,7 @@ namespace ReRabbit.Subscribers.Middlewares
             {
                 _logger.LogTrace(e, "Произошла ошибка при обработке сообщения {MessageId}.", messageId);
 
-                await RemoveAsync(messageId.ToString());
+                await RemoveAsync(messageId.ToString()!);
 
                 throw;
             }

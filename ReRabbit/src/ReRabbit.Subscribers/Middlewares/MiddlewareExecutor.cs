@@ -85,7 +85,7 @@ namespace ReRabbit.Subscribers.Middlewares
                 current = current.Previous;
             }
 
-            return await middlewareChain.First.Value.HandleAsync(ctx);
+            return await middlewareChain.First!.Value.HandleAsync(ctx);
         }
 
         #endregion Методы (public)

@@ -32,7 +32,7 @@ namespace ReRabbit.Core
         /// <param name="env">Переменные окружения.</param>
         public ServiceInfoAccessor(IConfiguration configuration, IHostEnvironment env)
         {
-            var applicationVersion = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
+            var applicationVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
             var serviceName = configuration.GetValue("ServiceName", "undefined-service-name");
             var hostName = configuration.GetValue("HOSTNAME", Environment.MachineName);
 

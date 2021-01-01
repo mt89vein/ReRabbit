@@ -93,7 +93,7 @@ namespace ReRabbit.Subscribers
         /// Периодически выполняющаяся функция, которая запускает потребителей, если они не активны.
         /// </summary>
         /// <param name="state">Стейт.</param>
-        private static async void ActivateIfNeedAsync(object state)
+        private static async void ActivateIfNeedAsync(object? state)
         {
             if (state is List<IConsumer> consumers)
             {

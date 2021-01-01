@@ -174,7 +174,7 @@ namespace ReRabbit.Subscribers
         {
             using var scope = serviceProvider.CreateScope();
 
-            if (!(scope.ServiceProvider.GetService(messageType) is IMessageHandler<TMessage> handler))
+            if (scope.ServiceProvider.GetService(messageType) is not IMessageHandler<TMessage> handler)
             {
                 throw new InvalidOperationException(
                     $"Ошибка конфигурирования обработчика {messageType}." +
@@ -219,7 +219,7 @@ namespace ReRabbit.Subscribers
                 var dtoType = rabbitMessage.GetDtoType();
                 mqMessage = serviceProvider
                     .GetRequiredService<ISerializer>()
-                    .Deserialize(dtoType, ctx.MessageData.MqMessage.Payload.ToString());
+                    .Deserialize(dtoType, ctx.MessageData.MqMessage.Payload.ToString()!);
 
                 if (dtoType != typeof(TMessage))
                 {
@@ -232,7 +232,7 @@ namespace ReRabbit.Subscribers
                     ? jObject.ToObject<TMessage>()!
                     : serviceProvider
                         .GetRequiredService<ISerializer>()
-                        .Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString());
+                        .Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString()!);
             }
 
             var message = (TMessage)mqMessage!;

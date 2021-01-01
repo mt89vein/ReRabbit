@@ -71,7 +71,7 @@ namespace ReRabbit.Core
             return _publishTasks.ContainsKey(taskId);
         }
 
-        private void OnBasicNacks(object model, BasicNackEventArgs args)
+        private void OnBasicNacks(object? model, BasicNackEventArgs args)
         {
             if (args.Multiple)
             {
@@ -93,7 +93,7 @@ namespace ReRabbit.Core
             }
         }
 
-        private void OnBasicAcks(object model, BasicAckEventArgs args)
+        private void OnBasicAcks(object? model, BasicAckEventArgs args)
         {
             if (args.Multiple)
             {
@@ -121,7 +121,7 @@ namespace ReRabbit.Core
             }
         }
 
-        private void OnBasicReturn(object model, BasicReturnEventArgs args)
+        private void OnBasicReturn(object? model, BasicReturnEventArgs args)
         {
             _logger?.LogDebug("BasicReturn: {ReplyCode}-{ReplyText} {MessageId}", args.ReplyCode, args.ReplyText, args.BasicProperties.MessageId);
 
@@ -142,7 +142,7 @@ namespace ReRabbit.Core
             }
         }
 
-        private void OnModelShutdown(object model, ShutdownEventArgs reason)
+        private void OnModelShutdown(object? model, ShutdownEventArgs reason)
         {
             FaultPendingPublishes(reason.ReplyText);
         }
@@ -235,7 +235,7 @@ namespace ReRabbit.Core
 
             basicProperties.Headers ??= new Dictionary<string, object>();
             basicProperties.Headers["publishTag"] = publishTag.ToString("F0");
-            
+
             var publishTaskInfo = new PublishTaskInfo(publishTag);
 
             try
@@ -282,7 +282,7 @@ namespace ReRabbit.Core
 
             try
             {
-                if (_channel.IsOpen && _publishTasks.Count > 0)
+                if (_channel.IsOpen && !_publishTasks.IsEmpty)
                 {
                     _channel.WaitForConfirms(TimeSpan.FromSeconds(10));
                 }

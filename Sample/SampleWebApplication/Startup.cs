@@ -14,7 +14,10 @@ using SampleWebApplication.Middlewares;
 using SampleWebApplication.RabbitMq;
 using SampleWebApplication.RetryDelayComputers;
 using SampleWebApplication.RouteProviders;
+using System.Diagnostics.CodeAnalysis;
 using TracingContext.Extensions;
+
+[assembly: ExcludeFromCodeCoverage]
 
 namespace SampleWebApplication
 {
