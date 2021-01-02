@@ -6,6 +6,7 @@ namespace ReRabbit.Subscribers.RetryDelayComputer
 {
     /// <summary>
     /// Линейный вычислитель задержек между повторными обработками.
+    /// Этот класс не наследуюется.
     /// </summary>
     internal sealed class LinearRetryDelayComputer : IRetryDelayComputer
     {

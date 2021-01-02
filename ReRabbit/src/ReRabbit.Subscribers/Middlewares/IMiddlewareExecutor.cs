@@ -1,3 +1,4 @@
+using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
@@ -8,17 +9,17 @@ namespace ReRabbit.Subscribers.Middlewares
     /// <summary>
     /// Интерфейс вызывателя реализаций <see cref="IMiddleware"/>.
     /// </summary>
-    public interface IMiddlewareExecutor
+    internal interface IMiddlewareExecutor
     {
         /// <summary>
         /// Вызвать цепочку middleware.
         /// </summary>
-        /// <param name="next">Финальный, основной обработчик.</param>
+        /// <param name="messageHandlerType">Тип финального обработчика.</param>
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат обработки.</returns>
-        Task<Acknowledgement> ExecuteAsync(
-            Func<MessageContext, Task<Acknowledgement>> next,
-            MessageContext ctx
-        );
+        Task<Acknowledgement> ExecuteAsync<TMessageType>(
+            Type messageHandlerType,
+            MessageContext<TMessageType> ctx
+        ) where TMessageType : class, IMessage;
     }
 }

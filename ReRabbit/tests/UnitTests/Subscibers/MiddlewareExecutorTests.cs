@@ -21,28 +21,21 @@ namespace ReRabbit.UnitTests.Subscibers
             #region Arrange
 
             var services = new ServiceCollection();
-            var registrator = new MiddlewareRegistrator(services);
+            var registrator = new MiddlewareRegistrator();
 
-            registrator.AddFor<TestMessageDto>()
-                .Add<TestMiddleware>();
+            registrator.AddFor<TestHandler, TestMessageDto>().Add<TestMiddleware>();
             var sp = services.BuildServiceProvider();
 
             var executor = new MiddlewareExecutor(registrator, sp);
-
-            DateTime? handlerExecutedAt = null;
+            var testMessageDto = new TestMessageDto();
 
             #endregion Arrange
 
             #region Act
 
             var acknowledgement = await executor.ExecuteAsync(
-                ctx =>
-                {
-                    handlerExecutedAt = DateTime.UtcNow;
-
-                    return Task.FromResult<Acknowledgement>(Ack.Ok);
-                },
-                new MessageContext(new TestMessageDto(), new MqMessageData()));
+                typeof(TestHandler),
+                new MessageContext<TestMessageDto>(testMessageDto, new MqMessageData()));
 
             #endregion Act
 
@@ -50,12 +43,13 @@ namespace ReRabbit.UnitTests.Subscibers
 
             Assert.Multiple(() =>
             {
-                var middleware = sp.GetRequiredService<TestMiddleware>();
+                var middleware = sp.GetService<TestMiddleware>();
 
-                Assert.IsNotNull(middleware.ExecutedAt, "Middleware не был выполнен.");
-                Assert.IsNotNull(handlerExecutedAt, "Handler не был выполнен.");
+                Assert.IsNull(middleware, "Middleware не должен быть в DI.");
+                Assert.IsNotNull(testMessageDto.HandlerExecutedAt, "Handler не был выполнен.");
+                Assert.IsNotNull(testMessageDto.MiddlewareExecutedAt, "Middleware не был выполнен.");
 
-                Assert.IsTrue(middleware.ExecutedAt < handlerExecutedAt, "Мидлварь должен запустить раньше, чем хендер.");
+                Assert.IsTrue(testMessageDto.MiddlewareExecutedAt < testMessageDto.HandlerExecutedAt, "Middleware должен выполниться раньше, чем хендер.");
                 Assert.IsInstanceOf<Ack>(acknowledgement);
             });
 
@@ -68,11 +62,11 @@ namespace ReRabbit.UnitTests.Subscibers
             #region Arrange
 
             var services = new ServiceCollection();
-            var registrator = new MiddlewareRegistrator(services);
+            var registrator = new MiddlewareRegistrator();
 
-            var messageMiddlewareRegistrator = registrator.AddFor<TestMessageDto>();
-            messageMiddlewareRegistrator
-                .Add<ShortCircuitMiddleware>();
+            var messageMiddlewareRegistrator =
+                registrator.AddFor<TestHandler, TestMessageDto>()
+                    .Add<ShortCircuitMiddleware>();
 
             var executor = new MiddlewareExecutor(registrator, services.BuildServiceProvider());
 
@@ -81,8 +75,8 @@ namespace ReRabbit.UnitTests.Subscibers
             #region Act
 
             var acknowledgement = await executor.ExecuteAsync(
-                ctx => Task.FromResult<Acknowledgement>(Ack.Ok),
-                new MessageContext(new TestMessageDto(), new MqMessageData()));
+                typeof(TestHandler),
+                new MessageContext<TestMessageDto>(new TestMessageDto(), new MqMessageData()));
 
             #endregion Act
 
@@ -104,7 +98,7 @@ namespace ReRabbit.UnitTests.Subscibers
             #region Arrange
 
             var services = new ServiceCollection();
-            var registrator = new MiddlewareRegistrator(services);
+            var registrator = new MiddlewareRegistrator();
 
             var executor = new MiddlewareExecutor(registrator, services.BuildServiceProvider());
 
@@ -113,8 +107,8 @@ namespace ReRabbit.UnitTests.Subscibers
             #region Act
 
             var acknowledgement = await executor.ExecuteAsync(
-                ctx => Task.FromResult<Acknowledgement>(Ack.Ok),
-                new MessageContext(new TestMessageDto(), new MqMessageData()));
+                typeof(TestHandler),
+                new MessageContext<TestMessageDto>(new TestMessageDto(), new MqMessageData()));
 
             #endregion Act
 
@@ -134,6 +128,9 @@ namespace ReRabbit.UnitTests.Subscibers
 
         private class TestMessageDto : IntegrationMessage
         {
+            public DateTime MiddlewareExecutedAt { get; set; }
+
+            public DateTime HandlerExecutedAt { get; set; }
         }
 
         private class TestRabbitMessage : RabbitMessage<TestMessageDto>
@@ -150,14 +147,14 @@ namespace ReRabbit.UnitTests.Subscibers
             [SubscriberConfiguration("Q2Subscriber", typeof(TestRabbitMessage))]
             public Task<Acknowledgement> HandleAsync(MessageContext<TestMessageDto> messageContext)
             {
-                throw new NotImplementedException();
+                messageContext.Message.HandlerExecutedAt = DateTime.UtcNow;
+
+                return Task.FromResult<Acknowledgement>(Ack.Ok);
             }
         }
 
         private class TestMiddleware : MiddlewareBase
         {
-            public DateTime? ExecutedAt { get; set; }
-
             /// <summary>
             /// Выполнить полезную работу.
             /// </summary>
@@ -165,7 +162,8 @@ namespace ReRabbit.UnitTests.Subscibers
             /// <returns>Результат выполнения.</returns>
             public override Task<Acknowledgement> HandleAsync(MessageContext ctx)
             {
-                ExecutedAt = DateTime.UtcNow;
+                var newCtx = ctx.As<TestMessageDto>();
+                newCtx.Message.MiddlewareExecutedAt = DateTime.UtcNow;
 
                 return Next(ctx);
             }

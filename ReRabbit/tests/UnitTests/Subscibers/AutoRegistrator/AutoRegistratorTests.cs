@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using ReRabbit.Extensions;
-using ReRabbit.Subscribers;
+using ReRabbit.Extensions.Registrator;
+using ReRabbit.Subscribers.Consumers;
 using ReRabbit.Subscribers.Exceptions;
 using ReRabbit.Subscribers.Middlewares;
 using ReRabbit.UnitTests.TestFiles;
@@ -20,12 +21,15 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<NormalConsumer.TestRabbitMessage>();
             services.AddConfiguration();
-            services.AddFakeLogger();
+            services.AddFakes();
             var sp = services.BuildServiceProvider();
 
-            var registrator = new RabbitMqHandlerAutoRegistrator(sp);
+            var registrator = new RabbitMqHandlerAutoRegistrator(
+                sp,
+                typeFilter: x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.NormalConsumer"
+            );
             var consumerRegistry = sp.GetRequiredService<IConsumerRegistry>();
-            registrator.FillConsumersRegistry(consumerRegistry, x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.NormalConsumer");
+            registrator.ScanAndRegister();
 
             Assert.AreEqual(1, (consumerRegistry as IConsumerRegistryAccessor)?.Consumers?.Count);
         }
@@ -37,15 +41,14 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<MultipleConsumersOnSingleQueue.SecondTestRabbitMessage>();
             services.AddConfiguration();
-            services.AddFakeLogger();
-            var sp = services.BuildServiceProvider();
+            services.AddFakes();
 
-            var registrator = new RabbitMqHandlerAutoRegistrator(sp);
-            var consumerRegistry = sp.GetRequiredService<IConsumerRegistry>();
-
-            Assert.Throws<NotSupportedException>(() => registrator.FillConsumersRegistry(consumerRegistry,
-                x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConsumersOnSingleQueue")
+            var registrator = new RabbitMqHandlerAutoRegistrator(
+                services.BuildServiceProvider(),
+                typeFilter: x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConsumersOnSingleQueue"
             );
+
+            Assert.Throws<NotSupportedException>(() => registrator.ScanAndRegister());
         }
 
         [Test]
@@ -55,15 +58,15 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<NotConfiguredConsumer.TestRabbitMessage>();
             services.AddConfiguration();
-            services.AddFakeLogger();
-            var sp = services.BuildServiceProvider();
+            services.AddFakes();
 
-            var registrator = new RabbitMqHandlerAutoRegistrator(sp);
-            var consumerRegistry = sp.GetRequiredService<IConsumerRegistry>();
-
-            Assert.Throws<SubscriberNotConfiguredException>(() => registrator.FillConsumersRegistry(consumerRegistry,
-                x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.NotConfiguredConsumer")
+            var registrator = new RabbitMqHandlerAutoRegistrator(
+                services.BuildServiceProvider(),
+                typeFilter: x =>
+                    x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.NotConfiguredConsumer"
             );
+
+            Assert.Throws<SubscriberNotConfiguredException>(() => registrator.ScanAndRegister());
         }
 
         [Test]
@@ -73,12 +76,15 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             services.AddRabbitMq();
             services.AddSingleton<MultipleConfigurationAttributes.TestRabbitMessage>();
             services.AddConfiguration();
-            services.AddFakeLogger();
+            services.AddFakes();
             var sp = services.BuildServiceProvider();
 
-            var registrator = new RabbitMqHandlerAutoRegistrator(sp);
+            var registrator = new RabbitMqHandlerAutoRegistrator(
+                sp,
+                typeFilter: x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConfigurationAttributes"
+            );
             var consumerRegistry = sp.GetRequiredService<IConsumerRegistry>();
-            registrator.FillConsumersRegistry(consumerRegistry, x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConfigurationAttributes");
+            registrator.ScanAndRegister();
 
             Assert.AreEqual(3, (consumerRegistry as IConsumerRegistryAccessor)?.Consumers?.Count);
         }
@@ -91,20 +97,23 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             var services = new ServiceCollection();
             services.AddRabbitMq(
                 options => options.SubscriberMiddlewares
-                    .AddFor<ConsumersWithMiddlewares.TestMessageDto>()
+                    .AddFor<ConsumersWithMiddlewares.TestHandler, ConsumersWithMiddlewares.TestMessageDto>()
                         .Add<ConsumersWithMiddlewares.Middleware2>()
                     .Registrator
                     .AddGlobal<ConsumersWithMiddlewares.GlobalMiddleware>() // добавится только для TestMessage2Dto
-                    .AddFor<ConsumersWithMiddlewares.TestMessage2Dto>()
+                    .AddFor<ConsumersWithMiddlewares.TestHandler2, ConsumersWithMiddlewares.TestMessage2Dto>()
                         .Add<ConsumersWithMiddlewares.Middleware1>()
             );
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage>();
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage2>();
             services.AddConfiguration();
-            services.AddFakeLogger();
+            services.AddFakes();
             var sp = services.BuildServiceProvider();
 
-            var registrator = new RabbitMqHandlerAutoRegistrator(sp);
+            var registrator = new RabbitMqHandlerAutoRegistrator(
+                sp,
+                typeFilter: x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares"
+            );
             var consumerRegistry = sp.GetRequiredService<IConsumerRegistry>();
             var middlewareRegistryAccessor = sp.GetRequiredService<IMiddlewareRegistryAccessor>();
 
@@ -112,14 +121,16 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
 
             #region Act
 
-            registrator.FillConsumersRegistry(consumerRegistry, x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares");
+            registrator.ScanAndRegister();
 
             #endregion Act
 
             #region Assert
 
-            var testMessageMiddlewares = middlewareRegistryAccessor.Get(typeof(ConsumersWithMiddlewares.TestMessageDto)).ToList();
-            var testMessage2Middlewares = middlewareRegistryAccessor.Get(typeof(ConsumersWithMiddlewares.TestMessage2Dto)).ToList();
+            var testMessageMiddlewares = middlewareRegistryAccessor.Get(
+                typeof(ConsumersWithMiddlewares.TestHandler), typeof(ConsumersWithMiddlewares.TestMessageDto));
+            var testMessage2Middlewares = middlewareRegistryAccessor.Get(
+                typeof(ConsumersWithMiddlewares.TestHandler2), typeof(ConsumersWithMiddlewares.TestMessage2Dto)).ToList();
 
             Assert.Multiple(() =>
             {
@@ -143,24 +154,27 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
             var services = new ServiceCollection();
             services.AddRabbitMq(
                 options => options.SubscriberMiddlewares
-                    .AddFor<ConsumersWithMiddlewares.TestMessageDto>()
+                    .AddFor<ConsumersWithMiddlewares.TestHandler, ConsumersWithMiddlewares.TestMessageDto>()
                         .Add<ConsumersWithMiddlewares.Middleware2>()
                     .Registrator
                     .AddGlobal<ConsumersWithMiddlewares.GlobalMiddleware>() // добавится только для TestMessage2Dto
-                    .AddFor<ConsumersWithMiddlewares.TestMessage2Dto>()
+                    .AddFor<ConsumersWithMiddlewares.TestHandler2, ConsumersWithMiddlewares.TestMessage2Dto>()
                         .Add<ConsumersWithMiddlewares.Middleware1>(executionOrder: 2)
                         .Add<ConsumersWithMiddlewares.Middleware2>(executionOrder: 3) // мидлварь зареган тут, но и добавлен в хендлер. То что указано здесь является преимуществом.
                     .Registrator
-                    .AddFor<ConsumersWithMiddlewares.TestMessage2Dto>() // повторное выполнение не приведет к обнулению реестра мидлварей.
+                    .AddFor<ConsumersWithMiddlewares.TestHandler2, ConsumersWithMiddlewares.TestMessage2Dto>() // повторное выполнение не приведет к обнулению реестра мидлварей.
                         .Add<ConsumersWithMiddlewares.Middleware1>() // добавится только тот, что был выше с executionOrder: 2
             );
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage>();
             services.AddSingleton<ConsumersWithMiddlewares.TestRabbitMessage2>();
             services.AddConfiguration();
-            services.AddFakeLogger();
+            services.AddFakes();
             var sp = services.BuildServiceProvider();
 
-            var registrator = new RabbitMqHandlerAutoRegistrator(sp);
+            var registrator = new RabbitMqHandlerAutoRegistrator(
+                sp,
+                typeFilter: x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares"
+            );
             var consumerRegistry = sp.GetRequiredService<IConsumerRegistry>();
             var middlewareRegistryAccessor = sp.GetRequiredService<IMiddlewareRegistryAccessor>();
 
@@ -168,14 +182,16 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator
 
             #region Act
 
-            registrator.FillConsumersRegistry(consumerRegistry, x => x.Namespace == "ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares");
+            registrator.ScanAndRegister();
 
             #endregion Act
 
             #region Assert
 
-            var testMessageMiddlewares = middlewareRegistryAccessor.Get(typeof(ConsumersWithMiddlewares.TestMessageDto)).ToList();
-            var testMessage2Middlewares = middlewareRegistryAccessor.Get(typeof(ConsumersWithMiddlewares.TestMessage2Dto)).ToList();
+            var testMessageMiddlewares = middlewareRegistryAccessor.Get(
+                typeof(ConsumersWithMiddlewares.TestHandler),typeof(ConsumersWithMiddlewares.TestMessageDto));
+            var testMessage2Middlewares = middlewareRegistryAccessor.Get(
+                typeof(ConsumersWithMiddlewares.TestHandler2),typeof(ConsumersWithMiddlewares.TestMessage2Dto)).ToList();
 
             Assert.Multiple(() =>
             {

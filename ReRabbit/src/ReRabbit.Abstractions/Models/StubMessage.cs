@@ -5,7 +5,7 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Структура для десериализации важных мета-данных.
     /// </summary>
-    public struct StubMessage : IMessage, ITracedMessage
+    internal struct StubMessage : IMessage, ITracedMessage
     {
         /// <summary>
         /// Идентификатор сообщения.

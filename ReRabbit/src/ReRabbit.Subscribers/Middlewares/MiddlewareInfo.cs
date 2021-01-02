@@ -1,5 +1,7 @@
+using ReRabbit.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
@@ -28,9 +30,20 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         public int MiddlewareId { get; }
 
-        /// <summary>Initializes a new instance of the <see cref="T:System.Object" /> class.</summary>
+        /// <summary>
+        /// Создает новый экземпляр структуры <see cref="MiddlewareInfo"/>.
+        /// </summary>
+        /// <param name="middlewareType">Тип middleware.</param>
+        /// <param name="order">Порядок, указанный разработчиком.</param>
+        /// <param name="middlewareId">Глобальный порядковый идентификатор регистрации middleware.</param>
         public MiddlewareInfo(Type middlewareType, int order, int middlewareId)
         {
+            if (middlewareType.GetInterfaces().All(i => i != typeof(IMiddleware)))
+            {
+                throw new ArgumentException(
+                    $"Тип {middlewareType} не реализует интерфейс IMiddleware.");
+            }
+
             MiddlewareType = middlewareType;
             Order = order;
             MiddlewareId = middlewareId;

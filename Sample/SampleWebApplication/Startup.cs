@@ -36,8 +36,6 @@ namespace SampleWebApplication
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<TestMiddleware>(); // TODO: scan and register all middlewares ?
-            services.AddSingleton<TestMiddleware2>();
             services.AddControllers();
             services
                 .AddSwagger(_env)
@@ -53,12 +51,12 @@ namespace SampleWebApplication
                     {
                         x.SubscriberMiddlewares
                             //.AddGlobal<UniqueMessagesSubscriberMiddleware>()
-                            .AddFor<TestMessage>()
+                            .AddFor<TestMessageHandler, TestMessage>()
                                 .Add<MessageProcessingPerfCounterMiddleware>()
-                                .Add<TestMiddleware3>()
+                                //.Add<TestMiddleware3>()
                             .Registrator
                             .AddGlobal<GlobalTestMiddleware>() // adds only for Metrics.
-                            .AddFor<Metrics>()
+                            .AddFor<MetricHandler, Metrics>()
                                 .Add<TestMiddleware2>();
                         x.RetryDelayComputerRegistrator.Add<CustomRoundRobinRetryDelayComputer>("CustomRoundRobin");
                         x.RouteProviderRegistrator.Add<MetricsRouteProvider>(nameof(MetricsRabbitMessage));

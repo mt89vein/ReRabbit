@@ -12,7 +12,7 @@ namespace ReRabbit.Subscribers.Extensions
     /// <summary>
     /// Методы расширения для работы с трейсингом.
     /// </summary>
-    public static class TracingExtensions
+    internal static class TracingExtensions
     {
         #region Константы
 
@@ -122,7 +122,7 @@ namespace ReRabbit.Subscribers.Extensions
 
             static Guid? TryGetFromHeaders(IBasicProperties basicProperties)
             {
-                if (basicProperties.IsHeadersPresent() &&
+                if (basicProperties.Headers is not null &&
                     basicProperties.Headers.TryGetValue(TRACE_ID_KEY, out var rawTraceId) &&
                     rawTraceId is byte[] byteTraceIdArray &&
                     Guid.TryParse(Encoding.UTF8.GetString(byteTraceIdArray), out var id) &&

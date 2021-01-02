@@ -6,13 +6,13 @@ using ReRabbit.Core;
 using System;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Subscribers
 {
     /// <summary>
     /// Менеджер подписок по-умолчанию.
     /// Этот класс не наследуется.
     /// </summary>
-    public sealed class DefaultSubscriptionManager : ISubscriptionManager
+    internal sealed class DefaultSubscriptionManager : ISubscriptionManager
     {
         #region Поля
 

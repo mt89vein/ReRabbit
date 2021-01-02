@@ -10,7 +10,7 @@ namespace ReRabbit.Publishers
     /// Провайдер информации о роуте для публикации.
     /// Этот класс не наследуется.
     /// </summary>
-    public sealed class DefaultRouteProvider : IRouteProvider
+    internal sealed class DefaultRouteProvider : IRouteProvider
     {
         #region Поля
 

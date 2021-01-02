@@ -71,6 +71,10 @@ namespace ReRabbit.Abstractions
         /// В случае, если неудалось найти настройки для подключения/виртуального хоста по имени.
         /// </exception>
         /// <returns>Настройки подключения.</returns>
-        MqConnectionSettings GetMqConnectionSettings(ConnectionPurposeType connectionPurposeType, string connectionName= "DefaultConnection", string virtualHost = "/");
+        MqConnectionSettings GetMqConnectionSettings(
+            ConnectionPurposeType connectionPurposeType,
+            string connectionName = "DefaultConnection",
+            string virtualHost = "/"
+        );
     }
 }

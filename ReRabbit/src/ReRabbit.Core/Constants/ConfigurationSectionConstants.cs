@@ -3,7 +3,7 @@ namespace ReRabbit.Core.Constants
     /// <summary>
     /// Константы с наименованиями секций конфигурации.
     /// </summary>
-    public static class ConfigurationSectionConstants
+    internal static class ConfigurationSectionConstants
     {
         /// <summary>
         /// Наименование корневой секции настроек.

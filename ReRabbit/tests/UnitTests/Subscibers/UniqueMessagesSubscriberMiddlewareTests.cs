@@ -6,9 +6,9 @@ using NUnit.Framework;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
+using ReRabbit.Subscribers.Markers;
 using ReRabbit.Subscribers.Middlewares;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ReRabbit.UnitTests.Subscibers
@@ -24,9 +24,9 @@ namespace ReRabbit.UnitTests.Subscibers
         private readonly UniqueMessagesSubscriberMiddleware _uniqueMessagesSubscriberMiddleware;
 
         /// <summary>
-        /// Распределенный кэш.
+        /// Маркер обработок сообщений.
         /// </summary>
-        private readonly IDistributedCache _distributedCache;
+        private readonly IUniqueMessageMarker _uniqueMessageMarker;
 
         #endregion Поля
 
@@ -37,11 +37,14 @@ namespace ReRabbit.UnitTests.Subscibers
         /// </summary>
         public UniqueMessagesSubscriberMiddlewareTests()
         {
-            _distributedCache = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
+            _uniqueMessageMarker =
+                new UniqueMessageMarker(
+                    new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()))
+                );
             var settings = new UniqueMessagesMiddlewareSettings();
 
             _uniqueMessagesSubscriberMiddleware = new UniqueMessagesSubscriberMiddleware(
-                _distributedCache,
+                _uniqueMessageMarker,
                 Options.Create(settings),
                 NullLogger<UniqueMessagesSubscriberMiddleware>.Instance
             );
@@ -68,10 +71,9 @@ namespace ReRabbit.UnitTests.Subscibers
                     new BasicDeliverEventArgs()
                 )
             );
-            var key = $"unique-messages:{messageId}";
-            var before = await _distributedCache.GetAsync(key);
+            var before = await _uniqueMessageMarker.IsProcessed(messageId);
 
-            Assert.IsNull(before, "Сообщение не должно быть обработано.");
+            Assert.IsFalse(before, "Сообщение не должно быть обработано.");
             _uniqueMessagesSubscriberMiddleware.SetNext(x => Task.FromResult<Acknowledgement>(Ack.Ok));
 
             #endregion Arrange
@@ -82,10 +84,10 @@ namespace ReRabbit.UnitTests.Subscibers
 
             Assert.Multiple(async () =>
             {
-                var after = await _distributedCache.GetAsync(key);
+                var after = await _uniqueMessageMarker.IsProcessed(messageId);
 
                 Assert.IsInstanceOf<Ack>(acknowledgement);
-                Assert.IsNotNull(after, "После успешной обработки флаг дедупликации не поднят.");
+                Assert.IsTrue(after, "После успешной обработки флаг дедупликации не поднят.");
             });
 
             #endregion Assert
@@ -108,10 +110,9 @@ namespace ReRabbit.UnitTests.Subscibers
                     new BasicDeliverEventArgs()
                 )
             );
-            var key = $"unique-messages:{messageId}";
-            var before = await _distributedCache.GetAsync(key);
+            var before = await _uniqueMessageMarker.IsProcessed(messageId);
 
-            Assert.IsNull(before, "Сообщение не должно быть обработано.");
+            Assert.IsFalse(before, "Сообщение не должно быть обработано.");
             _uniqueMessagesSubscriberMiddleware.SetNext(x => Task.FromResult<Acknowledgement>(new Reject("handler-reject")));
 
             #endregion Arrange
@@ -122,10 +123,10 @@ namespace ReRabbit.UnitTests.Subscibers
 
             Assert.Multiple(async () =>
             {
-                var after = await _distributedCache.GetAsync(key);
+                var after = await _uniqueMessageMarker.IsProcessed(messageId);
 
                 Assert.AreEqual("handler-reject", (acknowledgement as Reject)?.Reason);
-                Assert.IsNull(after, "После неуспешной обработки флаг дедупликации не должен быть поднят.");
+                Assert.IsFalse(after, "После неуспешной обработки флаг дедупликации не должен быть поднят.");
             });
 
             #endregion Assert
@@ -148,8 +149,7 @@ namespace ReRabbit.UnitTests.Subscibers
                     new BasicDeliverEventArgs()
                 )
             );
-            var key = $"unique-messages:{messageId}";
-            await _distributedCache.SetAsync(key, Encoding.UTF8.GetBytes("Hi")); // ставим как будто уже обработано.
+            await _uniqueMessageMarker.TakeLockAsync(messageId); // ставим как будто уже обработано.
             _uniqueMessagesSubscriberMiddleware.SetNext(x => Task.FromResult<Acknowledgement>(new Reject("handler-reject")));
 
             #endregion Arrange
@@ -160,10 +160,10 @@ namespace ReRabbit.UnitTests.Subscibers
 
             Assert.Multiple(async () =>
             {
-                var after = await _distributedCache.GetAsync(key);
+                var after = await _uniqueMessageMarker.IsProcessed(messageId);
 
                 Assert.AreEqual("Already processed", (acknowledgement as Reject)?.Reason);
-                Assert.IsNotNull(after);
+                Assert.IsTrue(after);
             });
 
             #endregion Assert
@@ -186,10 +186,9 @@ namespace ReRabbit.UnitTests.Subscibers
                     new BasicDeliverEventArgs()
                 )
             );
-            var key = $"unique-messages:{messageId}";
-            var before = await _distributedCache.GetAsync(key);
+            var before = await _uniqueMessageMarker.IsProcessed(messageId);
 
-            Assert.IsNull(before, "Сообщение не должно быть обработано.");
+            Assert.IsFalse(before, "Сообщение не должно быть обработано.");
             _uniqueMessagesSubscriberMiddleware.SetNext(x => Task.FromException<Acknowledgement>(new Exception("123"))); // тест на случай ошибки в хендлере
 
             #endregion Arrange
@@ -200,10 +199,10 @@ namespace ReRabbit.UnitTests.Subscibers
 
             Assert.Multiple(async () =>
             {
-                var after = await _distributedCache.GetAsync(key);
+                var after = await _uniqueMessageMarker.IsProcessed(messageId);
 
                 Assert.AreEqual("123", exception.Message, "Текст сообщения не совпадает.");
-                Assert.IsNull(after, "Флаг не должен быть поднят, если произошла ошибка.");
+                Assert.IsFalse(after, "Флаг не должен быть поднят, если произошла ошибка.");
             });
 
             #endregion Assert

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
@@ -11,13 +10,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Consumers
 {
     /// <summary>
     /// Потребитель сообщений.
+    /// Этот класс не наследуется.
     /// </summary>
     /// <typeparam name="TMessage">Тип сообщения</typeparam>
-    public sealed class Consumer<TMessage> : IConsumer
+    internal sealed class Consumer<TMessage> : IConsumer
         where TMessage : class, IMessage
     {
         #region Поля
@@ -33,9 +33,19 @@ namespace ReRabbit.Subscribers
         private readonly IConfigurationManager _configurationManager;
 
         /// <summary>
-        /// Провайдер служб.
+        /// Сериализатор.
         /// </summary>
-        private readonly IServiceProvider _serviceProvider;
+        private readonly ISerializer _serializer;
+
+        /// <summary>
+        /// Маппер.
+        /// </summary>
+        private readonly IMessageMapper _messageMapper;
+
+        /// <summary>
+        /// Интерфейс вызывателя реализаций <see cref="IMiddleware"/>.
+        /// </summary>
+        private readonly IMiddlewareExecutor _middlewareExecutor;
 
         /// <summary>
         /// Логгер.
@@ -80,18 +90,19 @@ namespace ReRabbit.Subscribers
         /// </summary>
         /// <param name="subscriptionManager">Менеджер подписок.</param>
         /// <param name="configurationManager">Менеджер конфигураций.</param>
-        /// <param name="serviceProvider">Провайдер служб.</param>
+        /// <param name="messageMapper">Маппер сообщений.</param>
+        /// <param name="middlewareExecutor">Интерфейс вызывателя реализаций <see cref="IMiddleware"/>.</param>
         /// <param name="logger">Логгер.</param>
         /// <param name="messageHandlerType">Тип обработчика (класс), который будет обрабатывать сообщения.</param>
         /// <param name="subscriberName">Наименование потребителя.</param>
         /// <param name="subscribedMessageTypes">Тип сообщений, на которые подписан потребитель.</param>
-        /// <remarks>
-        /// Создается через <see cref="ActivatorUtilities"/> в <see cref="RabbitMqHandlerAutoRegistrator.CreateConsumers"/>.
-        /// </remarks>
+        /// <param name="serializer">Сераиализатор сообщений.</param>
         public Consumer(
             ISubscriptionManager subscriptionManager,
             IConfigurationManager configurationManager,
-            IServiceProvider serviceProvider,
+            ISerializer serializer,
+            IMessageMapper messageMapper,
+            IMiddlewareExecutor middlewareExecutor,
             ILogger<Consumer<TMessage>> logger,
             Type messageHandlerType,
             string subscriberName,
@@ -100,15 +111,14 @@ namespace ReRabbit.Subscribers
         {
             _subscriptionManager = subscriptionManager;
             _configurationManager = configurationManager;
-            _serviceProvider = serviceProvider;
+            _serializer = serializer;
+            _messageMapper = messageMapper;
+            _middlewareExecutor = middlewareExecutor;
             _logger = logger;
             _messageHandlerType = messageHandlerType;
 
             _subscribedRabbitMessages = subscribedMessageTypes
-                .Select(type => new RabbitMessageInfo(
-                    (IRabbitMessage)ActivatorUtilities.CreateInstance(serviceProvider, type),
-                    configurationManager
-                ))
+                .Select(type => new RabbitMessageInfo(type, configurationManager))
                 .ToList();
 
             _settings = GetSubscriberSettings(subscriberName);
@@ -120,15 +130,12 @@ namespace ReRabbit.Subscribers
 
             public Type RabbitMessageType { get; }
 
-            public Type DtoType { get; }
-
             public MessageSettings MessageSettings { get; }
 
-            public RabbitMessageInfo(IRabbitMessage rabbitMessage, IConfigurationManager configurationManager)
+            public RabbitMessageInfo(Type rabbitMessageType, IConfigurationManager configurationManager)
             {
-                RabbitMessageType = rabbitMessage.GetType();
-                DtoType = rabbitMessage.GetDtoType();
-                RabbitMessage = rabbitMessage;
+                RabbitMessageType = rabbitMessageType;
+                RabbitMessage = (IRabbitMessage)Activator.CreateInstance(rabbitMessageType)!;
                 MessageSettings = configurationManager.GetMessageSettings(RabbitMessageType.Name);
             }
 
@@ -190,9 +197,11 @@ namespace ReRabbit.Subscribers
         /// </summary>
         public async Task StartAsync()
         {
-            var messageType = _messageHandlerType;
+            var messageHandlerType = _messageHandlerType;
             var subscribedMessages = _subscribedRabbitMessages;
-            var scopeFactory = _serviceProvider;
+            var mapper = _messageMapper;
+            var serializer = _serializer;
+            var middlewareExecutor = _middlewareExecutor;
 
             // сперва объявляем топологию
             await _subscriptionManager.BindAsync<TMessage>(_settings);
@@ -202,7 +211,7 @@ namespace ReRabbit.Subscribers
 
             // и запускаем потребление из очереди
             await _subscriptionManager.RegisterAsync<TMessage>(
-                ctx => ConsumeAsync(scopeFactory, messageType, subscribedMessages, ctx),
+                ctx => ConsumeAsync(mapper, serializer, middlewareExecutor, messageHandlerType, subscribedMessages, ctx),
                 _settings,
                 (isForceStopped, reason) =>
                 {
@@ -229,34 +238,26 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Обработать сообщение.
         /// </summary>
-        /// <param name="serviceProvider">Фабрика скоупов.</param>
-        /// <param name="messageType">Тип сообщения.</param>
+        /// <param name="serializer">Сериализатор.</param>
+        /// <param name="middlewareExecutor">Интерфейс вызывателя реализаций <see cref="IMiddleware"/>.</param>
+        /// <param name="messageHandlerType">Тип обработчика сообщения.</param>
         /// <param name="subscribedMessages">Сообщения, на которые подписан потребитель.</param>
         /// <param name="ctx">Контекст сообщения.</param>
+        /// <param name="mapper">Маппер.</param>
         /// <returns>Результат обработки сообщения.</returns>
         private static Task<Acknowledgement> ConsumeAsync(
-            IServiceProvider serviceProvider,
-            Type messageType,
+            IMessageMapper mapper,
+            ISerializer serializer,
+            IMiddlewareExecutor middlewareExecutor,
+            Type messageHandlerType,
             IEnumerable<RabbitMessageInfo> subscribedMessages,
             MessageContext ctx
         )
         {
-            using var scope = serviceProvider.CreateScope();
-
-            if (scope.ServiceProvider.GetService(messageType) is not IMessageHandler<TMessage> handler)
-            {
-                throw new InvalidOperationException(
-                    $"Ошибка конфигурирования обработчика {messageType}." +
-                    $"Проверьте зарегистрированы ли все обработчики реализующие {typeof(IMessageHandler<IMessage>)}. Используйте services.AddRabbitMq() для авто-регистрации."
-                );
-            }
-
-            var mqMessage = GetMqMessageFrom(scope.ServiceProvider, subscribedMessages, ctx);
-
-            var middlewareExecutor = scope.ServiceProvider.GetRequiredService<IMiddlewareExecutor>();
+            var mqMessage = GetMqMessageFrom(mapper, serializer, subscribedMessages, ctx);
 
             return middlewareExecutor.ExecuteAsync(
-                ctx => handler.HandleAsync(ctx.As<TMessage>()),
+                messageHandlerType,
                 new MessageContext<TMessage>(mqMessage, ctx.MessageData)
             );
         }
@@ -264,17 +265,19 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Используя метаданные получаем исходный тип сообщения и приводим к нужному формату.
         /// </summary>
-        /// <param name="serviceProvider">Провайдер служб.</param>
+        /// <param name="serializer">Сериализатор.</param>
         /// <param name="subscribedMessages">Сообщения, на которые подписан потребитель.</param>
         /// <param name="ctx">Контекст сообщения.</param>
+        /// <param name="messageMapper">Маппер.</param>
         /// <returns>Сообщение в формате, который ожидает обработчик.</returns>
         private static TMessage GetMqMessageFrom(
-            IServiceProvider serviceProvider,
+            IMessageMapper messageMapper,
+            ISerializer serializer,
             IEnumerable<RabbitMessageInfo> subscribedMessages,
             MessageContext ctx
         )
         {
-            var rabbitMessage = subscribedMessages.FirstOrDefault(
+            var rmqMessageInfo = subscribedMessages.FirstOrDefault(
                 s => s.Is(
                     ctx.MessageData.Exchange,
                     ctx.MessageData.RoutingKey,
@@ -283,22 +286,18 @@ namespace ReRabbit.Subscribers
             );
 
             object mqMessage;
-            if (rabbitMessage.RabbitMessageType != default)
+            if (rmqMessageInfo.RabbitMessageType != default)
             {
-                mqMessage = serviceProvider
-                    .GetRequiredService<ISerializer>()
-                    .Deserialize(rabbitMessage.DtoType, ctx.MessageData.MqMessage.Payload.ToString()!);
+                mqMessage = serializer.Deserialize(rmqMessageInfo.RabbitMessage.DtoType, ctx.MessageData.MqMessage.Payload.ToString()!);
 
-                if (rabbitMessage.DtoType != typeof(TMessage))
+                if (rmqMessageInfo.RabbitMessage.DtoType != typeof(TMessage))
                 {
-                    mqMessage = serviceProvider.GetRequiredService<IMessageMapper>().Map<TMessage>(mqMessage, ctx);
+                    mqMessage = messageMapper.Map<TMessage>(mqMessage, ctx);
                 }
             }
             else
             {
-                mqMessage = serviceProvider
-                    .GetRequiredService<ISerializer>()
-                    .Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString()!);
+                mqMessage = serializer.Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString()!);
             }
 
             var message = (TMessage)mqMessage!;

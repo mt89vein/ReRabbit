@@ -18,12 +18,17 @@ namespace SampleWebApplication.Controllers
         }
 
         [HttpPost("integration")]
-        public async Task<IActionResult> PublishIntegrationMessageAsync(string message, int? expires = null, int? delay = null)
+        public async Task<IActionResult> PublishIntegrationMessageAsync(string message, int? expires = null, int? delay = null, Guid? messageId = null)
         {
             var dto = new MyIntegrationMessageDto
             {
-                Message = message
+                Message = message,
             };
+
+            if (messageId.HasValue)
+            {
+                dto.MessageId = messageId.Value;
+            }
 
             await _publisher.PublishAsync<MyIntegrationRabbitMessage, MyIntegrationMessageDto>(
                 dto,
@@ -35,13 +40,24 @@ namespace SampleWebApplication.Controllers
         }
 
         [HttpPost("metrics")]
-        public async Task<IActionResult> PublishIntegrationMessageAsync(string name, int value, int? expires = null, int? delay = null)
+        public async Task<IActionResult> PublishIntegrationMessageAsync(
+            string name,
+            int value,
+            int? expires = null,
+            int? delay = null,
+            Guid? messageId = null
+        )
         {
             var dto = new MetricsDto
             {
                 Name = name,
                 Value = value
             };
+
+            if (messageId.HasValue)
+            {
+                dto.MessageId = messageId.Value;
+            }
 
             await _publisher.PublishAsync<MetricsRabbitMessage, MetricsDto>(
                 dto,

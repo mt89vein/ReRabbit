@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
+using ReRabbit.Abstractions;
 
 namespace ReRabbit.UnitTests.TestFiles
 {
@@ -18,12 +20,15 @@ namespace ReRabbit.UnitTests.TestFiles
             return services.AddSingleton(GetConfiguration(fileName));
         }
 
-        public static IServiceCollection AddFakeLogger(this IServiceCollection services)
+        public static IServiceCollection AddFakes(this IServiceCollection services)
         {
-            return services.AddLogging(x =>
-            {
-                x.ClearProviders();
-            });
+            services.AddLogging(x =>
+                {
+                    x.ClearProviders();
+                })
+                .AddSingleton(Mock.Of<IMessageMapper>());
+
+            return services;
         }
     }
 }

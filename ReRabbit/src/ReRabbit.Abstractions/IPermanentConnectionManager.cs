@@ -1,24 +1,9 @@
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
 using System;
 
 namespace ReRabbit.Abstractions
 {
-    /// <summary>
-    /// Предназначение подключения.
-    /// </summary>
-    public enum ConnectionPurposeType : byte
-    {
-        /// <summary>
-        /// Издатель.
-        /// </summary>
-        Publisher = 1,
-
-        /// <summary>
-        /// Подписчик.
-        /// </summary>
-        Subscriber = 2
-    }
-
     /// <summary>
     /// Менеджер постоянных соединений.
     /// </summary>

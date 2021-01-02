@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using ReRabbit.Abstractions;
-using ReRabbit.Subscribers;
+using ReRabbit.Extensions.Registrator;
+using ReRabbit.Subscribers.Consumers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,19 +10,19 @@ namespace ReRabbit.Extensions
     /// <summary>
     /// Запускает потребление сообщений при старте приложения.
     /// </summary>
-    public class RabbitMqSubscribersStarter : BackgroundService
+    internal class RabbitMqSubscribersStarter : BackgroundService
     {
         #region Поля
-
-        /// <summary>
-        /// Авторегистратор обработчиков <see cref="IMessageHandler{TMessage}"/>.
-        /// </summary>
-        private readonly RabbitMqHandlerAutoRegistrator _rabbitMqHandlerAutoRegistrator;
 
         /// <summary>
         /// Реестр-оркестратор потребителей.
         /// </summary>
         private readonly IConsumerRegistry _consumerRegistry;
+
+        /// <summary>
+        /// Авторегистратор обработчиков <see cref="IMessageHandler{TMessage}"/>.
+        /// </summary>
+        private readonly RabbitMqHandlerAutoRegistrator _autoRegistrator;
 
         #endregion Поля
 
@@ -30,18 +31,26 @@ namespace ReRabbit.Extensions
         /// <summary>
         /// Создает новый экземпляр класса <see cref="RabbitMqSubscribersStarter"/>.
         /// </summary>
-        public RabbitMqSubscribersStarter(
-            RabbitMqHandlerAutoRegistrator rabbitMqHandlerAutoRegistrator,
-            IConsumerRegistry consumerRegistry
-        )
+        public RabbitMqSubscribersStarter(IConsumerRegistry consumerRegistry, RabbitMqHandlerAutoRegistrator autoRegistrator)
         {
-            _rabbitMqHandlerAutoRegistrator = rabbitMqHandlerAutoRegistrator;
             _consumerRegistry = consumerRegistry;
+            _autoRegistrator = autoRegistrator;
         }
 
         #endregion Конструктор
 
         #region Методы (protected)
+
+        /// <summary>
+        /// Triggered when the application host is ready to start the service.
+        /// </summary>
+        /// <param name="cancellationToken">Indicates that the start process has been aborted.</param>
+        public override Task StartAsync(CancellationToken cancellationToken)
+        {
+            _autoRegistrator.ScanAndRegister();
+
+            return base.StartAsync(cancellationToken);
+        }
 
         /// <summary>
         /// This method is called when the <see cref="T:Microsoft.Extensions.Hosting.IHostedService" /> starts.
@@ -51,8 +60,6 @@ namespace ReRabbit.Extensions
         /// <returns>A <see cref="T:System.Threading.Tasks.Task" /> that represents the long running operations.</returns>
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _rabbitMqHandlerAutoRegistrator.FillConsumersRegistry(_consumerRegistry);
-
             return _consumerRegistry.StartAsync();
         }
 

@@ -4,20 +4,20 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Consumers
 {
     /// <summary>
     /// Реестр-оркестратор потребителей.
     /// Этот класс не наследуется.
     /// </summary>
-    public sealed class ConsumerRegistry : IConsumerRegistry, IConsumerRegistryAccessor
+    internal sealed class ConsumerRegistry : IConsumerRegistry, IConsumerRegistryAccessor
     {
         #region Поля
 
         /// <summary>
         /// Список потребителей.
         /// </summary>
-        private readonly List<IConsumer> _consumers = new List<IConsumer>();
+        private readonly List<IConsumer> _consumers = new();
 
         /// <summary>
         /// Таймер, следящий за активностью подписок.

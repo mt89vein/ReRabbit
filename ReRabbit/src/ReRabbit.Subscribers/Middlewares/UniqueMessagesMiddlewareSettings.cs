@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -12,11 +11,11 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Наименование сервиса.
         /// </summary>
-        public string ServiceName { get; set; } = Guid.NewGuid().ToString("N");
+        public string ServiceName { get; set; } = null!; // никогда не будет null.
 
         /// <summary>
         /// Время истечения хранения метки.
         /// </summary>
-        public int? MessageExpirySeconds { get; set; } = 600;
+        public int? LockSeconds { get; set; }
     }
 }

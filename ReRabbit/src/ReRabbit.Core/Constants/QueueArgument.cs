@@ -5,7 +5,7 @@ namespace ReRabbit.Core.Constants
     /// <summary>
     /// Аргументы очереди.
     /// </summary>
-    public static class QueueArgument
+    internal static class QueueArgument
     {
         /// <summary>
         /// Обменник, в которую будет переслано сообщение, если сделать basicReject или basicNack с параметром reEnqueue: false

@@ -6,12 +6,14 @@ using ReRabbit.Abstractions.Enums;
 using ReRabbit.Core;
 using ReRabbit.Core.Constants;
 using ReRabbit.Core.Serializations;
+using ReRabbit.Extensions.Registrator;
 using ReRabbit.Publishers;
-using ReRabbit.Subscribers;
 using ReRabbit.Subscribers.AcknowledgementBehaviours;
-using ReRabbit.Subscribers.Extensions;
+using ReRabbit.Subscribers.Consumers;
+using ReRabbit.Subscribers.Markers;
 using ReRabbit.Subscribers.Middlewares;
 using ReRabbit.Subscribers.RetryDelayComputer;
+using ReRabbit.Subscribers.Subscribers;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
@@ -29,11 +31,10 @@ namespace ReRabbit.Extensions
             Action<RabbitMqRegistrationOptions>? options = null
         )
         {
-            var middlewareRegistrator = new MiddlewareRegistrator(services);
+            var middlewareRegistrator = new MiddlewareRegistrator();
             services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistrator);
             services.AddSingleton<IRuntimeMiddlewareRegistrator>(middlewareRegistrator);
 
-            services.AddSingleton<RabbitMqHandlerAutoRegistrator>();
             services.AddSingleton<IConsumerRegistry, ConsumerRegistry>();
             services.AddHostedService<RabbitMqSubscribersStarter>();
 
@@ -65,8 +66,13 @@ namespace ReRabbit.Extensions
 
             options?.Invoke(rabbitMqRegistrationOptions);
 
+            services.AddSingleton<IRabbitMqHandlerAutoRegistrator>(sp => new RabbitMqHandlerAutoRegistrator(
+                sp,
+                rabbitMqRegistrationOptions.Assemblies,
+                rabbitMqRegistrationOptions.TypeFilter
+            ));
+
             return services
-                .AddClassesAsImplementedInterface(typeof(IMessageHandler<>))
                 .AddConnectionServices(rabbitMqRegistrationOptions)
                 .AddSubscribers(rabbitMqRegistrationOptions)
                 .AddConfigurations(rabbitMqRegistrationOptions)
@@ -122,9 +128,13 @@ namespace ReRabbit.Extensions
                 services.AddSingleton(options.Factories.MessageMapper);
             }
 
-            services.AddScoped<IMiddlewareExecutor, MiddlewareExecutor>();
+            services.AddSingleton<IMiddlewareExecutor, MiddlewareExecutor>();
 
-            services.AddSingleton<UniqueMessagesSubscriberMiddleware>();
+            services.AddSingleton<UniqueMessageMarker>();
+            services.AddSingleton(sp =>
+                options.Factories?.UniqueMessageMarker?.Invoke(sp) ??
+                sp.GetRequiredService<UniqueMessageMarker>()
+            );
             services.AddOptions<UniqueMessagesMiddlewareSettings>()
                 .Configure<IConfiguration, IServiceInfoAccessor>(
                     (settings, configuration, serviceInfoAccessor) =>

@@ -1,52 +1,10 @@
+using ReRabbit.Abstractions.Enums;
+using ReRabbit.Abstractions.Exceptions;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Core.Exceptions
 {
-    /// <summary>
-    /// Базовое исключение для ReRabbit.
-    /// </summary>
-    [ExcludeFromCodeCoverage]
-    public abstract class ReRabbitException : Exception
-    {
-        #region Свойства
-
-        /// <summary>
-        /// Код ошибки.
-        /// </summary>
-        public abstract ReRabbitErrorCode ErrorCode { get; }
-
-        #endregion Свойства
-
-        #region Конструкторы
-
-        protected ReRabbitException()
-        {
-        }
-
-        protected ReRabbitException(string message)
-            : base(message)
-        {
-        }
-
-        protected ReRabbitException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
-
-        #endregion Конструкторы
-    }
-
-    /// <summary>
-    /// Коды ошибки.
-    /// </summary>
-    public enum ReRabbitErrorCode
-    {
-        Unknown = 0,
-        UnnableToConnect = 1,
-        InvalidConfiguration = 2
-    }
-
     [ExcludeFromCodeCoverage]
     public sealed class ConnectionException : ReRabbitException
     {
@@ -70,31 +28,6 @@ namespace ReRabbit.Core.Exceptions
         ) : base(message, innerException)
         {
             ErrorCode = errorCode;
-        }
-
-        #endregion Конструкторы
-    }
-
-    [ExcludeFromCodeCoverage]
-    public sealed class InvalidConfigurationException : ReRabbitException
-    {
-        /// <summary>
-        /// Код ошибки.
-        /// </summary>
-        public override ReRabbitErrorCode ErrorCode { get; } = ReRabbitErrorCode.InvalidConfiguration;
-
-        #region Конструкторы
-
-        public InvalidConfigurationException(string message)
-            : base(message)
-        {
-        }
-
-        public InvalidConfigurationException(
-            string message,
-            Exception innerException
-        ) : base(message, innerException)
-        {
         }
 
         #endregion Конструкторы

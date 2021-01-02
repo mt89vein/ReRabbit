@@ -1,6 +1,8 @@
 using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using ReRabbit.Subscribers.Middlewares;
+using System;
+using System.Reflection;
 
 namespace ReRabbit.Extensions
 {
@@ -41,6 +43,16 @@ namespace ReRabbit.Extensions
         /// </summary>
         public INamedRegistratorBuilder<string, IRouteProvider> RouteProviderRegistrator { get; }
 
+        /// <summary>
+        /// Сборки для сканирования обработчиков.
+        /// </summary>
+        internal Assembly[]? Assemblies { get; private set; }
+
+        /// <summary>
+        /// Фильтр типов при сканировании обработчиков.
+        /// </summary>
+        internal Func<Type, bool>? TypeFilter { get; private set; }
+
         #endregion Свойства
 
         // TODO: outbox pattern
@@ -80,5 +92,29 @@ namespace ReRabbit.Extensions
         }
 
         #endregion Конструктор
+
+        #region Методы (public)
+
+        /// <summary>
+        /// Зарегистрировать обработчики из указанных сборок.
+        /// </summary>
+        /// <param name="assemblies">Сборки для сканирования.</param>
+        /// <param name="typeFilter">Фильтр типов.</param>
+        public void RegisterHandlersFrom(Assembly[] assemblies, Func<Type, bool>? typeFilter)
+        {
+            Assemblies = assemblies;
+            TypeFilter = typeFilter;
+        }
+
+        /// <summary>
+        /// Зарегистрировать обработчики из указанных сборок.
+        /// </summary>
+        /// <param name="assemblies">Сборки для сканирования.</param>
+        public void RegisterHandlersFrom(params Assembly[] assemblies)
+        {
+            Assemblies = assemblies;
+        }
+
+        #endregion Методы (public)
     }
 }

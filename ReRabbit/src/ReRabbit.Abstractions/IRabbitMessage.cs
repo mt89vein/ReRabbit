@@ -7,6 +7,6 @@ namespace ReRabbit.Abstractions
     /// </summary>
     public interface IRabbitMessage
     {
-        Type GetDtoType();
+        Type DtoType { get; }
     }
 }

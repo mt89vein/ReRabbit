@@ -1,7 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
 using System;
 using System.Collections.Generic;
@@ -17,22 +14,14 @@ namespace ReRabbit.Subscribers.Middlewares
         #region Поля
 
         /// <summary>
-        /// Конфигуратор сервисов.
-        /// </summary>
-        private readonly IServiceCollection _services;
-
-        /// <summary>
         /// Словарь реестров мидлварок сообщений.
         /// </summary>
-        private readonly Dictionary<Type, MessageMiddlewareRegistrator> _middlewareRegistries =
-            new Dictionary<Type, MessageMiddlewareRegistrator>();
+        private readonly Dictionary<(Type, Type), MessageMiddlewareRegistrator> _middlewareRegistries = new();
 
         /// <summary>
         /// Список глобальных мидлварок.
         /// </summary>
-        private readonly HashSet<MiddlewareInfo> _globalMiddlewares = new HashSet<MiddlewareInfo>(
-            MiddlewareInfo.MiddlewareTypeComparer
-        );
+        private readonly HashSet<MiddlewareInfo> _globalMiddlewares = new(MiddlewareInfo.MiddlewareTypeComparer);
 
         /// <summary>
         /// Идентификатор глобального <see cref="IMiddleware"/>.
@@ -41,19 +30,6 @@ namespace ReRabbit.Subscribers.Middlewares
 
         #endregion Поля
 
-        #region Конструктор
-
-        /// <summary>
-        /// Создает новый экземпляр класса <see cref="MiddlewareRegistrator"/>.
-        /// </summary>
-        /// <param name="services">Конфигуратор сервисов.</param>
-        public MiddlewareRegistrator(IServiceCollection services)
-        {
-            _services = services;
-        }
-
-        #endregion Конструктор
-
         #region Методы (public)
 
         /// <summary>
@@ -61,20 +37,12 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <typeparam name="TMiddleware">Тип middleware.</typeparam>
         /// <param name="executionOrder">Порядок вызова. По-умолчанию добавляется в конец.</param>
-        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр middlewares.</returns>
         public IMiddlewareRegistrator AddGlobal<TMiddleware>(
-            int executionOrder = -1,
-            ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton
+            int executionOrder = -1
         ) where TMiddleware : MiddlewareBase
         {
             _globalMiddlewares.Add(new MiddlewareInfo(typeof(TMiddleware), executionOrder, ++_lastGlobalMiddlewareId));
-            _services.TryAdd(ServiceDescriptor.Describe(
-                    typeof(TMiddleware),
-                    typeof(TMiddleware),
-                    middlewareLifetime
-                )
-            );
 
             return this;
         }
@@ -83,19 +51,19 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Зарегистрировать middleware.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <typeparam name="TMessageHandler">Тип обработчика сообщения.</typeparam>
         /// <param name="skipGlobals">Не добавлять глобальные мидлвари.</param>
-        /// <returns>
-        /// Регистратор middleware сообщений.
-        /// </returns>
-        public IMessageMiddlewareRegistrator AddFor<TMessage>(bool skipGlobals = true)
+        /// <returns>Регистратор middleware сообщений.</returns>
+        public IMessageMiddlewareRegistrator AddFor<TMessageHandler, TMessage>(bool skipGlobals = false)
+            where TMessageHandler : class, IMessageHandler<TMessage>
             where TMessage : class, IMessage
         {
             var messageType = typeof(TMessage);
+            var tuple = (typeof(TMessageHandler), messageType);
 
-            if (!_middlewareRegistries.TryGetValue(messageType, out var messageMiddlewareRegistrator))
+            if (!_middlewareRegistries.TryGetValue(tuple, out var messageMiddlewareRegistrator))
             {
-                _middlewareRegistries[messageType] = messageMiddlewareRegistrator = new MessageMiddlewareRegistrator(
-                    _services,
+                _middlewareRegistries[tuple] = messageMiddlewareRegistrator = new MessageMiddlewareRegistrator(
                     messageType,
                     this,
                     skipGlobals
@@ -110,34 +78,41 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Добавить мидлварку в цепочку выполнения.
         /// </summary>
+        /// <param name="messageHandlerType">Тип обработчика сообщений.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        /// <param name="middlewareAttributes">Middleware.</param>
-        public void Add(Type messageType, IEnumerable<MiddlewareAttribute> middlewareAttributes)
+        /// <param name="middlewareType">Тип Middleware.</param>
+        /// <param name="executionOrder">Порядок выполнения.</param>
+        /// <param name="skipGlobals">Не добавлять глобальные мидлвари.</param>
+        public IMessageMiddlewareRegistrator Add(
+            Type messageHandlerType,
+            Type messageType,
+            Type middlewareType,
+            int executionOrder = -1,
+            bool skipGlobals = false
+        )
         {
-            if (!_middlewareRegistries.TryGetValue(messageType, out var messageMiddlewareRegistrator))
+            var tuple = (messageHandlerType, messageType);
+            if (!_middlewareRegistries.TryGetValue(tuple, out var messageMiddlewareRegistrator))
             {
-                _middlewareRegistries[messageType] = messageMiddlewareRegistrator = new MessageMiddlewareRegistrator(
-                    _services,
+                _middlewareRegistries[tuple] = messageMiddlewareRegistrator = new MessageMiddlewareRegistrator(
                     messageType,
                     this,
-                    _globalMiddlewares
+                    skipGlobals
+                        ? Enumerable.Empty<MiddlewareInfo>()
+                        : _globalMiddlewares
                 );
             }
 
-            foreach (var middlewareAttribute in middlewareAttributes)
-            {
-                messageMiddlewareRegistrator.Add(middlewareAttribute);
-            }
+            return messageMiddlewareRegistrator.Add(middlewareType, executionOrder);
         }
 
         /// <summary>
         /// Получить список типов middleware.
         /// </summary>
-        /// <param name="messageType">Тип сообщения.</param>
         /// <returns>Список типов middleware.</returns>
-        public IReadOnlyCollection<MiddlewareInfo> Get(Type messageType)
+        public IReadOnlyCollection<MiddlewareInfo> Get(Type messageHandlerType, Type messageType)
         {
-            if (_middlewareRegistries.TryGetValue(messageType, out var messageMiddlewareRegistry))
+            if (_middlewareRegistries.TryGetValue((messageHandlerType, messageType), out var messageMiddlewareRegistry))
             {
                 return ((IMessageMiddlewareRegistryAccessor) messageMiddlewareRegistry).Get();
             }

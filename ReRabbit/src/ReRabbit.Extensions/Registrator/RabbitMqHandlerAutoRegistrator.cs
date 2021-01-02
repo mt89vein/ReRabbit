@@ -2,19 +2,22 @@ using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
+using ReRabbit.Extensions.Helpers;
+using ReRabbit.Subscribers.Consumers;
 using ReRabbit.Subscribers.Exceptions;
-using ReRabbit.Subscribers.Extensions;
 using ReRabbit.Subscribers.Middlewares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Extensions.Registrator
 {
     /// <summary>
     /// Авторегистратор обработчиков <see cref="IMessageHandler{TMessage}"/>.
+    /// Этот класс не наследуется.
     /// </summary>
-    public class RabbitMqHandlerAutoRegistrator
+    internal sealed class RabbitMqHandlerAutoRegistrator
     {
         #region Поля
 
@@ -24,9 +27,24 @@ namespace ReRabbit.Subscribers
         private readonly IServiceProvider _serviceProvider;
 
         /// <summary>
+        /// Сборки для сканирования.
+        /// </summary>
+        private readonly Assembly[] _assemblies;
+
+        /// <summary>
+        /// Фильтр типов.
+        /// </summary>
+        private readonly Func<Type, bool>? _typeFilter;
+
+        /// <summary>
         /// Реестр middleware.
         /// </summary>
         private readonly IRuntimeMiddlewareRegistrator _middlewareRegistrator;
+
+        /// <summary>
+        /// Реестр потребителей.
+        /// </summary>
+        private readonly IConsumerRegistry _consumerRegistry;
 
         #endregion Поля
 
@@ -36,10 +54,19 @@ namespace ReRabbit.Subscribers
         /// Создает экземпляр класса <see cref="RabbitMqHandlerAutoRegistrator"/>.
         /// </summary>
         /// <param name="serviceProvider">Провайдер служб.</param>
-        public RabbitMqHandlerAutoRegistrator(IServiceProvider serviceProvider)
+        /// <param name="assemblies">Сборки для сканирования.</param>
+        /// <param name="typeFilter">Фильтр типов.</param>
+        public RabbitMqHandlerAutoRegistrator(
+            IServiceProvider serviceProvider,
+            Assembly[]? assemblies = null,
+            Func<Type, bool>? typeFilter = null
+        )
         {
             _serviceProvider = serviceProvider;
+            _assemblies = assemblies ?? AppDomain.CurrentDomain.GetAssemblies();
+            _typeFilter = typeFilter;
             _middlewareRegistrator = serviceProvider.GetRequiredService<IRuntimeMiddlewareRegistrator>();
+            _consumerRegistry = serviceProvider.GetRequiredService<IConsumerRegistry>();
         }
 
         #endregion Конструктор
@@ -47,14 +74,15 @@ namespace ReRabbit.Subscribers
         #region Методы (public)
 
         /// <summary>
-        /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>.
+        /// Зарегистрировать все обработчики сообщений, реализующих интерфейс <see cref="IMessageHandler{TMessage}"/>
+        /// из указанных сборок.
         /// </summary>
-        public void FillConsumersRegistry(IConsumerRegistry consumerRegistry, Func<Type, bool>? typeFilter = null)
+        public void ScanAndRegister()
         {
             var handlerGenericTypeDefinition = typeof(IMessageHandler<>);
 
             // достаем все реализации интерфейса IMessageHandler<T>.
-            var handlerTypes = AssemblyScanner.GetClassesImplementingAnInterface(handlerGenericTypeDefinition, typeFilter);
+            var handlerTypes = AssemblyScanner.GetClassesImplementingAnInterface(handlerGenericTypeDefinition, _assemblies, _typeFilter);
 
             // получаем все интерфейсы каждого из обработчиков и маппим { тип сообщения - хэндлер }
             var groups = handlerTypes
@@ -75,7 +103,7 @@ namespace ReRabbit.Subscribers
             {
                 foreach (var consumer in CreateConsumers(g.EventType, g.Handlers))
                 {
-                    consumerRegistry.Add(consumer);
+                    _consumerRegistry.Add(consumer);
                 }
             }
         }
@@ -113,32 +141,44 @@ namespace ReRabbit.Subscribers
 
             foreach (var group in handlerGroups)
             {
-                if (group.Select(g => g.Handler).Distinct().Count() > 1)
+                //if (group.Select(g => g.Handler).Distinct().Count() > 1)
+                //{
+                //    throw new NotSupportedException(
+                //        "Множественные обработчики одного события в памяти не поддерживаются. " +
+                //        "Для этого используйте возможности брокера RabbitMq, выделив для каждого обработчика свою отдельную очередь. " +
+                //        $"Конфигурация '{group.Key}' используются у следующих обработчиков " +
+                //        $"({string.Join(", ", group.Select(g => g.Handler.FullName))})"
+                //    );
+                //}
+
+                // TODO: проверить на корректность регистрации если с двух разных классов настроены потребители
+                // TODO: не давать разрешать такую регистрацию, если они оба смотрят на одну очередь (разные норм)
+                foreach (var messageHandlerType in group.Select(x => x.Handler))
                 {
-                    throw new NotSupportedException(
-                        "Множественные обработчики одного события в памяти не поддерживаются. " +
-                        "Для этого используйте возможности брокера RabbitMq, выделив для каждого обработчика свою отдельную очередь. " +
-                        $"Конфигурация '{group.Key}' используются у следующих обработчиков " +
-                        $"({string.Join(", ", group.Select(g => g.Handler.FullName))})"
+                    var subscriberName = group.Key;
+                    var subscribedMessageTypes = group.SelectMany(g => g.Attribute.MessageTypes).Distinct();
+
+                    foreach (var middleware in group.SelectMany(g => g.Middlwares))
+                    {
+                        _middlewareRegistrator.Add(
+                            messageHandlerType,
+                            messageType,
+                            middleware.MiddlewareType,
+                            middleware.ExecutionOrder,
+                            skipGlobals: false
+                        );
+                    }
+
+                    var consumer = ActivatorUtilities.CreateInstance(
+                        _serviceProvider,
+                        typeof(Consumer<>).MakeGenericType(messageType),
+                        messageHandlerType,
+                        subscriberName,
+                        subscribedMessageTypes
                     );
+
+                    yield return (IConsumer)consumer;
                 }
-
-                var messageHandlerType = group.Single().Handler;
-                var subscriberName = group.Key;
-                var subscribedMessageTypes = group.SelectMany(g => g.Attribute.MessageTypes).Distinct();
-                var middlewares = group.SelectMany(g => g.Middlwares);
-
-                _middlewareRegistrator.Add(messageType, middlewares);
-
-                var consumer = ActivatorUtilities.CreateInstance(
-                    _serviceProvider,
-                    typeof(Consumer<>).MakeGenericType(messageType),
-                    messageHandlerType,
-                    subscriberName,
-                    subscribedMessageTypes
-                );
-
-                yield return (IConsumer)consumer;
             }
         }
 

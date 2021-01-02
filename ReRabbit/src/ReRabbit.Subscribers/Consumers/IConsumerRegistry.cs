@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Consumers
 {
     /// <summary>
     /// Реестр-оркестратор потребителей.
     /// </summary>
-    public interface IConsumerRegistry
+    internal interface IConsumerRegistry
     {
         /// <summary>
         /// Добавить потребителя.

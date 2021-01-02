@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Consumers
 {
     /// <summary>
     /// Предоставляет доступ к потребителям.

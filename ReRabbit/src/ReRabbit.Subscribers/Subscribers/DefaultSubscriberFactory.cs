@@ -3,13 +3,14 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Subscribers
 {
     /// <summary>
     /// Фабрика подписчиков.
+    /// Этот класс не наследуется.
     /// </summary>
     [ExcludeFromCodeCoverage]
-    public class DefaultSubscriberFactory : ISubscriberFactory
+    internal class DefaultSubscriberFactory : ISubscriberFactory
     {
         #region Поля
 

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
@@ -46,26 +47,35 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Вызвать цепочку middleware.
         /// </summary>
-        /// <param name="next">Финальный, основной обработчик.</param>
+        /// <param name="messageHandlerType">Тип финального обработчика сообщения.</param>
         /// <param name="ctx">Контекст.</param>
         /// <returns>Результат обработки.</returns>
-        public async Task<Acknowledgement> ExecuteAsync(
-            Func<MessageContext, Task<Acknowledgement>> next,
-            MessageContext ctx
-        )
+        public Task<Acknowledgement> ExecuteAsync<TMessageType>(
+            Type messageHandlerType,
+            MessageContext<TMessageType> ctx
+        ) where TMessageType : class, IMessage
         {
-            var middlewareInfos = _registry.Get(ctx.Message!.GetType());
+            var scope = _serviceProvider.CreateScope();
+            if (ActivatorUtilities.CreateInstance(scope.ServiceProvider, messageHandlerType) is not IMessageHandler<TMessageType> messageHandler)
+            {
+                throw new InvalidOperationException(
+                    $"Ошибка конфигурирования обработчика {messageHandlerType}." +
+                    $"Проверьте зарегистрированы ли все зависимости обработчиков реализующие {typeof(IMessageHandler<IMessage>)}."
+                );
+            }
+
+            var middlewareInfos = _registry.Get(messageHandlerType, ctx.Message!.GetType());
 
             if (middlewareInfos.Count == 0)
             {
-                return await next(ctx);
+                return messageHandler.HandleAsync(ctx);
             }
 
             var middlewareChain = new LinkedList<IMiddleware>();
 
             foreach (var middlewareInfo in middlewareInfos)
             {
-                if (_serviceProvider.GetService(middlewareInfo.MiddlewareType) is MiddlewareBase middleware)
+                if (ActivatorUtilities.CreateInstance(scope.ServiceProvider, middlewareInfo.MiddlewareType) is MiddlewareBase middleware)
                 {
                     middlewareChain.AddLast(middleware);
                 }
@@ -78,14 +88,14 @@ namespace ReRabbit.Subscribers.Middlewares
                 var middleware = current.Value as MiddlewareBase;
                 middleware?
                     .SetNext(current.Next == null
-                        ? next
+                        ? context => messageHandler.HandleAsync(context.As<TMessageType>())
                         : current.Next.Value.HandleAsync
                     );
 
                 current = current.Previous;
             }
 
-            return await middlewareChain.First!.Value.HandleAsync(ctx);
+            return middlewareChain.First!.Value.HandleAsync(ctx);
         }
 
         #endregion Методы (public)

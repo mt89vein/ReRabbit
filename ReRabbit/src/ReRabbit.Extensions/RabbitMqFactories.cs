@@ -1,4 +1,5 @@
 using ReRabbit.Abstractions;
+using ReRabbit.Subscribers.Markers;
 using System;
 
 namespace ReRabbit.Extensions
@@ -62,5 +63,10 @@ namespace ReRabbit.Extensions
         /// Провайдер информации о роутах события для издателя.
         /// </summary>
         public Func<IServiceProvider, IRouteProvider>? RouteProvider { get; set; }
+
+        /// <summary>
+        /// Интерфейс маркера обработок сообщений. Используется для дедупликации обработки сообщений.
+        /// </summary>
+        public Func<IServiceProvider, IUniqueMessageMarker>? UniqueMessageMarker { get; set; }
     }
 }

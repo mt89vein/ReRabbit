@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Core.Extensions
 {
-    public static class TaskExtensions
+    internal static class TaskExtensions
     {
         /// <summary>
         /// Установить таймаут таске.

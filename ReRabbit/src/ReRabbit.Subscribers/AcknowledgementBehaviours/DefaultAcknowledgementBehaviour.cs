@@ -18,8 +18,9 @@ namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 {
     /// <summary>
     /// Поведение по-умолчанию для оповещения брокера о результате обработки сообщения из шины.
+    /// Этот класс не наследуюется.
     /// </summary>
-    public class DefaultAcknowledgementBehaviour : IAcknowledgementBehaviour
+    internal sealed class DefaultAcknowledgementBehaviour : IAcknowledgementBehaviour
     {
         #region Поля
 

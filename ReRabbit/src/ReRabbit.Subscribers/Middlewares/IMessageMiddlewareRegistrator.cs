@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using System;
 
@@ -24,11 +23,17 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <typeparam name="TMiddleware">Мидлварка.</typeparam>
         /// <param name="executionOrder">Порядок выполнения.</param>
-        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр мидлварок сообщения.</returns>
-        public IMessageMiddlewareRegistrator Add<TMiddleware>(
-            int executionOrder = -1,
-            ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton
+        IMessageMiddlewareRegistrator Add<TMiddleware>(
+            int executionOrder = -1
         ) where TMiddleware : MiddlewareBase;
+
+        /// <summary>
+        /// Добавить мидлварку в цепочку выполнения.
+        /// </summary>
+        /// <param name="middlewareType">Тип мидлварки.</param>
+        /// <param name="executionOrder">Порядок выполнения.</param>
+        /// <returns>Реестр мидлварок сообщения.</returns>
+        IMessageMiddlewareRegistrator Add(Type middlewareType, int executionOrder = -1);
     }
 }

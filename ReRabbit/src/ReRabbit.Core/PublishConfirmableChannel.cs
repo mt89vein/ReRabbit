@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Core
 {
-    public sealed class PublishConfirmableChannel : IAsyncChannel
+    internal sealed class PublishConfirmableChannel : IAsyncChannel
     {
         #region Поля
 

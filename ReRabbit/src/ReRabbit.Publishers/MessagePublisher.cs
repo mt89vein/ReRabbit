@@ -22,8 +22,9 @@ namespace ReRabbit.Publishers
 
     /// <summary>
     /// Издатель сообщений.
+    /// Этот класс не наследуется.
     /// </summary>
-    public sealed class MessagePublisher : IMessagePublisher
+    internal sealed class MessagePublisher : IMessagePublisher
     {
         #region Поля
 

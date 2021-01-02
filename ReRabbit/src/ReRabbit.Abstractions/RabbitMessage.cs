@@ -1,7 +1,5 @@
 using ReRabbit.Abstractions.Models;
-using ReRabbit.Abstractions.Settings.Publisher;
 using System;
-using System.Collections.Generic;
 
 namespace ReRabbit.Abstractions
 {
@@ -11,10 +9,7 @@ namespace ReRabbit.Abstractions
     public abstract class RabbitMessage<TDto> : RabbitMessage
         where TDto : IMessage
     {
-        public override Type GetDtoType()
-        {
-            return typeof(TDto);
-        }
+        public override Type DtoType { get; } = typeof(TDto);
     }
 
     /// <summary>
@@ -22,6 +17,6 @@ namespace ReRabbit.Abstractions
     /// </summary>
     public abstract class RabbitMessage : IRabbitMessage
     {
-        public abstract Type GetDtoType();
+        public abstract Type DtoType { get; }
     }
 }

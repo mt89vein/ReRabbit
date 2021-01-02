@@ -1,8 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Attributes;
 using System;
-using System.Collections.Generic;
 
 namespace ReRabbit.Subscribers.Middlewares
 {
@@ -14,8 +12,17 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Добавить мидлварку в цепочку выполнения.
         /// </summary>
+        /// <param name="messageHandlerType">Тип обработчика сообщений.</param>
         /// <param name="messageType">Тип сообщения.</param>
-        /// <param name="middlewareAttributes">Middleware.</param>
-        void Add(Type messageType, IEnumerable<MiddlewareAttribute> middlewareAttributes);
+        /// <param name="middlewareType">Тип Middleware.</param>
+        /// <param name="executionOrder">Порядок выполнения.</param>
+        /// <param name="skipGlobals">Не добавлять глобальные мидлвари.</param>
+        IMessageMiddlewareRegistrator Add(
+            Type messageHandlerType,
+            Type messageType,
+            Type middlewareType,
+            int executionOrder = -1,
+            bool skipGlobals = false
+        );
     }
 }

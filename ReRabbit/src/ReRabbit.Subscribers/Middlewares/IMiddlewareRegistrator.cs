@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
 
@@ -14,22 +13,19 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <typeparam name="TMiddleware">Тип middleware.</typeparam>
         /// <param name="executionOrder">Порядок выполнения.</param>
-        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр middlewares.</returns>
-        IMiddlewareRegistrator AddGlobal<TMiddleware>(
-            int executionOrder = -1,
-            ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton
-        ) where TMiddleware : MiddlewareBase;
+        IMiddlewareRegistrator AddGlobal<TMiddleware>(int executionOrder = -1)
+            where TMiddleware : MiddlewareBase;
 
         /// <summary>
         /// Зарегистрировать middleware.
         /// </summary>
         /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <typeparam name="TMessageHandler">Тип обработчика сообщения.</typeparam>
         /// <param name="skipGlobals">Не добавлять глобальные мидлвари.</param>
-        /// <returns>
-        /// Регистратор middleware сообщений.
-        /// </returns>
-        IMessageMiddlewareRegistrator AddFor<TMessage>(bool skipGlobals = false)
+        /// <returns>Регистратор middleware сообщений.</returns>
+        IMessageMiddlewareRegistrator AddFor<TMessageHandler, TMessage>(bool skipGlobals = false)
+            where TMessageHandler : class, IMessageHandler<TMessage>
             where TMessage : class, IMessage;
     }
 }

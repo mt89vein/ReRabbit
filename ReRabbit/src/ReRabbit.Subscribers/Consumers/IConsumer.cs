@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Consumers
 {
     /// <summary>
     /// Интерфейс потребителя.
     /// </summary>
-    public interface IConsumer
+    internal interface IConsumer
     {
         /// <summary>
         /// Активен ли сейчас потребитель.

@@ -1,4 +1,3 @@
-using ReRabbit.Abstractions.Attributes;
 using System.Collections.Generic;
 
 namespace ReRabbit.Subscribers.Middlewares

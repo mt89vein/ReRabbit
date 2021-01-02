@@ -6,10 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 namespace ReRabbit.Subscribers.AcknowledgementBehaviours
 {
     /// <summary>
-    /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки
+    /// Фабрика поведений оповещения брокера сообщений об успешности/не успешности обработки.
+    /// Этот класс не наследуется.
     /// </summary>
     [ExcludeFromCodeCoverage]
-    public class DefaultAcknowledgementBehaviourFactory : IAcknowledgementBehaviourFactory
+    internal class DefaultAcknowledgementBehaviourFactory : IAcknowledgementBehaviourFactory
     {
         #region Поля
 

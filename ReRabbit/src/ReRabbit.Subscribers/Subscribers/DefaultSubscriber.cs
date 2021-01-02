@@ -4,6 +4,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Exceptions;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Subscriber;
@@ -17,13 +18,13 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReRabbit.Subscribers
+namespace ReRabbit.Subscribers.Subscribers
 {
     /// <summary>
     /// Подписчик на сообщения по-умолчанию.
     /// Этот класс не наследуется.
     /// </summary>
-    public sealed class DefaultSubscriber : ISubscriber
+    internal sealed class DefaultSubscriber : ISubscriber
     {
         #region Поля
 

@@ -17,9 +17,6 @@ namespace Sample.IntegrationMessages.Messages
 
     public class DynamicRabbitMessage : RabbitMessage
     {
-        public override Type GetDtoType()
-        {
-            return typeof(object);
-        }
+        public override Type DtoType { get; } = typeof(object);
     }
 }

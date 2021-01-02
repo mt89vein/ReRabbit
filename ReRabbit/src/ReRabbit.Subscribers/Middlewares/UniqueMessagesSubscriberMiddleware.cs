@@ -1,9 +1,9 @@
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
+using ReRabbit.Subscribers.Markers;
 using System;
 using System.Threading.Tasks;
 
@@ -22,9 +22,9 @@ namespace ReRabbit.Subscribers.Middlewares
         private readonly UniqueMessagesMiddlewareSettings _options;
 
         /// <summary>
-        /// Интерфейс кэша.
+        /// Интерфейс маркера обработок сообщений.
         /// </summary>
-        private readonly IDistributedCache _cache;
+        private readonly IUniqueMessageMarker _uniqueMessageMarker;
 
         /// <summary>
         /// Логгер.
@@ -38,17 +38,17 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Создает экземпляр класса <see cref="UniqueMessagesSubscriberMiddleware"/>
         /// </summary>
-        /// <param name="cache">Интерфейс кэша.</param>
+        /// <param name="uniqueMessageMarker">Интерфейс маркера обработок сообщений.</param>
         /// <param name="options">Настройки middleware для дедупликации сообщений.</param>
         /// <param name="logger">Логгер.</param>
         public UniqueMessagesSubscriberMiddleware(
-            IDistributedCache cache,
+            IUniqueMessageMarker uniqueMessageMarker,
             IOptions<UniqueMessagesMiddlewareSettings> options,
             ILogger<UniqueMessagesSubscriberMiddleware> logger
         )
         {
             _options = options.Value;
-            _cache = cache;
+            _uniqueMessageMarker = uniqueMessageMarker;
             _logger = logger;
         }
 
@@ -65,8 +65,6 @@ namespace ReRabbit.Subscribers.Middlewares
         {
             var messageId = ctx.MessageData.MessageId;
 
-            using var _ = _logger.BeginScope("{MessageId}", messageId);
-
             if (!messageId.HasValue || messageId.Value == Guid.Empty)
             {
                 _logger.LogWarning("MessageId не указан.");
@@ -74,9 +72,13 @@ namespace ReRabbit.Subscribers.Middlewares
                 return await Next(ctx);
             }
 
+            using var _ = _logger.BeginScope("{MessageId}", messageId);
+
             _logger.LogTrace("Получено сообщение для обработки.");
 
-            if (!await TryProcessAsync(messageId.ToString()!))
+            var id = messageId.ToString()!;
+
+            if (!await TryProcessAsync(id))
             {
                 _logger.LogTrace("Сообщение уже было обработано.");
 
@@ -99,7 +101,7 @@ namespace ReRabbit.Subscribers.Middlewares
                 _logger.LogTrace("Сообщение не обработано, флаг убираем.");
 
                 // если не Ack, то убираем.
-                await RemoveAsync(messageId.ToString()!);
+                await _uniqueMessageMarker.UnlockAsync(id);
 
                 return result;
             }
@@ -107,7 +109,7 @@ namespace ReRabbit.Subscribers.Middlewares
             {
                 _logger.LogTrace(e, "Произошла ошибка при обработке сообщения {MessageId}.", messageId);
 
-                await RemoveAsync(messageId.ToString()!);
+                await _uniqueMessageMarker.UnlockAsync(id);
 
                 throw;
             }
@@ -124,47 +126,30 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <returns>True, если сообщения можно обрабатывать.</returns>
         private async Task<bool> TryProcessAsync(string id)
         {
-            var key = GetKey(id);
-            var message = await _cache.GetStringAsync(key);
-            if (!string.IsNullOrWhiteSpace(message))
+            try
             {
-                return false;
-            }
-
-            var expiry = _options.MessageExpirySeconds ?? 0;
-            if (expiry <= 0)
-
-            {
-                await _cache.SetStringAsync(key, id);
-            }
-            else
-            {
-                await _cache.SetStringAsync(key, id, new DistributedCacheEntryOptions
+                var isProcessed = await _uniqueMessageMarker.IsProcessed(id);
+                if (isProcessed)
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(expiry)
-                });
+                    return false;
+                }
+
+                var expiry = _options.LockSeconds ?? 600;
+                if (expiry <= 0)
+                {
+                    await _uniqueMessageMarker.TakeLockAsync(id);
+                }
+                else
+                {
+                    await _uniqueMessageMarker.TakeLockAsync(id, TimeSpan.FromSeconds(expiry));
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Не удалось запросить статус обработки сообщения или поставить блокировку.");
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Удалить ключ из кэша.
-        /// </summary>
-        /// <param name="id">Идентификатор сообщения.</param>
-        private Task RemoveAsync(string id)
-        {
-            return _cache.RemoveAsync(GetKey(id));
-        }
-
-        /// <summary>
-        /// Сформировать ключ.
-        /// </summary>
-        /// <param name="id">Идентификатор сообщения.</param>
-        /// <returns>Ключ.</returns>
-        private static string GetKey(string id)
-        {
-            return $"unique-messages:{id}";
         }
 
         #endregion Методы (private)

@@ -3,7 +3,7 @@ namespace ReRabbit.Core.Constants
     /// <summary>
     /// Константы общих очередей.
     /// </summary>
-    public static class CommonQueuesConstants
+    internal static class CommonQueuesConstants
     {
         /// <summary>
         /// Наименование очереди, в которую будут пересылаться сообщения с ошибками, у которых не настроен dead-lettered.

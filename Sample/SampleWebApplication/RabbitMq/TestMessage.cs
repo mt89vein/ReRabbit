@@ -4,6 +4,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Attributes;
 using ReRabbit.Abstractions.Models;
+using ReRabbit.Subscribers.Middlewares;
 using Sample.IntegrationMessages.Messages;
 using SampleWebApplication.Mappings.Interfaces;
 using SampleWebApplication.Middlewares;
@@ -48,8 +49,7 @@ namespace SampleWebApplication.RabbitMq
         /// <returns>Результат выполнения обработчика.</returns>
         [SubscriberConfiguration("Q1Subscriber", typeof(MyIntegrationRabbitMessage))]
         [SubscriberConfiguration("Q2Subscriber")]
-        [Middleware(typeof(TestMiddleware), -1)]
-        [Middleware(typeof(TestMiddleware2), 1)]
+        [Middleware(typeof(TestMiddleware))]
         public async Task<Acknowledgement> HandleAsync(MessageContext<TestMessage> ctx)
         {
             _logger.LogInformation(
@@ -59,12 +59,40 @@ namespace SampleWebApplication.RabbitMq
 
             await Task.CompletedTask;
 
-            if (ctx.MessageData.IsLastRetry)
-            {
-                return Ack.Ok;
-            }
+            await Task.CompletedTask;
 
-            return new Reject("1"); // Ack.Ok;
+            return Ack.Ok;
+        }
+    }
+
+    public class TestMessageHandler2 : IMessageHandler<TestMessage>
+    {
+        private readonly ILogger<TestMessageHandler2> _logger;
+
+        public TestMessageHandler2(ILogger<TestMessageHandler2> logger)
+        {
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Обработать сообщение.
+        /// </summary>
+        /// <param name="ctx">Данные сообщения.</param>
+        /// <returns>Результат выполнения обработчика.</returns>
+        [SubscriberConfiguration("Q2Subscriber")]
+        [SubscriberConfiguration("Q6Subscriber")]
+        [Middleware(typeof(MessageProcessingPerfCounterMiddleware))]
+        [Middleware(typeof(TestMiddleware2))]
+        public async Task<Acknowledgement> HandleAsync(MessageContext<TestMessage> ctx)
+        {
+            _logger.LogInformation(
+                "Принято тестовое сообщение {Message}",
+                ctx.Message.Message
+            );
+
+            await Task.CompletedTask;
+
+            return Ack.Ok;
         }
     }
 }

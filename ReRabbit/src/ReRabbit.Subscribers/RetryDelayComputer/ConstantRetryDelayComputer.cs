@@ -6,8 +6,9 @@ namespace ReRabbit.Subscribers.RetryDelayComputer
 {
     /// <summary>
     /// Константный вычислитель задержек между повторными обработками.
+    /// Этот класс не наследуюется.
     /// </summary>
-    public sealed class ConstantRetryDelayComputer : IRetryDelayComputer
+    internal sealed class ConstantRetryDelayComputer : IRetryDelayComputer
     {
         /// <summary>
         /// Вычислить задержку для указанного номера повторения.

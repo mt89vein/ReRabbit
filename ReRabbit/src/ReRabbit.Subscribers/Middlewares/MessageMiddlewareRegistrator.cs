@@ -1,7 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using ReRabbit.Abstractions;
-using ReRabbit.Abstractions.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +11,6 @@ namespace ReRabbit.Subscribers.Middlewares
     internal class MessageMiddlewareRegistrator : IMessageMiddlewareRegistrator, IMessageMiddlewareRegistryAccessor
     {
         #region Поля
-
-        /// <summary>
-        /// Конфигуратор сервисов.
-        /// </summary>
-        private readonly IServiceCollection _services;
 
         /// <summary>
         /// Мидлварки.
@@ -56,18 +48,15 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Создает новый экземпляр класса <see cref="MessageMiddlewareRegistrator"/>.
         /// </summary>
-        /// <param name="services">Конфигуратор сервисов.</param>
         /// <param name="messageType">Тип сообщения.</param>
         /// <param name="registrator">Реестр Middleware.</param>
         /// <param name="globalMiddlewares">Глобальные мидлварки для добавления в цепочку.</param>
         public MessageMiddlewareRegistrator(
-            IServiceCollection services,
             Type messageType,
             IMiddlewareRegistrator registrator,
             IEnumerable<MiddlewareInfo> globalMiddlewares
         )
         {
-            _services = services;
             _middlewares = new HashSet<MiddlewareInfo>(globalMiddlewares, MiddlewareInfo.MiddlewareTypeComparer);
             MessageType = messageType;
             Registrator = registrator;
@@ -82,38 +71,24 @@ namespace ReRabbit.Subscribers.Middlewares
         /// </summary>
         /// <typeparam name="TMiddleware">Мидлварка.</typeparam>
         /// <param name="executionOrder">Порядок выполнения.</param>
-        /// <param name="middlewareLifetime">Время жизни мидлварки в DI.</param>
         /// <returns>Реестр мидлварок сообщения.</returns>
         public IMessageMiddlewareRegistrator Add<TMiddleware>(
-            int executionOrder = -1,
-            ServiceLifetime middlewareLifetime = ServiceLifetime.Singleton
+            int executionOrder = -1
         ) where TMiddleware : MiddlewareBase
         {
-            _middlewares.Add(new MiddlewareInfo(typeof(TMiddleware), executionOrder, ++_lastMiddlewareId));
-            _services.TryAdd(ServiceDescriptor.Describe(
-                    typeof(TMiddleware),
-                    typeof(TMiddleware),
-                    middlewareLifetime
-                )
-            );
-
-            return this;
+            return Add(typeof(TMiddleware), executionOrder);
         }
 
         /// <summary>
         /// Добавить мидлварку в цепочку выполнения.
         /// </summary>
-        /// <param name="middlewareAttribute">Middleware.</param>
-        /// <returns>Реестр мидлварок сообщения.</returns>
-        public void Add(MiddlewareAttribute middlewareAttribute)
+        /// <param name="middlewareType">Тип мидлварки.</param>
+        /// <param name="executionOrder">Порядок выполнения.</param>
+        public IMessageMiddlewareRegistrator Add(Type middlewareType, int executionOrder)
         {
-            _middlewares.Add(
-                new MiddlewareInfo(
-                    middlewareAttribute.MiddlewareType,
-                    middlewareAttribute.ExecutionOrder,
-                    ++_lastMiddlewareId
-                )
-            );
+            _middlewares.Add(new MiddlewareInfo(middlewareType, executionOrder, ++_lastMiddlewareId));
+
+            return this;
         }
 
         /// <summary>
