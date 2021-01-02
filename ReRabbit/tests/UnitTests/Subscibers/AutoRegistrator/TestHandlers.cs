@@ -16,10 +16,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConsumersOnSingl
 
     internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
     {
-        public TestRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class TestHandler : IMessageHandler<TestMessageDto>
@@ -42,10 +38,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConsumersOnSingl
 
     internal class SecondTestRabbitMessage : RabbitMessage<TestMessageDto>
     {
-        public SecondTestRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class SecondTestHandler : IMessageHandler<TestMessageDto>
@@ -71,10 +63,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.NormalConsumer
 
     internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
     {
-        public TestRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class TestHandler : IMessageHandler<TestMessageDto>
@@ -100,10 +88,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.NotConfiguredConsumer
 
     internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
     {
-        public TestRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class TestHandler : IMessageHandler<TestMessageDto>
@@ -128,10 +112,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConfigurationAtt
 
     internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
     {
-        public TestRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class TestHandler : IMessageHandler<TestMessageDto>
@@ -159,10 +139,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares
 
     internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
     {
-        public TestRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class TestHandler : IMessageHandler<TestMessageDto>
@@ -185,10 +161,6 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares
 
     internal class TestRabbitMessage2 : RabbitMessage<TestMessage2Dto>
     {
-        public TestRabbitMessage2(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     internal class TestHandler2 : IMessageHandler<TestMessage2Dto>

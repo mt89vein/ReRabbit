@@ -49,7 +49,7 @@ namespace ReRabbit.UnitTests.Subscibers
 
             _subscriber = new DefaultSubscriber(
                 NullLogger<DefaultSubscriber>.Instance,
-                new DefaultJsonSerializer(new JsonSerializer()),
+                new DefaultJsonSerializer(),
                 topologyProviderMock.Object,
                 namingConventionMock.Object,
                 acknowledgementBehaviourFactoryMock.Object,
@@ -69,7 +69,7 @@ namespace ReRabbit.UnitTests.Subscibers
         {
             const string originalExchange = "original-exchange";
             const string originalRoutingKey = "original-routing-key";
-            
+
             var msg = new MyIntegrationEvent();
             var mqMessage = new MqMessage(JsonConvert.SerializeObject(msg), "Type", "1.0", "1.0", "myApp");
 

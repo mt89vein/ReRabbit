@@ -1,3 +1,5 @@
+using System;
+
 namespace ReRabbit.Abstractions
 {
     /// <summary>
@@ -5,5 +7,6 @@ namespace ReRabbit.Abstractions
     /// </summary>
     public interface IRabbitMessage
     {
+        Type GetDtoType();
     }
 }

@@ -78,17 +78,17 @@ namespace ReRabbit.Core
                 var ids = _publishTasks.Keys.Where(x => x <= args.DeliveryTag).ToArray();
                 foreach (var id in ids)
                 {
-                    if (_publishTasks.TryRemove(id, out var value))
+                    if (_publishTasks.TryRemove(id, out var publishTaskInfo))
                     {
-                        value.Nack();
+                        publishTaskInfo.Nack();
                     }
                 }
             }
             else
             {
-                if (_publishTasks.TryRemove(args.DeliveryTag, out var value))
+                if (_publishTasks.TryRemove(args.DeliveryTag, out var publishTaskInfo))
                 {
-                    value.Nack();
+                    publishTaskInfo.Nack();
                 }
             }
         }
@@ -100,23 +100,23 @@ namespace ReRabbit.Core
                 var ids = _publishTasks.Keys.Where(x => x <= args.DeliveryTag).ToArray();
                 foreach (var id in ids)
                 {
-                    if (_publishTasks.TryRemove(id, out var value))
+                    if (_publishTasks.TryRemove(id, out var publishTaskInfo))
                     {
                         _logger?.LogInformation("ack all with less than {PublishTag}", id);
-                        value.Ack();
+                        publishTaskInfo.Ack();
                     }
                 }
             }
             else
             {
-                if (_publishTasks.TryRemove(args.DeliveryTag, out var value))
+                if (_publishTasks.TryRemove(args.DeliveryTag, out var publishTaskInfo))
                 {
                     if (_logger?.IsEnabled(LogLevel.Trace) == true)
                     {
                         _logger?.LogInformation("ack with {PublishTag}", args.DeliveryTag);
                     }
 
-                    value.Ack();
+                    publishTaskInfo.Ack();
                 }
             }
         }

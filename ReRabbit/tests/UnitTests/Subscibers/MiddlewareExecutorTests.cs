@@ -138,10 +138,6 @@ namespace ReRabbit.UnitTests.Subscibers
 
         private class TestRabbitMessage : RabbitMessage<TestMessageDto>
         {
-            public TestRabbitMessage(IConfigurationManager configurationManager)
-                : base(configurationManager)
-            {
-            }
         }
 
         private class TestHandler : IMessageHandler<TestMessageDto>

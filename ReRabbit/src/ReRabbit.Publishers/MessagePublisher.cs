@@ -234,7 +234,7 @@ namespace ReRabbit.Publishers
             {
                 properties.Expiration = expires.Value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
             }
- 
+
             properties.Type = routeInfo.Name;
             properties.Headers = routeInfo.Arguments;
 

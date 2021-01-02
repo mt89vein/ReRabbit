@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
+using ReRabbit.Abstractions.Settings.Publisher;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Subscribers.Middlewares;
 using System;
@@ -50,7 +50,7 @@ namespace ReRabbit.Subscribers
         /// <summary>
         /// Типы сообщений, на который подписан потребитель.
         /// </summary>
-        private readonly IReadOnlyList<RabbitMessage> _subscribedRabbitMessages;
+        private readonly List<RabbitMessageInfo> _subscribedRabbitMessages;
 
         /// <summary>
         /// Настройки потребителя.
@@ -105,11 +105,80 @@ namespace ReRabbit.Subscribers
             _messageHandlerType = messageHandlerType;
 
             _subscribedRabbitMessages = subscribedMessageTypes
-                .Select(serviceProvider.GetRequiredService)
-                .OfType<RabbitMessage>()
+                .Select(type => new RabbitMessageInfo(
+                    (IRabbitMessage)ActivatorUtilities.CreateInstance(serviceProvider, type),
+                    configurationManager
+                ))
                 .ToList();
 
-            _settings = GetSubscriberSettings(subscriberName, _subscribedRabbitMessages);
+            _settings = GetSubscriberSettings(subscriberName);
+        }
+
+        private readonly struct RabbitMessageInfo
+        {
+            public IRabbitMessage RabbitMessage { get; }
+
+            public Type RabbitMessageType { get; }
+
+            public Type DtoType { get; }
+
+            public MessageSettings MessageSettings { get; }
+
+            public RabbitMessageInfo(IRabbitMessage rabbitMessage, IConfigurationManager configurationManager)
+            {
+                RabbitMessageType = rabbitMessage.GetType();
+                DtoType = rabbitMessage.GetDtoType();
+                RabbitMessage = rabbitMessage;
+                MessageSettings = configurationManager.GetMessageSettings(RabbitMessageType.Name);
+            }
+
+            public bool Is(string exchange, string routingKey, IReadOnlyDictionary<string, object> arguments)
+            {
+                if (!string.Equals(MessageSettings.Exchange.Name, exchange))
+                {
+                    return false;
+                }
+
+                if (!string.Equals(MessageSettings.Route, routingKey))
+                {
+                    return false;
+                }
+
+                // TODO: header exchange
+                //if (MessageSettings.Arguments is null ^ arguments is null)
+                //{
+                //    return false; // если один из них null, но не оба сразу
+                //}
+
+                //if (MessageSettings.Arguments?.Count != arguments?.Count)
+                //{
+                //    return false;
+                //}
+
+                //// если оба null, то ок
+                //if (MessageSettings.Arguments is null && arguments is null)
+                //{
+                //    return true;
+                //}
+                //else
+                //{
+                //    // проверяем каждое значение по-очереди
+                //    foreach (var (key, o) in arguments)
+                //    {
+                //        if (MessageSettings.Arguments.TryGetValue(key, out var value))
+                //        {
+                //            if (value != o)
+                //            {
+                //                return false;
+                //            }
+                //        }
+                //        // если нет в списке, значит это служебное поле
+                //        // главное чтобы совпали все заявленные
+                //    }
+                //}
+
+                return true;
+            }
         }
 
         #endregion Конструктор
@@ -168,7 +237,7 @@ namespace ReRabbit.Subscribers
         private static Task<Acknowledgement> ConsumeAsync(
             IServiceProvider serviceProvider,
             Type messageType,
-            IEnumerable<RabbitMessage> subscribedMessages,
+            IEnumerable<RabbitMessageInfo> subscribedMessages,
             MessageContext ctx
         )
         {
@@ -201,7 +270,7 @@ namespace ReRabbit.Subscribers
         /// <returns>Сообщение в формате, который ожидает обработчик.</returns>
         private static TMessage GetMqMessageFrom(
             IServiceProvider serviceProvider,
-            IEnumerable<RabbitMessage> subscribedMessages,
+            IEnumerable<RabbitMessageInfo> subscribedMessages,
             MessageContext ctx
         )
         {
@@ -214,25 +283,22 @@ namespace ReRabbit.Subscribers
             );
 
             object mqMessage;
-            if (rabbitMessage != null)
+            if (rabbitMessage.RabbitMessageType != default)
             {
-                var dtoType = rabbitMessage.GetDtoType();
                 mqMessage = serviceProvider
                     .GetRequiredService<ISerializer>()
-                    .Deserialize(dtoType, ctx.MessageData.MqMessage.Payload.ToString()!);
+                    .Deserialize(rabbitMessage.DtoType, ctx.MessageData.MqMessage.Payload.ToString()!);
 
-                if (dtoType != typeof(TMessage))
+                if (rabbitMessage.DtoType != typeof(TMessage))
                 {
                     mqMessage = serviceProvider.GetRequiredService<IMessageMapper>().Map<TMessage>(mqMessage, ctx);
                 }
             }
             else
             {
-                mqMessage = ctx.MessageData.MqMessage.Payload is JObject jObject
-                    ? jObject.ToObject<TMessage>()!
-                    : serviceProvider
-                        .GetRequiredService<ISerializer>()
-                        .Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString()!);
+                mqMessage = serviceProvider
+                    .GetRequiredService<ISerializer>()
+                    .Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString()!);
             }
 
             var message = (TMessage)mqMessage!;
@@ -268,13 +334,12 @@ namespace ReRabbit.Subscribers
         /// Получить настройки очереди с учетом подписок на сообщения.
         /// </summary>
         /// <param name="subscriberName">Наименование подписчика.</param>
-        /// <param name="rabbitMessages">Сообщения на которые оформляется подписка.</param>
         /// <returns>Настройки потребителя.</returns>
-        private SubscriberSettings GetSubscriberSettings(string subscriberName, IEnumerable<RabbitMessage> rabbitMessages)
+        private SubscriberSettings GetSubscriberSettings(string subscriberName)
         {
             var subscriberSettings = _configurationManager.GetSubscriberSettings(subscriberName);
 
-            foreach (var rabbitMessage in rabbitMessages)
+            foreach (var rabbitMessage in _subscribedRabbitMessages)
             {
                 var binding = new ExchangeBinding(
                     rabbitMessage.MessageSettings.Exchange.Name,

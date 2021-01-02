@@ -149,7 +149,11 @@ namespace ReRabbit.Core
             model.ModelShutdown += (sender, e) =>
             {
                 _channels.Remove(model);
-                model.Dispose();
+
+                if (model?.IsOpen == true)
+                {
+                    model.Dispose();
+                }
             };
 
             _channels.Add(model);

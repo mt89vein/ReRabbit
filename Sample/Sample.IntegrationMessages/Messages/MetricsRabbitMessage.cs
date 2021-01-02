@@ -1,14 +1,11 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Models;
+using System;
 
 namespace Sample.IntegrationMessages.Messages
 {
     public class MetricsRabbitMessage : RabbitMessage<MetricsDto>
     {
-        public MetricsRabbitMessage(IConfigurationManager configurationManager)
-            : base(configurationManager)
-        {
-        }
     }
 
     public class MetricsDto : IntegrationMessage
@@ -16,5 +13,13 @@ namespace Sample.IntegrationMessages.Messages
         public string? Name { get; set; }
 
         public int Value { get; set; }
+    }
+
+    public class DynamicRabbitMessage : RabbitMessage
+    {
+        public override Type GetDtoType()
+        {
+            return typeof(object);
+        }
     }
 }

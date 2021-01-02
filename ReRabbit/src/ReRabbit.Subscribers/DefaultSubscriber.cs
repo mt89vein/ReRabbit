@@ -124,11 +124,7 @@ namespace ReRabbit.Subscribers
 
             for (var i = 0; i < settings.ScalingSettings.ConsumersPerChannel; i++)
             {
-                var consumer = GetBasicConsumer(channel, messageHandler, settings, queueName);
-                consumer.ConsumerCancelled += delegate
-                {
-                    onUnsubscribed?.Invoke(true, "The channel is closed. Looks like the queue has been deleted via management plugin.");
-                };
+                var consumer = GetBasicConsumer(channel, settings, queueName, messageHandler, onUnsubscribed);
 
                 channel.BasicConsume(
                     queue: queueName,
@@ -323,15 +319,18 @@ namespace ReRabbit.Subscribers
         /// Получить <see cref="IBasicConsumer"/> (синхронный или асинхронный).
         /// </summary>
         /// <param name="channel">Канал.</param>
-        /// <param name="messageHandler">Обработчик.</param>
         /// <param name="settings">Настройки очереди.</param>
         /// <param name="queueName">Название очереди.</param>
+        /// <param name="messageHandler">Обработчик.</param>
+        /// <param name="onUnsubscribed">Функция обратного вызова, для отслеживания ситуации, когда произошел дисконнект.</param>
         /// <returns>Потребитель.</returns>
         private IBasicConsumer GetBasicConsumer<TMessage>(
             IModel channel,
-            AcknowledgableMessageHandler<TMessage> messageHandler,
             SubscriberSettings settings,
-            string queueName
+            string queueName,
+            AcknowledgableMessageHandler<TMessage> messageHandler,
+            Action<bool, string>? onUnsubscribed
+
         )
             where TMessage : class, IMessage
         {
@@ -347,6 +346,12 @@ namespace ReRabbit.Subscribers
             {
                 var consumer = new AsyncEventingBasicConsumer(channel);
                 consumer.Received += (sender, ea) => OnReceivedAsync(ea);
+                consumer.ConsumerCancelled += (sender, ea) =>
+                {
+                    onUnsubscribed?.Invoke(true, "The channel is closed. Looks like the queue has been deleted via management plugin.");
+
+                    return Task.CompletedTask;
+                };
 
                 return consumer;
             }
@@ -356,6 +361,10 @@ namespace ReRabbit.Subscribers
 
                 // AsyncContext handle async-void problem.
                 consumer.Received += (_, ea) => AsyncContext.Run(() => OnReceivedAsync(ea));
+                consumer.ConsumerCancelled += (sender, ea) =>
+                {
+                    onUnsubscribed?.Invoke(true, "The channel is closed. Looks like the queue has been deleted via management plugin.");
+                };
 
                 return consumer;
             }

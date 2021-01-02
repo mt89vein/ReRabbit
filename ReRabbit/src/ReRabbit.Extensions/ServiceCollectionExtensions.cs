@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NamedResolver;
-using Newtonsoft.Json;
 using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Enums;
 using ReRabbit.Core;
@@ -180,7 +179,6 @@ namespace ReRabbit.Extensions
             RabbitMqRegistrationOptions options
         )
         {
-            services.AddSingleton<JsonSerializer>();
             services.AddSingleton<DefaultJsonSerializer>();
             services.AddSingleton(
                 sp => options.Factories?.Serializer?.Invoke(sp) ??

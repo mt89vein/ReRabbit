@@ -37,9 +37,9 @@ namespace ReRabbit.Core.Serializations
         /// Создает экземпляр класса <see cref="DefaultJsonSerializer"/>.
         /// </summary>
         /// <param name="json">Сериализатор Newtonsoft.Json.</param>
-        public DefaultJsonSerializer(JsonSerializer json)
+        public DefaultJsonSerializer(JsonSerializer? json = null)
         {
-            _json = json;
+            _json = json ?? new JsonSerializer();
             ContentType = "application/json";
         }
 

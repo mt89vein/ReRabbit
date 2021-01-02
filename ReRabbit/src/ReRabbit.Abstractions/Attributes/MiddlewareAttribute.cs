@@ -4,7 +4,7 @@ using System.Linq;
 namespace ReRabbit.Abstractions.Attributes
 {
     /// <summary>
-    /// Атрибут для конфигурации middlware.
+    /// Атрибут для конфигурации middleware.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public sealed class MiddlewareAttribute : Attribute

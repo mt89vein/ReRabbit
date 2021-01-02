@@ -59,10 +59,6 @@ namespace ReRabbit.UnitTests.Publishers
 
         internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
         {
-            public TestRabbitMessage(IConfigurationManager configurationManager)
-                : base(configurationManager)
-            {
-            }
         }
 
         #endregion Вспомогательные классы
