@@ -1,7 +1,6 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Abstractions.Settings.Subscriber;
-using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -151,33 +150,4 @@ namespace ReRabbit.Subscribers.Extensions
 
         #endregion Методы (public)
     }
-
-    /// <summary>
-    /// Методы расширения для <see cref="IBasicProperties"/>.
-    /// </summary>
-    public static class BasicPropertiesExtensions
-    {
-        /// <summary>
-        /// Попытаться получить данные из заголовков.
-        /// </summary>
-        /// <param name="properties">Свойства.</param>
-        /// <param name="header">Наименование заголовка.</param>
-        /// <param name="headerData">Не пустой массив байт, если заголовок присутствует.</param>
-        /// <returns>True, если заголовок нашелся.</returns>
-        public static bool TryGetHeaderValue(this IBasicProperties properties, string header, out byte[] headerData)
-        {
-            headerData = Array.Empty<byte>();
-            if (properties.Headers != null &&
-                properties.Headers.TryGetValue(header, out var headerRawData) &&
-                headerRawData is byte[] byteArray)
-            {
-                headerData = byteArray;
-
-                return true;
-            }
-
-            return false;
-        }
-    }
-
 }

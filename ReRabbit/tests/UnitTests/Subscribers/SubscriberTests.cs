@@ -90,7 +90,13 @@ namespace ReRabbit.UnitTests.Subscribers
                 Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mqMessage))
             };
 
-            var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
+            var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName")
+            {
+                TracingSettings = new TracingSettingsDto
+                {
+                    LogWhenMessageIncome = true
+                }
+            };
 
             var (_, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
                 args,
@@ -264,6 +270,98 @@ namespace ReRabbit.UnitTests.Subscribers
             {
                 Assert.IsInstanceOf<FormatReject>(acknowledgement, "Тип Acknowledgement некорректен.");
                 Assert.AreEqual(args.DeliveryTag, ctx.MessageData.DeliverEventArgs?.DeliveryTag, "DeliveryTag не совпадает.");
+            });
+        }
+
+        /// <summary>
+        /// Корректно обрабатывает исключение, выброшенное в обработчике сообщения.
+        /// </summary>
+        [Test]
+        public async Task CorrectlyHandlesMessageHandlerExceptionsAsync()
+        {
+            var mqMessage = new MqMessage(
+                JsonConvert.SerializeObject(new MyIntegrationEvent()),
+                "Type",
+                "1.0",
+                "1.0",
+                "myApp"
+            );
+
+            var args = new BasicDeliverEventArgs
+            {
+                DeliveryTag = 123,
+                RoutingKey = "some-key",
+                Exchange = "some-exchange",
+                BasicProperties = new FakeOptions
+                {
+                    Headers = new Dictionary<string, object>(),
+                    ContentType = "application/json",
+                    ContentEncoding = "UTF8"
+                },
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mqMessage))
+            };
+
+            var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
+
+            var (acknowledgement, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
+                args,
+                _ => throw new Exception("Unhandled exception!"),
+                subscriberSettingsDto.Create(null!)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsInstanceOf<Reject>(acknowledgement, "Тип Acknowledgement некорректен.");
+                Assert.AreEqual(args.DeliveryTag, ctx.MessageData.DeliverEventArgs?.DeliveryTag, "DeliveryTag не совпадает.");
+            });
+        }
+
+        /// <summary>
+        /// Корректно обрабатывает сообщения которые не могут быть обработаны (много раз падают с ошибкой).
+        /// </summary>
+        [Test]
+        [TestCase(4, true)]
+        [TestCase(5, false)]
+        public async Task CorrectlyHandlesPoisonedMessageAsync(int alreadyRetriedCount, bool shouldRetryOneMoreTime)
+        {
+            var mqMessage = new MqMessage(
+                JsonConvert.SerializeObject(new MyIntegrationEvent()),
+                "Type",
+                "1.0",
+                "1.0",
+                "myApp"
+            );
+
+            var args = new BasicDeliverEventArgs
+            {
+                DeliveryTag = 123,
+                RoutingKey = "some-key",
+                Exchange = "some-exchange",
+                BasicProperties = new FakeOptions
+                {
+                    Headers = new Dictionary<string, object>
+                    {
+                        [PoisonedMessageExtensions.RETRY_CNT_KEY] = alreadyRetriedCount
+                    },
+                    ContentType = "application/json",
+                    ContentEncoding = "UTF8"
+                },
+                Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mqMessage))
+            };
+
+            var subscriberSettingsDto = new SubscriberSettingsDto("MySubscriberName");
+
+            var (acknowledgement, ctx) = await _subscriber.HandleMessageAsync<MyIntegrationEvent>(
+                args,
+                _ => throw new Exception("Unhandled exception!"),
+                subscriberSettingsDto.Create(null!)
+            );
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsInstanceOf<Reject>(acknowledgement, "Тип Acknowledgement некорректен.");
+                Assert.AreEqual(args.DeliveryTag, ctx.MessageData.DeliverEventArgs?.DeliveryTag, "DeliveryTag не совпадает.");
+                Assert.AreEqual(shouldRetryOneMoreTime, (acknowledgement as Reject)?.Requeue, "ShouldRetryOneMoreTime не совпадает.");
             });
         }
 

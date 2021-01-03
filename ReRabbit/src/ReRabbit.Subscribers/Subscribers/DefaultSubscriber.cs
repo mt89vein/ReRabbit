@@ -304,13 +304,12 @@ namespace ReRabbit.Subscribers.Subscribers
                 }
                 catch (Exception e)
                 {
-                    // любые ошибки, выброшенные в пользовательском обработчике будут автоматически реджектить.
-                    // TODO: прикрутить здесь poison-message-handling
+                    var shouldRetryOneMoreTime = ea.BasicProperties.IncrementFailRetries();
 
                     return (new Reject(
                         "Ошибка обработки сообщения из очереди.",
                         e,
-                        settings.RetrySettings.IsEnabled && !isLastRetry
+                        shouldRetryOneMoreTime
                     ), messageContext!.Value);
                 }
             }
@@ -331,7 +330,6 @@ namespace ReRabbit.Subscribers.Subscribers
             string queueName,
             AcknowledgableMessageHandler<TMessage> messageHandler,
             Action<bool, string>? onUnsubscribed
-
         )
             where TMessage : class, IMessage
         {
