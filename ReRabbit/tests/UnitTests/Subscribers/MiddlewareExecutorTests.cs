@@ -8,7 +8,7 @@ using ReRabbit.Subscribers.Middlewares;
 using System;
 using System.Threading.Tasks;
 
-namespace ReRabbit.UnitTests.Subscibers
+namespace ReRabbit.UnitTests.Subscribers
 {
     [TestOf(typeof(MiddlewareExecutor))]
     public class MiddlewareExecutorTests

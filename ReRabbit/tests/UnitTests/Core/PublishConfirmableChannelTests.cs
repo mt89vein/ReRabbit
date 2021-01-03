@@ -3,7 +3,7 @@ using NUnit.Framework;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ReRabbit.Core;
-using ReRabbit.UnitTests.Subscibers;
+using ReRabbit.UnitTests.Subscribers;
 using System;
 using System.Collections.Generic;
 using System.Text;

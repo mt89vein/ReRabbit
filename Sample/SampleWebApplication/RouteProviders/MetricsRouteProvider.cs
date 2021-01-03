@@ -1,5 +1,6 @@
 using RabbitMQ.Client;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Abstractions.Settings.Publisher;
 using Sample.IntegrationMessages.Messages;

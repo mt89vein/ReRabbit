@@ -17,7 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TracingContext;
 
-namespace ReRabbit.UnitTests.Subscibers
+namespace ReRabbit.UnitTests.Subscribers
 {
     /// <summary>
     /// Тесты подписчика.

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Abstractions.Settings.Connection;
 using ReRabbit.Abstractions.Settings.Publisher;

@@ -46,6 +46,11 @@ namespace ReRabbit.Extensions.Registrator
         /// </summary>
         private readonly IConsumerRegistry _consumerRegistry;
 
+        /// <summary>
+        /// Менеджер конфигураций.
+        /// </summary>
+        private readonly IConfigurationManager _configurationManager;
+
         #endregion Поля
 
         #region Конструктор
@@ -67,6 +72,7 @@ namespace ReRabbit.Extensions.Registrator
             _typeFilter = typeFilter;
             _middlewareRegistrator = serviceProvider.GetRequiredService<IRuntimeMiddlewareRegistrator>();
             _consumerRegistry = serviceProvider.GetRequiredService<IConsumerRegistry>();
+            _configurationManager = serviceProvider.GetRequiredService<IConfigurationManager>();
         }
 
         #endregion Конструктор
@@ -141,18 +147,22 @@ namespace ReRabbit.Extensions.Registrator
 
             foreach (var group in handlerGroups)
             {
-                //if (group.Select(g => g.Handler).Distinct().Count() > 1)
-                //{
-                //    throw new NotSupportedException(
-                //        "Множественные обработчики одного события в памяти не поддерживаются. " +
-                //        "Для этого используйте возможности брокера RabbitMq, выделив для каждого обработчика свою отдельную очередь. " +
-                //        $"Конфигурация '{group.Key}' используются у следующих обработчиков " +
-                //        $"({string.Join(", ", group.Select(g => g.Handler.FullName))})"
-                //    );
-                //}
+                if (group.Select(g => g.Handler).Distinct().Count() > 1)
+                {
+                    var subscriberSettings = group.Select(x => _configurationManager.GetSubscriberSettings(x.Attribute.SubscriberName));
 
-                // TODO: проверить на корректность регистрации если с двух разных классов настроены потребители
-                // TODO: не давать разрешать такую регистрацию, если они оба смотрят на одну очередь (разные норм)
+                    // если два разных обработчика смотрят на одну и ту же очередь
+                    if (subscriberSettings.GroupBy(x => x.QueueName).Select(x => x.Count()).Any(x => x > 1))
+                    {
+                        throw new NotSupportedException(
+                            "Множественные обработчики одного события в памяти не поддерживаются. " +
+                            "Для этого используйте возможности брокера RabbitMq, выделив для каждого обработчика свою отдельную очередь. " +
+                            $"Конфигурация '{group.Key}' используются у следующих обработчиков " +
+                            $"({string.Join(", ", group.Select(g => g.Handler.FullName))})"
+                        );
+                    }
+                }
+
                 foreach (var messageHandlerType in group.Select(x => x.Handler))
                 {
                     var subscriberName = group.Key;

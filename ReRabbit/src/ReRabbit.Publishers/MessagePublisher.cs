@@ -4,6 +4,7 @@ using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Models;
 using ReRabbit.Core;
 using System;

@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReRabbit.UnitTests.Subscibers
+namespace ReRabbit.UnitTests.Subscribers
 {
     /// <summary>
     /// Тесты оповещения о результате обработки сообщения.
@@ -445,7 +445,7 @@ namespace ReRabbit.UnitTests.Subscibers
                             // проверка на прокидывание оригинальных (с тем, которыми был опубликован) ключ роутинга и обменник
                             (string)p.Headers[RetryExtensions.ORIGINAL_EXCHANGE_HEADER] == publishedFromExchange &&
                             (string)p.Headers[RetryExtensions.ORIGINAL_ROUTING_KEY_HEADER] == publishedRoutingKey
-                        ), 
+                        ),
                         It.IsAny<ReadOnlyMemory<byte>>()
                     ), "Ретрай не произведен с ожидаемыми параметрами. Сообщение не отправлено в конец очереди через стандартный обменник."
                 );
@@ -579,7 +579,7 @@ namespace ReRabbit.UnitTests.Subscibers
                             // проверка на прокидывание оригинальных (с тем, которыми был опубликован) ключ роутинга и обменник
                             (string)p.Headers[RetryExtensions.ORIGINAL_EXCHANGE_HEADER] == publishedFromExchange &&
                             (string)p.Headers[RetryExtensions.ORIGINAL_ROUTING_KEY_HEADER] == publishedRoutingKey
-                        ), 
+                        ),
                         It.IsAny<ReadOnlyMemory<byte>>()
                     ), "Ретрай не произведен с ожидаемыми параметрами. Сообщение не отправлено в конец очереди через стандартный обменник."
                 );
@@ -637,7 +637,7 @@ namespace ReRabbit.UnitTests.Subscibers
                         RoutingKey = routingKey,
                         Redelivered = redelivered ?? false,
                         BasicProperties = properties
-                    } 
+                    }
                 ));
 
             return messageContext;

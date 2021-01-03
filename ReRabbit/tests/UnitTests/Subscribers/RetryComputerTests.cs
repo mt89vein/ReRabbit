@@ -4,7 +4,7 @@ using ReRabbit.Abstractions.Settings.Subscriber;
 using ReRabbit.Subscribers.RetryDelayComputer;
 using System;
 
-namespace ReRabbit.UnitTests.Subscibers
+namespace ReRabbit.UnitTests.Subscribers
 {
     /// <summary>
     /// Тесты на вычислители времени ожидания.

@@ -35,7 +35,9 @@ namespace ReRabbit.Extensions
             services.AddSingleton<IMiddlewareRegistryAccessor>(middlewareRegistrator);
             services.AddSingleton<IRuntimeMiddlewareRegistrator>(middlewareRegistrator);
 
-            services.AddSingleton<IConsumerRegistry, ConsumerRegistry>();
+            services.AddSingleton<ConsumerRegistry>();
+            services.AddSingleton<IConsumerRegistry>(sp => sp.GetRequiredService<ConsumerRegistry>());
+            services.AddSingleton<IConsumerRegistryAccessor>(sp => sp.GetRequiredService<ConsumerRegistry>());
             services.AddHostedService<RabbitMqSubscribersStarter>();
 
             var subscriberRegistrator =
@@ -66,7 +68,7 @@ namespace ReRabbit.Extensions
 
             options?.Invoke(rabbitMqRegistrationOptions);
 
-            services.AddSingleton<IRabbitMqHandlerAutoRegistrator>(sp => new RabbitMqHandlerAutoRegistrator(
+            services.AddSingleton(sp => new RabbitMqHandlerAutoRegistrator(
                 sp,
                 rabbitMqRegistrationOptions.Assemblies,
                 rabbitMqRegistrationOptions.TypeFilter

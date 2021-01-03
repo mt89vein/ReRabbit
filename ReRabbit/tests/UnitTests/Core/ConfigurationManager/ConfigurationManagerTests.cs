@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using ReRabbit.Abstractions;
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Core;
 using ReRabbit.Core.Exceptions;
 using ReRabbit.UnitTests.TestFiles;

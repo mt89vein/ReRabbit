@@ -1,3 +1,4 @@
+using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Abstractions.Settings.Publisher;
 using ReRabbit.Abstractions.Settings.Subscriber;

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 [assembly: ExcludeFromCodeCoverage]
 
-namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConsumersOnSingleQueue
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.MultipleConsumersOnSingleQueue
 {
     internal class TestMessageDto : IntegrationMessage
     {
@@ -55,7 +55,46 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConsumersOnSingl
     }
 }
 
-namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.NormalConsumer
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.MultipleConsumersOnDifferentQueues
+{
+    internal class TestMessageDto : IntegrationMessage
+    {
+    }
+
+    internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
+    {
+    }
+
+    internal class TestHandler : IMessageHandler<TestMessageDto>
+    {
+        /// <summary>
+        /// Обработать сообщение.
+        /// </summary>
+        /// <param name="messageContext">Контекст сообщения.</param>
+        /// <returns>Результат выполнения обработчика.</returns>
+        [SubscriberConfiguration("Q2Subscriber", typeof(TestRabbitMessage))]
+        public Task<Acknowledgement> HandleAsync(MessageContext<TestMessageDto> messageContext)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    internal class SecondTestHandler : IMessageHandler<TestMessageDto>
+    {
+        /// <summary>
+        /// Обработать сообщение.
+        /// </summary>
+        /// <param name="messageContext">Контекст сообщения.</param>
+        /// <returns>Результат выполнения обработчика.</returns>
+        [SubscriberConfiguration("Q4Subscriber", typeof(TestRabbitMessage))]
+        public Task<Acknowledgement> HandleAsync(MessageContext<TestMessageDto> messageContext)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.NormalConsumer
 {
     internal class TestMessageDto : IntegrationMessage
     {
@@ -80,7 +119,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.NormalConsumer
     }
 }
 
-namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.NotConfiguredConsumer
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.NotConfiguredConsumer
 {
     internal class TestMessageDto : IntegrationMessage
     {
@@ -104,7 +143,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.NotConfiguredConsumer
     }
 }
 
-namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConfigurationAttributes
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.MultipleConfigurationAttributes
 {
     internal class TestMessageDto : IntegrationMessage
     {
@@ -131,7 +170,7 @@ namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.MultipleConfigurationAtt
     }
 }
 
-namespace ReRabbit.UnitTests.Subscibers.AutoRegistrator.ConsumersWithMiddlewares
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.ConsumersWithMiddlewares
 {
     internal class TestMessageDto : IntegrationMessage
     {

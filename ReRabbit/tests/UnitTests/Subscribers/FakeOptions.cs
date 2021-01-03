@@ -1,7 +1,7 @@
 using RabbitMQ.Client;
 using System.Collections.Generic;
 
-namespace ReRabbit.UnitTests.Subscibers
+namespace ReRabbit.UnitTests.Subscribers
 {
     /// <summary>
     /// Фейковая реализация <see cref="IBasicProperties"/>.
