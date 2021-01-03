@@ -7,8 +7,8 @@ RabbitMQ framework over official RabbitMQ.Client
 
 ### Features highlight
 
--   JSON конфигурация, clean statup
--   near zero C# code configuration
+-   JSON конфигурация, clean startup
+-   near-zero C# code configuration
 -   точки расширения на всех этапах обработки
     -   Serializer, with JSON.NET by default
     -   Acknowlegdement behaviour
@@ -30,8 +30,11 @@ RabbitMQ framework over official RabbitMQ.Client
 -   rich scaling settings
 -   enabled distributed tracing
 -   autoscan and register handlers by convention
+-   IServiceScope created for every message, then resolves IMessageHandler from it 
 -   autorecovering all handlers after disconnect
 -   publisher confirms
+-   separate connections for publishers and subscribers
+-   thread-safe singleton publisher with channel pooling
 
 ### Install
 
@@ -53,6 +56,10 @@ docker-compose -f docker-compose.debug.yml up
 
 Далее проект с примером будет доступен по адресу http://localhost:8080
 
+### Nuget package
+
+... coming soon
+
 ### Example
 
 in startup.cs
@@ -66,7 +73,7 @@ public void ConfigureServices(IServiceCollection services)
 
 in appsettings.json 
 
-```json
+```jsonc
 {
     "RabbitMq": {
         "SubscriberConnections": {
