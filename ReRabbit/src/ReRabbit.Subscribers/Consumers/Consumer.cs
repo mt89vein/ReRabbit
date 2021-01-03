@@ -254,12 +254,14 @@ namespace ReRabbit.Subscribers.Consumers
             MessageContext ctx
         )
         {
-            var mqMessage = GetMqMessageFrom(mapper, serializer, subscribedMessages, ctx);
-
-            return middlewareExecutor.ExecuteAsync(
-                messageHandlerType,
-                new MessageContext<TMessage>(mqMessage, ctx.MessageData)
+            var messageContext = CreateMessageContext(
+                mapper,
+                serializer,
+                subscribedMessages,
+                ctx
             );
+
+            return middlewareExecutor.ExecuteAsync(messageHandlerType, messageContext);
         }
 
         /// <summary>
@@ -270,7 +272,7 @@ namespace ReRabbit.Subscribers.Consumers
         /// <param name="ctx">Контекст сообщения.</param>
         /// <param name="messageMapper">Маппер.</param>
         /// <returns>Сообщение в формате, который ожидает обработчик.</returns>
-        private static TMessage GetMqMessageFrom(
+        private static MessageContext<TMessage> CreateMessageContext(
             IMessageMapper messageMapper,
             ISerializer serializer,
             IEnumerable<RabbitMessageInfo> subscribedMessages,
@@ -300,6 +302,7 @@ namespace ReRabbit.Subscribers.Consumers
                 mqMessage = serializer.Deserialize<TMessage>(ctx.MessageData.MqMessage.Payload.ToString()!);
             }
 
+            // дополняем данными, которых могло не быть среди данных в Payload
             var message = (TMessage)mqMessage!;
             if (ctx.MessageData.CreatedAt.HasValue)
             {
@@ -326,7 +329,7 @@ namespace ReRabbit.Subscribers.Consumers
                 tracedMessage.TraceId = ctx.MessageData.TraceId.Value;
             }
 
-            return message;
+            return new MessageContext<TMessage>(message, ctx.MessageData);
         }
 
         /// <summary>

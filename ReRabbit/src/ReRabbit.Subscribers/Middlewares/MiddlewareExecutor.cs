@@ -55,7 +55,8 @@ namespace ReRabbit.Subscribers.Middlewares
             MessageContext<TMessageType> ctx
         ) where TMessageType : class, IMessage
         {
-            var scope = _serviceProvider.CreateScope();
+            using var scope = _serviceProvider.CreateScope();
+
             if (ActivatorUtilities.CreateInstance(scope.ServiceProvider, messageHandlerType) is not IMessageHandler<TMessageType> messageHandler)
             {
                 // такого кейса быть не должно, но всё же.

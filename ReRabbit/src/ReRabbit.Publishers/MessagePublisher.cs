@@ -9,6 +9,7 @@ using ReRabbit.Abstractions.Models;
 using ReRabbit.Core;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -229,12 +230,20 @@ namespace ReRabbit.Publishers
             properties.ContentType = contentType;
             properties.MessageId = message.MessageId.ToString();
             properties.CorrelationId = TraceContext.Current.TraceId.ToString();
-            // TODO: traceIdSource
-            properties.Timestamp = new AmqpTimestamp(((DateTimeOffset)message.MessageCreatedAt).ToUnixTimeSeconds());
+
+            if (message.MessageCreatedAt != default)
+            {
+                properties.Timestamp = new AmqpTimestamp(((DateTimeOffset)message.MessageCreatedAt).ToUnixTimeSeconds());
+            }
 
             if (expires.HasValue)
             {
                 properties.Expiration = expires.Value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (!string.IsNullOrWhiteSpace(TraceContext.Current.TraceIdSource))
+            {
+                routeInfo.Arguments["x-trace-id-source"] = TraceContext.Current.TraceIdSource;
             }
 
             properties.Type = routeInfo.Name;
