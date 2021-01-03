@@ -19,6 +19,7 @@ namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator
         [TestCase("MultipleConsumersOnDifferentQueues", 2)]
         [TestCase("MultipleConfigurationAttributes", 3)]
         [TestCase("MultipleConsumersOnSingleQueue", 0, typeof(NotSupportedException))]
+        [TestCase("MultipleConsumersOnSingleQueueGeneratedNames", 0, typeof(NotSupportedException))]
         [TestCase("NotConfiguredConsumer", 0, typeof(SubscriberNotConfiguredException))]
         public void ShouldCorrectlyScanAndRegister(string @namespace, int consumerCount, Type? exceptionType = null)
         {

@@ -47,7 +47,56 @@ namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.MultipleConsumersOnSing
         /// </summary>
         /// <param name="messageContext">Контекст сообщения.</param>
         /// <returns>Результат выполнения обработчика.</returns>
-        [SubscriberConfiguration("Q2Subscriber", typeof(SecondTestRabbitMessage))]
+        [SubscriberConfiguration("Q1Subscriber")]
+        [SubscriberConfiguration("Q2SubscriberDuplicate", typeof(SecondTestRabbitMessage))]
+        public Task<Acknowledgement> HandleAsync(MessageContext<TestMessageDto> messageContext)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+namespace ReRabbit.UnitTests.Subscribers.AutoRegistrator.MultipleConsumersOnSingleQueueGeneratedNames
+{
+    internal class TestMessageDto : IntegrationMessage
+    {
+    }
+
+    internal class TestRabbitMessage : RabbitMessage<TestMessageDto>
+    {
+    }
+
+    internal class TestHandler : IMessageHandler<TestMessageDto>
+    {
+        /// <summary>
+        /// Обработать сообщение.
+        /// </summary>
+        /// <param name="messageContext">Контекст сообщения.</param>
+        /// <returns>Результат выполнения обработчика.</returns>
+        [SubscriberConfiguration("Q7SubscriberGenerated2", typeof(TestRabbitMessage))]
+        public Task<Acknowledgement> HandleAsync(MessageContext<TestMessageDto> messageContext)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    internal class SecondTestMessageDto : IntegrationMessage
+    {
+    }
+
+    internal class SecondTestRabbitMessage : RabbitMessage<TestMessageDto>
+    {
+    }
+
+    internal class SecondTestHandler : IMessageHandler<TestMessageDto>
+    {
+        /// <summary>
+        /// Обработать сообщение.
+        /// </summary>
+        /// <param name="messageContext">Контекст сообщения.</param>
+        /// <returns>Результат выполнения обработчика.</returns>
+        [SubscriberConfiguration("Q7Subscriber")]
+        [SubscriberConfiguration("Q7SubscriberGenerated", typeof(SecondTestRabbitMessage))]
         public Task<Acknowledgement> HandleAsync(MessageContext<TestMessageDto> messageContext)
         {
             throw new NotImplementedException();
