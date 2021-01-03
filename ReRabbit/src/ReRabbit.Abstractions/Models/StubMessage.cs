@@ -1,10 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Структура для десериализации важных мета-данных.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal struct StubMessage : IMessage, ITracedMessage
     {
         /// <summary>

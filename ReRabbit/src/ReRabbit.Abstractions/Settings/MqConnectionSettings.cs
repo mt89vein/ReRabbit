@@ -1,12 +1,14 @@
 using ReRabbit.Abstractions.Settings.Connection;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings
 {
     /// <summary>
     /// Конкретное подключение по опр. хосту/порту и виртуальному хосту.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class MqConnectionSettings : IEquatable<MqConnectionSettings>
     {
         #region Свойства

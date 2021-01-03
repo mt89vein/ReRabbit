@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ReRabbit.Abstractions.Settings.Subscriber
@@ -6,6 +7,7 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
     /// <summary>
     /// Настройки подписчика.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class SubscriberSettings
     {
         #region Поля

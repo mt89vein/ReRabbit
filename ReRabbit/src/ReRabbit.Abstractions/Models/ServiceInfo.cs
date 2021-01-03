@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Информация о сервисе.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class ServiceInfo
     {
         #region Свойства

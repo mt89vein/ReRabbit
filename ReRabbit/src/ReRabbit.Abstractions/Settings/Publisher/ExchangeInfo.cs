@@ -1,10 +1,12 @@
 using RabbitMQ.Client;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Publisher
 {
     /// <summary>
     /// Информация об обменнике.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class ExchangeInfo
     {
         #region Свойства

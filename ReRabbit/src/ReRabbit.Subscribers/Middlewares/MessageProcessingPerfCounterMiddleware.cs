@@ -3,6 +3,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Middlewares
@@ -10,6 +11,7 @@ namespace ReRabbit.Subscribers.Middlewares
     /// <summary>
     /// Мидлварь, логирующая перф.метрики.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class MessageProcessingPerfCounterMiddleware : MiddlewareBase
     {
         #region Поля

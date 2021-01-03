@@ -1,10 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Connection
 {
     /// <summary>
     /// Настройки TLS.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class SslOptions
     {
         /// <summary>

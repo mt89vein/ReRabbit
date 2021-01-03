@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using ReRabbit.Abstractions;
 using ReRabbit.Extensions.Registrator;
 using ReRabbit.Subscribers.Consumers;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace ReRabbit.Extensions
     /// <summary>
     /// Запускает потребление сообщений при старте приложения.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     internal class RabbitMqSubscribersStarter : BackgroundService
     {
         #region Поля

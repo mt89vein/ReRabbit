@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Publisher
 {
     /// <summary>
     /// Настройки сообщения.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class MessageSettings
     {
         #region Свойства
@@ -46,7 +48,7 @@ namespace ReRabbit.Abstractions.Settings.Publisher
         /// Таймаут на подтверждения доставки в брокер.
         /// </summary>
         public TimeSpan ConfirmationTimeout { get; }
-        
+
         /// <summary>
         /// Конкретное подключение по опр. хосту/порту и виртуальному хосту.
         /// </summary>

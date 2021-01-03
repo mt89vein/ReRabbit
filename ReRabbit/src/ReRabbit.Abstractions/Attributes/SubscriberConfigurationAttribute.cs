@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ReRabbit.Abstractions.Attributes
@@ -7,6 +8,7 @@ namespace ReRabbit.Abstractions.Attributes
     /// <summary>
     /// Атрибут для конфигурации подписчика.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public sealed class SubscriberConfigurationAttribute : Attribute
     {

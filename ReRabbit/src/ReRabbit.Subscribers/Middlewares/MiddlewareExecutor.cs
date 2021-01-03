@@ -58,6 +58,7 @@ namespace ReRabbit.Subscribers.Middlewares
             var scope = _serviceProvider.CreateScope();
             if (ActivatorUtilities.CreateInstance(scope.ServiceProvider, messageHandlerType) is not IMessageHandler<TMessageType> messageHandler)
             {
+                // такого кейса быть не должно, но всё же.
                 throw new InvalidOperationException(
                     $"Ошибка конфигурирования обработчика {messageHandlerType}." +
                     $"Проверьте зарегистрированы ли все зависимости обработчиков реализующие {typeof(IMessageHandler<IMessage>)}."

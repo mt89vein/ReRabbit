@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace ReRabbit.Abstractions.Settings.Subscriber
 {
     /// <summary>
     /// Настройки поведения работы с глобальным идентификатором отслеживания.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class TracingSettings
     {
         #region Свойства

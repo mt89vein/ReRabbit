@@ -1,6 +1,7 @@
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ReRabbit.Abstractions.Models
@@ -8,6 +9,7 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Данные о сообщении (событии) полученный обработчиком.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public readonly struct MqMessageData
     {
         #region Свойства

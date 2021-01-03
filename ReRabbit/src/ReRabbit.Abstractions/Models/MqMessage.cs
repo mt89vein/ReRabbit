@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Формат сообщения.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class MqMessage
     {
         #region Свойства

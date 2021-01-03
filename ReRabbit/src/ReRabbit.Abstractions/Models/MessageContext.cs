@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace ReRabbit.Abstractions.Models
 {
     /// <summary>
     /// Контекст сообщения для обработки.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public readonly struct MessageContext<TMessage>
         where TMessage : class, IMessage
     {

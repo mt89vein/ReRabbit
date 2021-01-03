@@ -1,8 +1,10 @@
 using ReRabbit.Abstractions.Settings.Connection;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Root
 {
+    [ExcludeFromCodeCoverage]
     public sealed class RabbitMqSettings
     {
         #region Поля

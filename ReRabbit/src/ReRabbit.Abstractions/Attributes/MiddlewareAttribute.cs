@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ReRabbit.Abstractions.Attributes
@@ -6,6 +7,7 @@ namespace ReRabbit.Abstractions.Attributes
     /// <summary>
     /// Атрибут для конфигурации middleware.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public sealed class MiddlewareAttribute : Attribute
     {

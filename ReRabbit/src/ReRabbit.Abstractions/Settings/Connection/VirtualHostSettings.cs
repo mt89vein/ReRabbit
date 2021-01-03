@@ -1,12 +1,14 @@
 using ReRabbit.Abstractions.Settings.Publisher;
 using ReRabbit.Abstractions.Settings.Subscriber;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Connection
 {
     /// <summary>
     /// Настройки виртуального хоста.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class VirtualHostSettings
     {
         #region Поля

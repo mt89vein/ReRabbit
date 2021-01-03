@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Subscriber
 {
     /// <summary>
     /// Параметры привязки.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class ExchangeBinding : IEquatable<ExchangeBinding>
     {
         #region Свойства

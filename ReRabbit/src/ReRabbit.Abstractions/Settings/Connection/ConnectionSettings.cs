@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Connection
 {
     /// <summary>
     /// Настройки подключения к RabbitMq.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class ConnectionSettings
     {
         #region Поля

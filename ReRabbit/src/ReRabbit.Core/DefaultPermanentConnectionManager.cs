@@ -5,6 +5,7 @@ using ReRabbit.Abstractions.Enums;
 using ReRabbit.Abstractions.Settings;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace ReRabbit.Core
@@ -98,6 +99,7 @@ namespace ReRabbit.Core
         /// <param name="settings">Настройки подключения.</param>
         /// <param name="purposeType">Цель подключения.</param>
         /// <returns>Постоянное подключение к RabbitMq.</returns>
+        [ExcludeFromCodeCoverage]
         private IPermanentConnection PermanentConnectionFactory(MqConnectionSettings settings, ConnectionPurposeType purposeType)
         {
             var connectionFactory = new ConnectionFactory

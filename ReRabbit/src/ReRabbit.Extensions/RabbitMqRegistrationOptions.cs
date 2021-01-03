@@ -2,6 +2,7 @@ using NamedResolver.Abstractions;
 using ReRabbit.Abstractions;
 using ReRabbit.Subscribers.Middlewares;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace ReRabbit.Extensions
@@ -9,6 +10,7 @@ namespace ReRabbit.Extensions
     /// <summary>
     /// Настройки сервисов RabbitMq.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class RabbitMqRegistrationOptions
     {
         #region Свойства

@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace ReRabbit.Abstractions.Settings.Subscriber
 {
     /// <summary>
     /// Настроки масштабирования подписчика.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class ScalingSettings
     {
         #region Свойства

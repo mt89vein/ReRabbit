@@ -1,12 +1,14 @@
 using ReRabbit.Abstractions;
 using ReRabbit.Subscribers.Markers;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Extensions
 {
     /// <summary>
     /// Фабрики, для переопределения.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class RabbitMqFactories
     {
         /// <summary>

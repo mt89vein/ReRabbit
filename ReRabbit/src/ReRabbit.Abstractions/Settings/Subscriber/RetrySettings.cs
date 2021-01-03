@@ -1,11 +1,13 @@
 using ReRabbit.Abstractions.Enums;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReRabbit.Abstractions.Settings.Subscriber
 {
     /// <summary>
     /// Параметры повторной обработки сообщений.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed class RetrySettings
     {
         #region Свойства

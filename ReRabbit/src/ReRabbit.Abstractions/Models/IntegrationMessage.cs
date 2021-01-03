@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using TracingContext;
 
 namespace ReRabbit.Abstractions.Models
@@ -6,6 +7,7 @@ namespace ReRabbit.Abstractions.Models
     /// <summary>
     /// Интеграционное сообщение.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public abstract class IntegrationMessage : IMessage, ITracedMessage
     {
         protected IntegrationMessage()
