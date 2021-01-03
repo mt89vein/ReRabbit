@@ -3,34 +3,36 @@
 
 # Subscriber
 
-* Trigger handlers by event FormatVersion
-* SubscriberBuilder
-* Poison message handling
+- [ ] Trigger handlers by event FormatVersion
+- [x] Poison message handling
+- [x] Middleware support
 
 ## SubscriberPlugins
 
-* FluentValidation plugin
-* Unit of work plugin
+- [ ] FluentValidation middleware
+- [ ] Mapping from different types
+- [ ] Unit of work middleware
+- [x] Performance logger
+- [x] MessageDeduplicator
 
 # Publisher
 
-* Outbox pattern
-* Delayed publish
-* PublisherBuilder
-* Publisher confirms
+- [ ] Outbox pattern
+- [x] Delayed publish
+- [x] PublisherConfirms
 
 # Common
 
-* UnitTests
-* FunctionalTests
-* Connection/permission problems handling (403, blocked connections etc)
-* TraceContext integration
+- [x] UnitTests
+- [x] TraceContext integration
+- [ ] FunctionalTests
+- [ ] Connection/permission problems handling (403, blocked connections etc)
 
 # v1.1.0
 
 # Subscriber
 
-* Sagas
-* Handlers chain ?
-* Batching
-* TimeoutQueue
+- [ ] Sagas
+- [ ] Handlers chain ?
+- [ ] Batching
+- [ ] TimeoutQueue
