@@ -59,8 +59,6 @@ namespace SampleWebApplication.RabbitMq
 
             await Task.CompletedTask;
 
-            await Task.CompletedTask;
-
             return Ack.Ok;
         }
     }
@@ -79,7 +77,6 @@ namespace SampleWebApplication.RabbitMq
         /// </summary>
         /// <param name="ctx">Данные сообщения.</param>
         /// <returns>Результат выполнения обработчика.</returns>
-        [SubscriberConfiguration("Q2Subscriber")]
         [SubscriberConfiguration("Q6Subscriber")]
         [Middleware(typeof(MessageProcessingPerfCounterMiddleware))]
         [Middleware(typeof(TestMiddleware2))]
