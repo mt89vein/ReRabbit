@@ -113,7 +113,7 @@ in MetricsSubscriber.cs
 
 ```cs
 
-public class MetricsDto
+public class MetricsDto : IntegrationMessage // или IMessage
 {
     public string Label { get; set; }
     public int Value { get; set; }
