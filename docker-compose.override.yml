@@ -3,6 +3,10 @@ version: '3.4'
 services:
 
   samplewebapplication:
+    image: samplewebapplication
+    build:
+      context: .
+      dockerfile: ./Sample/SampleWebApplication/Dockerfile
     env_file:
       - .env
     ports:
