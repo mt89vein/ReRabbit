@@ -3,6 +3,7 @@ using ReRabbit.Abstractions;
 using ReRabbit.Abstractions.Acknowledgements;
 using ReRabbit.Abstractions.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -24,6 +25,11 @@ namespace ReRabbit.Subscribers.Middlewares
         /// Провайдер служб.
         /// </summary>
         private readonly IServiceProvider _serviceProvider;
+
+        /// <summary>
+        /// Словарь фабрик типов.
+        /// </summary>
+        private readonly ConcurrentDictionary<Type, ObjectFactory> _factories = new();
 
         #endregion Поля
 
@@ -57,7 +63,9 @@ namespace ReRabbit.Subscribers.Middlewares
         {
             using var scope = _serviceProvider.CreateScope();
 
-            if (ActivatorUtilities.CreateInstance(scope.ServiceProvider, messageHandlerType) is not IMessageHandler<TMessageType> messageHandler)
+            var messageHandlerFactory = _factories.GetOrAdd(messageHandlerType, type => ActivatorUtilities.CreateFactory(type, Type.EmptyTypes));
+
+            if (messageHandlerFactory(scope.ServiceProvider, Array.Empty<object>()) is not IMessageHandler<TMessageType> messageHandler)
             {
                 // такого кейса быть не должно, но всё же.
                 throw new InvalidOperationException(
@@ -77,7 +85,8 @@ namespace ReRabbit.Subscribers.Middlewares
 
             foreach (var middlewareInfo in middlewareInfos)
             {
-                if (ActivatorUtilities.CreateInstance(scope.ServiceProvider, middlewareInfo.MiddlewareType) is MiddlewareBase middleware)
+                var middlewareFactory = _factories.GetOrAdd(middlewareInfo.MiddlewareType, type => ActivatorUtilities.CreateFactory(type, Type.EmptyTypes));
+                if (middlewareFactory(scope.ServiceProvider, Array.Empty<object>()) is MiddlewareBase middleware)
                 {
                     middlewareChain.AddLast(middleware);
                 }
