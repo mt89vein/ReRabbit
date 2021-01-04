@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 
 namespace ReRabbit.Subscribers.Subscribers
 {
+    // TODO: тесты
     /// <summary>
     /// Подписчик на сообщения по-умолчанию.
     /// Этот класс не наследуется.
@@ -113,6 +114,16 @@ namespace ReRabbit.Subscribers.Subscribers
         {
             var channel = await BindAsync<TMessage>(settings);
 
+            if (settings.UsePublisherConfirms)
+            {
+                // создаем канал с подтверждениями публикаций сообщений
+                channel = new PublishConfirmableChannel(
+                    channel,
+                    TimeSpan.FromSeconds(10),
+                    _logger
+                );
+            }
+
             channel.BasicQos(0, settings.ScalingSettings.MessagesPerConsumer, false);
 
             // если стоит лимит на канал, то делаем глобальным.
@@ -160,13 +171,7 @@ namespace ReRabbit.Subscribers.Subscribers
                 }
             };
 
-            // создаем канал с подтверждениями публикаций сообщений
-
-            return new PublishConfirmableChannel(
-                channel,
-                TimeSpan.FromSeconds(5),
-                _logger
-            );
+            return channel;
         }
 
         /// <summary>

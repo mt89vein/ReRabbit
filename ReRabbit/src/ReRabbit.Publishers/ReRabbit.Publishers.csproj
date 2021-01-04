@@ -5,11 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NamedResolver" Version="2.1.0" />
-    <PackageReference Include="TraceContext" Version="1.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\ReRabbit.Abstractions\ReRabbit.Abstractions.csproj" />
     <ProjectReference Include="..\ReRabbit.Core\ReRabbit.Core.csproj" />
   </ItemGroup>

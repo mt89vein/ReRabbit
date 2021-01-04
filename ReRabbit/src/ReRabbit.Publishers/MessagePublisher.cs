@@ -9,7 +9,6 @@ using ReRabbit.Abstractions.Models;
 using ReRabbit.Core;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -61,9 +60,24 @@ namespace ReRabbit.Publishers
         private readonly ILogger<MessagePublisher> _logger;
 
         /// <summary>
-        /// Пул каналов.
+        /// Пул каналов без подтверждения.
         /// </summary>
-        private readonly ConcurrentBag<ExclusiveChannel> _channelPool;
+        private readonly ConcurrentBag<ExclusiveChannel> _channelPool = new();
+
+        /// <summary>
+        /// Пул каналов с подтверждением.
+        /// </summary>
+        private readonly ConcurrentBag<ExclusiveChannel> _confirmableChannelPool = new();
+
+        /// <summary>
+        /// Управляет уровнем конкурентности публикации без подтверждений. В данном случае 15 каналов будет в пуле.
+        /// </summary>
+        private readonly SemaphoreSlim _channelPoolSemaphore = new(15, 15);
+
+        /// <summary>
+        /// Управляет уровнем конкурентности публикации с подтверждением. В данном случае 15 каналов будет в пуле.
+        /// </summary>
+        private readonly SemaphoreSlim _confirmableChannelPoolSemaphore = new(15, 15);
 
         #endregion Поля
 
@@ -87,7 +101,6 @@ namespace ReRabbit.Publishers
             _serializer = serializer;
             _topologyProvider = topologyProvider;
             _logger = logger;
-            _channelPool = new ConcurrentBag<ExclusiveChannel>();
         }
 
         #endregion Конструктор
@@ -102,8 +115,8 @@ namespace ReRabbit.Publishers
         /// <param name="message">Данные сообщения.</param>
         /// <param name="expires">Время жизни сообщения в шине.</param>
         /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
-        public Task PublishAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
-            where TRabbitMessage : RabbitMessage<TMessage>
+        public async Task PublishDynamicAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
+            where TRabbitMessage : IRabbitMessage
             where TMessage : class, IMessage
         {
             if (!_router.TryGet(out var routeProvider, typeof(TRabbitMessage).Name))
@@ -111,7 +124,6 @@ namespace ReRabbit.Publishers
                 routeProvider = _router.Get();
             }
             var routeInfo = routeProvider.GetFor<TRabbitMessage, TMessage>(message, delay);
-            var connection = _connectionManager.GetConnection(routeInfo.ConnectionSettings, ConnectionPurposeType.Publisher);
 
             var mqMessage = new MqMessage(
                 message,
@@ -128,10 +140,12 @@ namespace ReRabbit.Publishers
                 .Handle<BrokerUnreachableException>()
                 .Or<SocketException>()
                 .Or<TimeoutException>()
+                .Or<OperationCanceledException>()
+                .Or<InvalidOperationException>()
                 .WaitAndRetryAsync(
                     routeInfo.RetryCount,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (ex, _, count, ctx) =>
+                    (ex, _, count, _) =>
                     {
                         if (count == routeInfo.RetryCount)
                         {
@@ -144,47 +158,91 @@ namespace ReRabbit.Publishers
                         }
                     });
 
-            return retryPolicy.ExecuteAsync(async () =>
+            var connection = _connectionManager.GetConnection(routeInfo.ConnectionSettings, ConnectionPurposeType.Publisher);
+
+            var channelSemaphore = routeInfo.UsePublisherConfirms
+                ? _confirmableChannelPoolSemaphore
+                : _channelPoolSemaphore;
+
+            await channelSemaphore.WaitAsync();
+            try
             {
-                await connection.TryConnectAsync();
-                var exclusiveChannel = await GetChannelAsync(routeInfo, connection);
-                var (channel, semaphoreSlim) = exclusiveChannel;
-
-                await semaphoreSlim.WaitAsync();
-                try
+                await retryPolicy.ExecuteAsync(async () =>
                 {
-                    var delayedRoute = EnsureTopology<TMessage>(channel, routeInfo);
-
-                    var properties = GetPublishProperties(channel, contentType, routeInfo, message, expires);
-
-                    if (channel is IAsyncChannel asyncChannel)
+                    using var exclusiveChannel = await GetChannelAsync(connection, routeInfo.UsePublisherConfirms);
+                    await exclusiveChannel.SemaphoreSlim.WaitAsync();
+                    try
                     {
-                        await asyncChannel.BasicPublishAsync(
-                            delayedRoute != null ? string.Empty : routeInfo.Exchange,
-                            delayedRoute ?? routeInfo.Route,
-                            true,
-                            properties,
-                            body,
-                            2 // 2 повторов достаточно
+                        var delayedRoute = EnsureTopology(typeof(TMessage), exclusiveChannel.Channel, routeInfo);
+
+                        var properties = GetPublishProperties(
+                            exclusiveChannel.Channel.CreateBasicProperties(),
+                            contentType,
+                            routeInfo,
+                            message,
+                            expires
                         );
+
+                        if (exclusiveChannel.Channel is IAsyncChannel asyncChannel)
+                        {
+                            await asyncChannel.BasicPublishAsync(
+                                delayedRoute != null ? string.Empty : routeInfo.Exchange,
+                                delayedRoute ?? routeInfo.Route,
+                                true,
+                                properties,
+                                body,
+                                retryCount: 2
+                            );
+                        }
+                        else
+                        {
+                            exclusiveChannel.Channel.BasicPublish(
+                                delayedRoute != null ? string.Empty : routeInfo.Exchange,
+                                delayedRoute ?? routeInfo.Route,
+                                true,
+                                properties,
+                                body
+                            );
+                        }
                     }
-                    else
+                    catch (InvalidOperationException e)
                     {
-                        channel.BasicPublish(
-                            delayedRoute != null ? string.Empty : routeInfo.Exchange,
-                            delayedRoute ?? routeInfo.Route,
-                            true,
-                            properties,
-                            body
-                        );
+                        _logger.LogWarning(e,
+                            "Ошибка RabbitMQ.Client при публикации сообщения. Канал будет пересоздан.");
+
+                        exclusiveChannel.Channel.Dispose();
+
+                        throw;
                     }
-                }
-                finally
-                {
-                    _channelPool.Add(exclusiveChannel);
-                    semaphoreSlim.Release();
-                }
-            });
+                    catch (OperationCanceledException e)
+                    {
+                        _logger.LogError(e, "Таймаут ожидания подтверждения публикации. Канал будет пересоздан.");
+
+                        exclusiveChannel.Channel.Dispose();
+
+                        throw;
+                    }
+                });
+            }
+            finally
+            {
+                channelSemaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// Опубликовать сообщение.
+        /// </summary>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <typeparam name="TRabbitMessage">Тип интеграционного сообщения.</typeparam>
+        /// <param name="message">Данные сообщения.</param>
+        /// <param name="expires">Время жизни сообщения в шине.</param>
+        /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
+        public Task PublishAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
+            where TRabbitMessage : RabbitMessage<TMessage>
+            where TMessage : class, IMessage
+        {
+            return PublishDynamicAsync<TRabbitMessage, TMessage>(message, expires, delay);
         }
 
         #endregion Методы (public)
@@ -192,7 +250,7 @@ namespace ReRabbit.Publishers
         #region Методы (private)
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string? EnsureTopology<TMessage>(IModel channel, in RouteInfo routeInfo)
+        private string? EnsureTopology(Type messageType, IModel channel, in RouteInfo routeInfo)
         {
             channel.ExchangeDeclare(
                 exchange: routeInfo.Exchange,
@@ -205,7 +263,7 @@ namespace ReRabbit.Publishers
             {
                 return _topologyProvider.DeclareDelayedPublishQueue(
                     channel,
-                    typeof(TMessage),
+                    messageType,
                     routeInfo.Exchange,
                     routeInfo.Route,
                     routeInfo.Delay.Value
@@ -217,15 +275,13 @@ namespace ReRabbit.Publishers
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static IBasicProperties GetPublishProperties(
-            IModel channel,
+            IBasicProperties properties,
             string contentType,
             in RouteInfo routeInfo,
             IMessage message,
             in TimeSpan? expires
         )
         {
-            var properties = channel.CreateBasicProperties();
-
             properties.Persistent = routeInfo.Durable;
             properties.ContentType = contentType;
             properties.MessageId = message.MessageId.ToString();
@@ -252,35 +308,81 @@ namespace ReRabbit.Publishers
             return properties;
         }
 
-        private async ValueTask<ExclusiveChannel> GetChannelAsync(RouteInfo routeInfo, IPermanentConnection connection)
+        private async ValueTask<ExclusiveChannel> GetChannelAsync(IPermanentConnection connection, bool confirmable)
         {
-            if (_channelPool.TryTake(out var exclusiveChannel) && exclusiveChannel.Channel?.IsOpen == true)
+            if (confirmable)
             {
-                return exclusiveChannel;
-            }
+                ExclusiveChannel? exclusiveChannel;
+                lock (_confirmableChannelPool)
+                {
+                    if (_confirmableChannelPool.TryTake(out exclusiveChannel) && exclusiveChannel.Channel?.IsOpen == true)
+                    {
+                        return exclusiveChannel;
+                    }
+                }
 
-            if (exclusiveChannel == null)
-            {
-                exclusiveChannel = new ExclusiveChannel(
-                    new PublishConfirmableChannel(await connection.CreateModelAsync(), routeInfo.ConfirmationTimeout, _logger),
-                    new SemaphoreSlim(1, 1)
-                );
+                if (exclusiveChannel == null)
+                {
+                    exclusiveChannel = new ExclusiveChannel(
+                        new PublishConfirmableChannel(await connection.CreateModelAsync(), logger: _logger),
+                        new SemaphoreSlim(1, 1),
+                        onDispose: ec =>
+                        {
+                            lock (_confirmableChannelPool)
+                            {
+                                _confirmableChannelPool.Add(ec);
+                            }
+                        });
+                }
+                else
+                {
+                    exclusiveChannel.ReplaceChannel(
+                        new PublishConfirmableChannel(await connection.CreateModelAsync(), logger: _logger)
+                    );
+                }
+
+                return exclusiveChannel;
             }
             else
             {
-                exclusiveChannel.ReplaceChannel(
-                    new PublishConfirmableChannel(await connection.CreateModelAsync(), routeInfo.ConfirmationTimeout, _logger)
-                );
-            }
+                ExclusiveChannel? exclusiveChannel;
+                lock (_channelPool)
+                {
+                    if (_channelPool.TryTake(out exclusiveChannel) && exclusiveChannel.Channel?.IsOpen == true)
+                    {
+                        return exclusiveChannel;
+                    }
+                }
 
-            return exclusiveChannel;
+                if (exclusiveChannel == null)
+                {
+                    exclusiveChannel = new ExclusiveChannel(
+                        await connection.CreateModelAsync(),
+                        new SemaphoreSlim(1, 1),
+                        onDispose: ec =>
+                        {
+                            lock (_channelPool)
+                            {
+                                _channelPool.Add(ec);
+                            }
+                        });
+                }
+                else
+                {
+                    exclusiveChannel.ReplaceChannel(await connection.CreateModelAsync());
+                }
+
+                return exclusiveChannel;
+            }
         }
 
         /// <summary>
         /// Предоставляет эксклюзивный доступ к каналу.
         /// </summary>
-        private sealed class ExclusiveChannel
+        private sealed class ExclusiveChannel : IDisposable
         {
+            private readonly Action<ExclusiveChannel> _onDispose;
+
             #region Свойства
 
             /// <summary>
@@ -300,8 +402,9 @@ namespace ReRabbit.Publishers
             /// <summary>
             /// Создает новый экземпляр класса <see cref="ExclusiveChannel"/>.
             /// </summary>
-            public ExclusiveChannel(IModel channel, SemaphoreSlim semaphoreSlim)
+            public ExclusiveChannel(IModel channel, SemaphoreSlim semaphoreSlim, Action<ExclusiveChannel> onDispose)
             {
+                _onDispose = onDispose;
                 Channel = channel;
                 SemaphoreSlim = semaphoreSlim;
             }
@@ -320,10 +423,10 @@ namespace ReRabbit.Publishers
                 Channel = channel;
             }
 
-            public void Deconstruct(out IModel channel, out SemaphoreSlim semaphoreSlim)
+            public void Dispose()
             {
-                channel = Channel;
-                semaphoreSlim = SemaphoreSlim;
+                SemaphoreSlim.Release();
+                _onDispose?.Invoke(this);
             }
 
             #endregion Методы (public)

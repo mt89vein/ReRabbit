@@ -54,7 +54,7 @@ docker-compose -f docker-compose.debug.yml up
 
 либо установить и запустить на локальной машине и потом в IIS/Kestrel запустить само приложение [Sample](https://github.com/mt89vein/ReRabbit/tree/master/Sample)
 
-Далее проект с примером будет доступен по адресу http://localhost:8080
+Далее проект с примером будет доступен по адресу http://localhost:5000
 
 ### Nuget package
 

@@ -45,9 +45,9 @@ namespace ReRabbit.Abstractions.Settings.Publisher
 
         // TODO: добавить в JsonSchema
         /// <summary>
-        /// Таймаут на подтверждения доставки в брокер.
+        /// Включно ли подтверждение публикаций сообщений брокером.
         /// </summary>
-        public TimeSpan ConfirmationTimeout { get; }
+        public bool UsePublisherConfirms { get; }
 
         /// <summary>
         /// Конкретное подключение по опр. хосту/порту и виртуальному хосту.
@@ -80,11 +80,8 @@ namespace ReRabbit.Abstractions.Settings.Publisher
         /// По-умолчанию: 5.
         /// </para>
         /// </param>
-        /// <param name="confirmationTimeout">
-        /// Таймаут на подтверждения доставки в брокер.
-        /// <para>
-        /// По-умолчанию: 10 секунд.
-        /// </para>
+        /// <param name="UsePublisherConfirms">
+        /// Включно ли подтверждение публикаций сообщений брокером.
         /// </param>
         public MessageSettings(
             MqConnectionSettings connectionSettings,
@@ -94,7 +91,7 @@ namespace ReRabbit.Abstractions.Settings.Publisher
             IDictionary<string, object>? arguments = null,
             ExchangeInfo? exchange = null,
             int? retryCount = null,
-            TimeSpan? confirmationTimeout = null
+            bool? UsePublisherConfirms = null
         )
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -104,7 +101,7 @@ namespace ReRabbit.Abstractions.Settings.Publisher
             Exchange = exchange ?? new ExchangeInfo();
             RetryCount = retryCount ?? 5;
             ConnectionSettings = connectionSettings;
-            ConfirmationTimeout = confirmationTimeout ?? TimeSpan.FromSeconds(10);
+            UsePublisherConfirms = UsePublisherConfirms ?? false;
         }
 
         #endregion Конструктор

@@ -252,8 +252,8 @@ namespace ReRabbit.UnitTests.Core
 
             // timeout confirm immediatelly - we can add task to tracker, but timeout cancel it fast
             var confirmTimeout = TimeSpan.FromMilliseconds(10);
-  
-            var confirmableChannel = new PublishConfirmableChannel(modelMock.Object, confirmTimeout); 
+
+            var confirmableChannel = new PublishConfirmableChannel(modelMock.Object, confirmTimeout);
 
             #endregion Arrange
 

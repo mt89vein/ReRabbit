@@ -1,6 +1,5 @@
 using ReRabbit.Abstractions.Settings;
 using ReRabbit.Abstractions.Settings.Publisher;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -47,9 +46,9 @@ namespace ReRabbit.Core.Settings.Publisher
 
         // TODO: добавить в JsonSchema
         /// <summary>
-        /// Таймаут на подтверждения доставки в брокер.
+        /// Включно ли подтверждение публикаций сообщений брокером.
         /// </summary>
-        public TimeSpan? ConfirmationTimeout { get; set; }
+        public bool UsePublisherConfirms { get; set; }
 
         #endregion Свойства
 
@@ -65,7 +64,7 @@ namespace ReRabbit.Core.Settings.Publisher
                 Arguments,
                 Exchange?.Create(),
                 RetryCount,
-                ConfirmationTimeout
+                UsePublisherConfirms
             );
         }
 

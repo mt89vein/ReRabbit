@@ -18,7 +18,19 @@ namespace ReRabbit.Abstractions
         /// <param name="expires">Время жизни сообщения в шине.</param>
         /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
         Task PublishAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
-            where TRabbitMessage: RabbitMessage<TMessage>
+            where TRabbitMessage : RabbitMessage<TMessage>
+            where TMessage : class, IMessage;
+
+        /// <summary>
+        /// Опубликовать сообщение. Тип сообщения не проверяется.
+        /// </summary>
+        /// <typeparam name="TMessage">Тип сообщения.</typeparam>
+        /// <typeparam name="TRabbitMessage">Тип интеграционного сообщения.</typeparam>
+        /// <param name="message">Данные сообщения.</param>
+        /// <param name="expires">Время жизни сообщения в шине.</param>
+        /// <param name="delay">Время, через которое нужно доставить сообщение.</param>
+        Task PublishDynamicAsync<TRabbitMessage, TMessage>(TMessage message, TimeSpan? expires = null, TimeSpan? delay = null)
+            where TRabbitMessage : IRabbitMessage
             where TMessage : class, IMessage;
     }
 }

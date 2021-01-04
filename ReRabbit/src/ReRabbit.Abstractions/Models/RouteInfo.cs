@@ -70,9 +70,9 @@ namespace ReRabbit.Abstractions.Models
         public TimeSpan? Delay { get; }
 
         /// <summary>
-        /// Таймаут на подтверждения.
+        /// Включно ли подтверждение публикаций сообщений брокером.
         /// </summary>
-        public TimeSpan? ConfirmationTimeout { get; }
+        public bool UsePublisherConfirms { get; }
 
         #endregion Свойства
 
@@ -93,7 +93,7 @@ namespace ReRabbit.Abstractions.Models
             string messageVersion,
             MqConnectionSettings connectionSettings,
             TimeSpan? delay,
-            TimeSpan? confirmationTimeout
+            bool usePublisherConfirms
         )
         {
             Name = messageName;
@@ -107,7 +107,7 @@ namespace ReRabbit.Abstractions.Models
             ExchangeType = exchangeType;
             Arguments = arguments;
             Delay = delay;
-            ConfirmationTimeout = confirmationTimeout;
+            UsePublisherConfirms = usePublisherConfirms;
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace ReRabbit.Abstractions.Models
             MessageVersion = messageSettings.Version;
             ConnectionSettings = messageSettings.ConnectionSettings;
             Delay = delay;
-            ConfirmationTimeout = messageSettings.ConfirmationTimeout;
+            UsePublisherConfirms = messageSettings.UsePublisherConfirms;
         }
 
         #endregion Конструкторы

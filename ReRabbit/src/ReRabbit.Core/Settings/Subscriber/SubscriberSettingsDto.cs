@@ -70,6 +70,12 @@ namespace ReRabbit.Core.Settings.Subscriber
         /// </summary>
         public bool? UseDeadLetter { get; set; }
 
+        // TODO: добавить в JSON схему
+        /// <summary>
+        /// Включно ли подтверждение публикаций сообщений брокером.
+        /// </summary>
+        public bool UsePublisherConfirms { get; set; }
+
         /// <summary>
         /// Настройки отслеживания сообщений.
         /// </summary>
@@ -116,6 +122,7 @@ namespace ReRabbit.Core.Settings.Subscriber
                 AutoDelete,
                 AutoAck,
                 UseDeadLetter,
+                UsePublisherConfirms,
                 TracingSettings?.Create(),
                 RetrySettings?.Create(),
                 ScalingSettings?.Create()

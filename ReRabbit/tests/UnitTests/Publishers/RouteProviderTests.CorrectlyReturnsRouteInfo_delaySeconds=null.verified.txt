@@ -31,6 +31,5 @@
     NetworkRecoveryInterval: 00:00:10,
     TopologyRecoveryEnabled: true,
     Ssl: {}
-  },
-  ConfirmationTimeout: 00:00:10
+  }
 }

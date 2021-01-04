@@ -34,7 +34,7 @@ namespace SampleWebApplication.RouteProviders
                     null,
                     new ExchangeInfo("metrics", true, false, ExchangeType.Fanout),
                     5,
-                    TimeSpan.FromMinutes(1)),
+                    false),
                 delay
             );
         }

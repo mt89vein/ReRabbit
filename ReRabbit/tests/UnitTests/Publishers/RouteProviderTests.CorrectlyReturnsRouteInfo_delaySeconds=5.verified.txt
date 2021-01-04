@@ -32,6 +32,5 @@
     TopologyRecoveryEnabled: true,
     Ssl: {}
   },
-  Delay: 00:00:05,
-  ConfirmationTimeout: 00:00:10
+  Delay: 00:00:05
 }

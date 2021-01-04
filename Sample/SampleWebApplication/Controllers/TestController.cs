@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using ReRabbit.Abstractions;
 using Sample.IntegrationMessages.Messages;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SampleWebApplication.Controllers
@@ -15,26 +17,34 @@ namespace SampleWebApplication.Controllers
         public TestController(IMessagePublisher publisher)
         {
             _publisher = publisher;
+
         }
 
         [HttpPost("integration")]
         public async Task<IActionResult> PublishIntegrationMessageAsync(string message, int? expires = null, int? delay = null, Guid? messageId = null)
         {
-            var dto = new MyIntegrationMessageDto
+            const int count = 10;
+            var tasks = new Task[count];
+            for (var i = 0; i < count; i++)
             {
-                Message = message,
-            };
+                var dto = new MyIntegrationMessageDto
+                {
+                    Message = message,
+                };
 
-            if (messageId.HasValue)
-            {
-                dto.MessageId = messageId.Value;
+                if (messageId.HasValue)
+                {
+                    dto.MessageId = messageId.Value;
+                }
+
+                tasks[i] = _publisher.PublishAsync<MyIntegrationRabbitMessage, MyIntegrationMessageDto>(
+                    dto,
+                    expires: expires == null ? (TimeSpan?)null : TimeSpan.FromSeconds(expires.Value),
+                    delay: delay == null ? (TimeSpan?)null : TimeSpan.FromSeconds(delay.Value)
+                );
             }
 
-            await _publisher.PublishAsync<MyIntegrationRabbitMessage, MyIntegrationMessageDto>(
-                dto,
-                expires: expires == null ? (TimeSpan?)null : TimeSpan.FromSeconds(expires.Value),
-                delay: delay == null ? (TimeSpan?)null : TimeSpan.FromSeconds(delay.Value)
-            );
+            await Task.WhenAll(tasks);
 
             return Ok();
         }

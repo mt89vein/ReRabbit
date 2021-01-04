@@ -38,6 +38,11 @@ namespace ReRabbit.Core
         private readonly ILogger? _logger;
 
         /// <summary>
+        /// Включена ли трассировка.
+        /// </summary>
+        private readonly bool _logTraceEnabled;
+
+        /// <summary>
         /// Пул текущих задач на публикацию.
         /// </summary>
         private readonly ConcurrentDictionary<ulong, PublishTaskInfo> _publishTasks;
@@ -47,7 +52,7 @@ namespace ReRabbit.Core
         public PublishConfirmableChannel(IModel channel, TimeSpan? confirmTimeout = null, ILogger? logger = null)
         {
             _channel = channel ?? throw new ArgumentNullException(nameof(channel));
-            _confirmTimeout = confirmTimeout ?? TimeSpan.FromSeconds(5);
+            _confirmTimeout = confirmTimeout ?? TimeSpan.FromSeconds(10);
 
             if (_channel.IsClosed)
             {
@@ -62,6 +67,7 @@ namespace ReRabbit.Core
             _channel.BasicReturn += OnBasicReturn;
             _logger = logger;
             _publishTasks = new ConcurrentDictionary<ulong, PublishTaskInfo>();
+            _logTraceEnabled = logger?.IsEnabled(LogLevel.Trace) ?? false;
         }
 
         #region PublishConfirmableChannel
@@ -76,7 +82,7 @@ namespace ReRabbit.Core
             if (args.Multiple)
             {
                 var ids = _publishTasks.Keys.Where(x => x <= args.DeliveryTag).ToArray();
-                foreach (var id in ids)
+                foreach (var id in ids.AsParallel())
                 {
                     if (_publishTasks.TryRemove(id, out var publishTaskInfo))
                     {
@@ -98,11 +104,14 @@ namespace ReRabbit.Core
             if (args.Multiple)
             {
                 var ids = _publishTasks.Keys.Where(x => x <= args.DeliveryTag).ToArray();
-                foreach (var id in ids)
+                if (_logTraceEnabled)
+                {
+                    _logger?.LogTrace("ack all with less than {PublishTag}", args.DeliveryTag);
+                }
+                foreach (var id in ids.AsParallel())
                 {
                     if (_publishTasks.TryRemove(id, out var publishTaskInfo))
                     {
-                        _logger?.LogInformation("ack all with less than {PublishTag}", id);
                         publishTaskInfo.Ack();
                     }
                 }
@@ -111,9 +120,9 @@ namespace ReRabbit.Core
             {
                 if (_publishTasks.TryRemove(args.DeliveryTag, out var publishTaskInfo))
                 {
-                    if (_logger?.IsEnabled(LogLevel.Trace) == true)
+                    if (_logTraceEnabled)
                     {
-                        _logger?.LogInformation("ack with {PublishTag}", args.DeliveryTag);
+                        _logger?.LogTrace("ack with {PublishTag}", args.DeliveryTag);
                     }
 
                     publishTaskInfo.Ack();
@@ -123,9 +132,17 @@ namespace ReRabbit.Core
 
         private void OnBasicReturn(object? model, BasicReturnEventArgs args)
         {
-            _logger?.LogDebug("BasicReturn: {ReplyCode}-{ReplyText} {MessageId}", args.ReplyCode, args.ReplyText, args.BasicProperties.MessageId);
+            if (_logTraceEnabled)
+            {
+                _logger?.LogDebug(
+                    "BasicReturn: {ReplyCode}-{ReplyText} {MessageId}",
+                    args.ReplyCode,
+                    args.ReplyText,
+                    args.BasicProperties.MessageId
+                );
+            }
 
-            if (args.BasicProperties.IsHeadersPresent() &&
+            if (args.BasicProperties != null &&
                 args.BasicProperties.Headers.TryGetValue("publishTag", out var value) &&
                 value is byte[] bytes)
             {
@@ -137,6 +154,7 @@ namespace ReRabbit.Core
                 if (_publishTasks.TryRemove(id, out var published))
                 {
                     _logger?.LogWarning("returned! with {PublishTag}", id);
+
                     published.PublishReturned(args.ReplyCode, args.ReplyText);
                 }
             }
@@ -151,7 +169,7 @@ namespace ReRabbit.Core
         {
             try
             {
-                foreach (var key in _publishTasks.Keys)
+                foreach (var key in _publishTasks.Keys.AsParallel())
                 {
                     if (_publishTasks.TryRemove(key, out var publishTaskInfo))
                     {
@@ -206,7 +224,7 @@ namespace ReRabbit.Core
                     })
                 .ExecuteAsync(async ct =>
                 {
-                    var publishInfo = Publish(exchange, routingKey, mandatory, basicProperties, body);
+                    var publishInfo = CreatePublishTask(exchange, routingKey, mandatory, basicProperties, body);
 
                     try
                     {
@@ -223,7 +241,7 @@ namespace ReRabbit.Core
                 }, cancellationToken);
         }
 
-        private PublishTaskInfo Publish(
+        private PublishTaskInfo CreatePublishTask(
             string exchange,
             string routingKey,
             bool mandatory,
@@ -236,29 +254,32 @@ namespace ReRabbit.Core
             basicProperties.Headers ??= new Dictionary<string, object>();
             basicProperties.Headers["publishTag"] = publishTag.ToString("F0");
 
-            var publishTaskInfo = new PublishTaskInfo(publishTag);
+            PublishTaskInfo publishTaskInfo;
 
             try
             {
-                _publishTasks.AddOrUpdate(publishTag, key => publishTaskInfo, (key, existing) =>
+                publishTaskInfo = _publishTasks.AddOrUpdate(
+                    publishTag,
+                    key => new PublishTaskInfo(key),
+                    (key, existing) =>
+                    {
+                        existing.PublishNotConfirmed($"Duplicate key: {key}");
+
+                        return new PublishTaskInfo(key);
+                    });
+
+                Task.Run(() => BasicPublish(exchange, routingKey, mandatory, basicProperties, body));
+
+                if (_logTraceEnabled)
                 {
-                    existing.PublishNotConfirmed($"Duplicate key: {key}");
-
-                    return publishTaskInfo;
-                });
-
-                BasicPublish(exchange, routingKey, mandatory, basicProperties, body);
-
-                if (_logger?.IsEnabled(LogLevel.Trace) == true)
-                {
-                    _logger?.LogInformation("published with {PublishTag}", publishTag);
+                    _logger?.LogTrace("Published with {PublishTag}", publishTag);
                 }
             }
             catch (Exception e)
             {
                 _publishTasks.TryRemove(publishTag, out _);
 
-                _logger?.LogInformation(e, "error on publish with {PublishTag}", publishTag);
+                _logger?.LogError(e, "Error on publish with {PublishTag}", publishTag);
 
                 throw;
             }

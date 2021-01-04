@@ -78,6 +78,11 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         public bool UseDeadLetter { get; }
 
         /// <summary>
+        /// Включно ли подтверждение публикаций сообщений брокером.
+        /// </summary>
+        public bool UsePublisherConfirms { get; }
+
+        /// <summary>
         /// Настройки отслеживания сообщений.
         /// </summary>
         public TracingSettings TracingSettings { get; }
@@ -150,6 +155,9 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
         /// По-умолчанию: false.
         /// </para>
         /// </param>
+        /// <param name="usePublisherConfirms">
+        /// Включно ли подтверждение публикаций сообщений брокером.
+        /// </param>
         /// <param name="tracingSettings">Настройки отслеживания сообщений.</param>
         /// <param name="retrySettings">Настройки повторной обработки сообщений.</param>
         /// <param name="scalingSettings">Настройки масштабирования подписчика.</param>
@@ -167,6 +175,7 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
             bool? autoDelete = null,
             bool? autoAck = null,
             bool? useDeadLetter = null,
+            bool? usePublisherConfirms = null,
             TracingSettings? tracingSettings = null,
             RetrySettings? retrySettings = null,
             ScalingSettings? scalingSettings = null
@@ -182,6 +191,7 @@ namespace ReRabbit.Abstractions.Settings.Subscriber
             AutoDelete = autoDelete ?? false;
             AutoAck = autoAck ?? false;
             UseDeadLetter = useDeadLetter ?? false;
+            UsePublisherConfirms = usePublisherConfirms ?? false;
             TracingSettings = tracingSettings ?? new TracingSettings();
             RetrySettings = retrySettings ?? new RetrySettings();
             ScalingSettings = scalingSettings ?? new ScalingSettings();

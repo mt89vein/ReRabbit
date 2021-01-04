@@ -8,7 +8,6 @@
     Type: fanout
   },
   RetryCount: 5,
-  ConfirmationTimeout: 00:00:10,
   ConnectionSettings: {
     HostNames: [
       localhost

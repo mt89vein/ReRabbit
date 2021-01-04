@@ -15,7 +15,8 @@
                   "Type": "direct",
                   "Durable": true
                 },
-                "Route": "rk1"
+                "Route": "rk1",
+                "UsePublisherConfirms": true
               },
               "MetricsRabbitMessage": {
                 "Version": "v1",

@@ -26,6 +26,12 @@ namespace ReRabbit.Abstractions
 
     public interface IRouteProvider
     {
+        /// <summary>
+        /// Получить информацию о роутах для сообщения.
+        /// </summary>
+        /// <param name="message">Сообщение.</param>
+        /// <param name="delay">Время задержки перед публикацией.</param>
+        /// <returns>Информация о роутах.</returns>
         RouteInfo GetFor<TRabbitMessage, TMessage>(TMessage message, TimeSpan? delay = null)
             where TRabbitMessage : IRabbitMessage
             where TMessage : class, IMessage;
