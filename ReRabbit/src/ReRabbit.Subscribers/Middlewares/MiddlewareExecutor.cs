@@ -29,7 +29,10 @@ namespace ReRabbit.Subscribers.Middlewares
         /// <summary>
         /// Словарь фабрик типов.
         /// </summary>
-        private readonly ConcurrentDictionary<Type, ObjectFactory> _factories = new();
+        /// <remarks>
+        /// GetOrAdd не гарантирует что фабрика будет создана единожды (not thread safe) поэтому здесь Lazy.
+        /// </remarks>
+        private readonly ConcurrentDictionary<Type, Lazy<ObjectFactory>> _factories = new();
 
         #endregion Поля
 
@@ -63,7 +66,7 @@ namespace ReRabbit.Subscribers.Middlewares
         {
             using var scope = _serviceProvider.CreateScope();
 
-            var messageHandlerFactory = _factories.GetOrAdd(messageHandlerType, type => ActivatorUtilities.CreateFactory(type, Type.EmptyTypes));
+            var messageHandlerFactory = GetFactoryFor(messageHandlerType);
 
             if (messageHandlerFactory(scope.ServiceProvider, Array.Empty<object>()) is not IMessageHandler<TMessageType> messageHandler)
             {
@@ -85,7 +88,8 @@ namespace ReRabbit.Subscribers.Middlewares
 
             foreach (var middlewareInfo in middlewareInfos)
             {
-                var middlewareFactory = _factories.GetOrAdd(middlewareInfo.MiddlewareType, type => ActivatorUtilities.CreateFactory(type, Type.EmptyTypes));
+                var middlewareFactory = GetFactoryFor(middlewareInfo.MiddlewareType);
+
                 if (middlewareFactory(scope.ServiceProvider, Array.Empty<object>()) is MiddlewareBase middleware)
                 {
                     middlewareChain.AddLast(middleware);
@@ -110,5 +114,22 @@ namespace ReRabbit.Subscribers.Middlewares
         }
 
         #endregion Методы (public)
+
+        #region Методы (private)
+
+        /// <summary>
+        /// Создать фабрику для указанного типа.
+        /// </summary>
+        /// <param name="type">Тип, для которого нужна фабрика.</param>
+        /// <returns>Фабрика объекта указанного типа.</returns>
+        private ObjectFactory GetFactoryFor(Type type)
+        {
+            return _factories.GetOrAdd(
+                type,
+                instanceType => new Lazy<ObjectFactory>(() => ActivatorUtilities.CreateFactory(instanceType, Type.EmptyTypes))
+            ).Value;
+        }
+
+        #endregion Методы (private)
     }
 }
